@@ -74,5 +74,7 @@ const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
             return arg1 && arg2;
         case '||':
             return arg1 || arg2;
+        default:
+            throw new Error(`Unrecognized operator ${operator}`)
     }
 }

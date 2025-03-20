@@ -26,11 +26,13 @@ export class SimpleLangEvaluator extends BasicEvaluator {
 
             // Parse the input
             const tree = parser.prog();
+            console.log(tree.toStringTree());
 
             // Compile the parsed tree
             this.visitor = new CompilerVisitor()
             this.visitor.visit(tree);
             const instructions = this.visitor.instructionArray;
+            console.log(instructions);
             const result = evaluate(instructions);
 
             // Send the result to the REPL
