@@ -1,7 +1,26 @@
 import { Heap } from './heap';
 
-export const tagToType = (tag: number): Types => {
-    switch(tag) {
+export const valueToAddress = (heap: Heap, value: any): number => {
+    return valueToType(value).allocate(heap, value);
+}
+
+export const addressToValue = (heap: Heap, address: number): any => {
+    const tag = heap.getTag(address);
+    return tagToType(tag).addressToValue(heap, address);
+}
+
+const valueToType = (value: any): typeof Types => {
+    if (Number.isInteger(value)) {
+        return Int64
+    } else if (typeof value === 'boolean') {
+        return Boolean
+    } else {
+        throw new Error(`Unrecognize literal type: ${value}`)
+    }
+}
+
+const tagToType = (tag: number): typeof Types => {
+    switch (tag) {
         case Int64.getTag():
             return Int64
         case Boolean.getTag():
@@ -19,7 +38,7 @@ abstract class Types {
     public static allocate(heap: Heap, value: any): number {
         throw new Error("Type heap allocation not implemented")
     }
-    
+
     public static addressToValue(heap: Heap, address: number): any {
         throw new Error("Address to value not implemented");
     }
@@ -54,4 +73,4 @@ class Boolean {
 }
 
 // TODO
-class Float{}
+class Float { }
