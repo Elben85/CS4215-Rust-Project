@@ -37,7 +37,6 @@ const microcode = {
         PC++;
     },
     BINOP: (instr) => {
-        PC++;
         const arg2 = stackPop();
         const arg1 = stackPop();
 
@@ -46,6 +45,11 @@ const microcode = {
         );
 
         stackPush(result);
+        PC++;
+    },
+    POP: (instr) => {
+        stackPop();
+        PC++;
     }
 }
 

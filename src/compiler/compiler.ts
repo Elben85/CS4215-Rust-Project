@@ -1,14 +1,16 @@
 import { AbstractParseTreeVisitor } from 'antlr4ng';
-import { ExpressionContext, ProgContext } from '../parser/src/SimpleLangParser';
+import { ExpressionContext, ProgContext, StatementContext } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
     public instructionArray: any[];
+    private isFirstStatement: boolean;
 
     public constructor() {
         super();
         this.instructionArray = [];
+        this.isFirstStatement = true;
     }
 
     public compileLiteral(literal: any) {
@@ -28,10 +30,26 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitProg(ctx: ProgContext): void {
-        this.visit(ctx.expression());
-        this.instructionArray.push({
-            tag: "DONE"
-        })
+        if (ctx.EOF() !== null) {
+            this.instructionArray.push({
+                tag: "DONE"
+            })
+            return;
+        }
+
+        this.visit(ctx.statement());
+        this.visit(ctx.prog());
+    }
+
+    visitStatement(ctx: StatementContext): void {
+        if (this.isFirstStatement) {
+            this.isFirstStatement = false;
+        } else {
+            this.instructionArray.push({
+                tag: "POP"
+            });
+        }
+        this.visitExpression(ctx.expression());
     }
 
     // Visit a parse tree produced by SimpleLangParser#expression

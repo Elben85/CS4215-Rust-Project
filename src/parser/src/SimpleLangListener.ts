@@ -4,6 +4,7 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 
 
 import { ProgContext } from "./SimpleLangParser.js";
+import { StatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 
 
@@ -22,6 +23,16 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitProg?: (ctx: ProgContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    enterStatement?: (ctx: StatementContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    exitStatement?: (ctx: StatementContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.expression`.
      * @param ctx the parse tree
