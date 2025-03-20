@@ -62,5 +62,17 @@ const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
                 throw new Error("Division by zero");
             }
             return arg1 / arg2;
+        case '<':
+            return arg1 < arg2;
+        case '<=':
+            return arg1 <= arg2;
+        case '>':
+            return arg1 > arg2;
+        case '>=':
+            return arg1 >= arg2;
+        case '&&':
+            return arg1 && arg2;
+        case '||':
+            return arg1 || arg2;
     }
 }

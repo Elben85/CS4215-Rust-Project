@@ -37,24 +37,29 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     // Visit a parse tree produced by SimpleLangParser#expression
     visitExpression(ctx: ExpressionContext): void {
         if (ctx.getChildCount() === 1) {
-            // INT case
-            this.compileLiteral(parseInt(ctx.getText()));
+            const text = ctx.getText();
+            if (text === 'true') {
+                this.compileLiteral(true);
+            } else if (text === 'false') {
+                this.compileLiteral(false);
+            } else {
+                // INT case
+                this.compileLiteral(parseInt(ctx.getText()));
+            }
             return;
         } else if (ctx.getChildCount() === 3) {
             if (ctx.getChild(0).getText() === '(' && ctx.getChild(2).getText() === ')') {
                 // Parenthesized expression
                 this.visit(ctx.getChild(1) as ExpressionContext);
-                return;
             } else {
                 // Binary operation
                 const arg1 = ctx.getChild(0) as ExpressionContext;
                 const arg2 = ctx.getChild(2) as ExpressionContext;
                 const op = ctx.getChild(1).getText();
                 this.compileBinop(op, arg1, arg2)
-                return;
             }
+        } else {
+            throw new Error(`Invalid expression: ${ctx.getText()}`);
         }
-
-        throw new Error(`Invalid expression: ${ctx.getText()}`);
     }
 }
