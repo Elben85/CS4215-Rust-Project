@@ -6,18 +6,20 @@ prog
 
 statement: expression ';';
 
-// NOTE: operator precedence
+// NOTE: operator precedence matters
 // https://doc.rust-lang.org/reference/expressions.html
 
+
+// Note: Reordered for proper precedence
 expression
-    : expression op=('*'|'/') expression  // Note: Reordered for proper precedence
-    | expression op=('+'|'-') expression
-    | expression op=('<'|'<='|'>'|'>=') expression
-    | expression '&&' expression
-    | expression '||' expression
-    | INT
-    | BOOL
-    | '(' expression ')'
+    : expression op=('*'|'/') expression #Binop
+    | expression op=('+'|'-') expression #Binop
+    | expression op=('<'|'<='|'>'|'>=') expression #Binop
+    | expression '&&' expression #Binop
+    | expression '||' expression #Binop
+    | INT #Primitive
+    | BOOL #Primitive
+    | '(' expression ')' #bracket
     ;
 
 INT: [0-9]+;

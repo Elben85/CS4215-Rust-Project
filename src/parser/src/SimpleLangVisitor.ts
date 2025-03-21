@@ -5,7 +5,9 @@ import { AbstractParseTreeVisitor } from "antlr4ng";
 
 import { ProgContext } from "./SimpleLangParser.js";
 import { StatementContext } from "./SimpleLangParser.js";
-import { ExpressionContext } from "./SimpleLangParser.js";
+import { PrimitiveContext } from "./SimpleLangParser.js";
+import { BracketContext } from "./SimpleLangParser.js";
+import { BinopContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -29,10 +31,25 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      */
     visitStatement?: (ctx: StatementContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.expression`.
+     * Visit a parse tree produced by the `primitive`
+     * labeled alternative in `SimpleLangParser.expression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitExpression?: (ctx: ExpressionContext) => Result;
+    visitPrimitive?: (ctx: PrimitiveContext) => Result;
+    /**
+     * Visit a parse tree produced by the `bracket`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBracket?: (ctx: BracketContext) => Result;
+    /**
+     * Visit a parse tree produced by the `Binop`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBinop?: (ctx: BinopContext) => Result;
 }
 

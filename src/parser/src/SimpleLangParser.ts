@@ -150,18 +150,28 @@ export class SimpleLangParser extends antlr.Parser {
             switch (this.tokenStream.LA(1)) {
             case SimpleLangParser.INT:
                 {
+                localContext = new PrimitiveContext(localContext);
+                this.context = localContext;
+                previousContext = localContext;
+
                 this.state = 16;
                 this.match(SimpleLangParser.INT);
                 }
                 break;
             case SimpleLangParser.BOOL:
                 {
+                localContext = new PrimitiveContext(localContext);
+                this.context = localContext;
+                previousContext = localContext;
                 this.state = 17;
                 this.match(SimpleLangParser.BOOL);
                 }
                 break;
             case SimpleLangParser.T__11:
                 {
+                localContext = new BracketContext(localContext);
+                this.context = localContext;
+                previousContext = localContext;
                 this.state = 18;
                 this.match(SimpleLangParser.T__11);
                 this.state = 19;
@@ -189,17 +199,17 @@ export class SimpleLangParser extends antlr.Parser {
                     switch (this.interpreter.adaptivePredict(this.tokenStream, 2, this.context) ) {
                     case 1:
                         {
-                        localContext = new ExpressionContext(parentContext, parentState);
+                        localContext = new BinopContext(new ExpressionContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, SimpleLangParser.RULE_expression);
                         this.state = 24;
                         if (!(this.precpred(this.context, 8))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 8)");
                         }
                         this.state = 25;
-                        localContext._op = this.tokenStream.LT(1);
+                        (localContext as BinopContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 2 || _la === 3)) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            (localContext as BinopContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -211,17 +221,17 @@ export class SimpleLangParser extends antlr.Parser {
                         break;
                     case 2:
                         {
-                        localContext = new ExpressionContext(parentContext, parentState);
+                        localContext = new BinopContext(new ExpressionContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, SimpleLangParser.RULE_expression);
                         this.state = 27;
                         if (!(this.precpred(this.context, 7))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 7)");
                         }
                         this.state = 28;
-                        localContext._op = this.tokenStream.LT(1);
+                        (localContext as BinopContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 4 || _la === 5)) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            (localContext as BinopContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -233,17 +243,17 @@ export class SimpleLangParser extends antlr.Parser {
                         break;
                     case 3:
                         {
-                        localContext = new ExpressionContext(parentContext, parentState);
+                        localContext = new BinopContext(new ExpressionContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, SimpleLangParser.RULE_expression);
                         this.state = 30;
                         if (!(this.precpred(this.context, 6))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 6)");
                         }
                         this.state = 31;
-                        localContext._op = this.tokenStream.LT(1);
+                        (localContext as BinopContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 960) !== 0))) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            (localContext as BinopContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -255,7 +265,7 @@ export class SimpleLangParser extends antlr.Parser {
                         break;
                     case 4:
                         {
-                        localContext = new ExpressionContext(parentContext, parentState);
+                        localContext = new BinopContext(new ExpressionContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, SimpleLangParser.RULE_expression);
                         this.state = 33;
                         if (!(this.precpred(this.context, 5))) {
@@ -269,7 +279,7 @@ export class SimpleLangParser extends antlr.Parser {
                         break;
                     case 5:
                         {
-                        localContext = new ExpressionContext(parentContext, parentState);
+                        localContext = new BinopContext(new ExpressionContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, SimpleLangParser.RULE_expression);
                         this.state = 36;
                         if (!(this.precpred(this.context, 4))) {
@@ -431,15 +441,76 @@ export class StatementContext extends antlr.ParserRuleContext {
 
 
 export class ExpressionContext extends antlr.ParserRuleContext {
-    public _op?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
+    }
+    public override get ruleIndex(): number {
+        return SimpleLangParser.RULE_expression;
+    }
+    public override copyFrom(ctx: ExpressionContext): void {
+        super.copyFrom(ctx);
+    }
+}
+export class PrimitiveContext extends ExpressionContext {
+    public constructor(ctx: ExpressionContext) {
+        super(ctx.parent, ctx.invokingState);
+        super.copyFrom(ctx);
     }
     public INT(): antlr.TerminalNode | null {
         return this.getToken(SimpleLangParser.INT, 0);
     }
     public BOOL(): antlr.TerminalNode | null {
         return this.getToken(SimpleLangParser.BOOL, 0);
+    }
+    public override enterRule(listener: SimpleLangListener): void {
+        if(listener.enterPrimitive) {
+             listener.enterPrimitive(this);
+        }
+    }
+    public override exitRule(listener: SimpleLangListener): void {
+        if(listener.exitPrimitive) {
+             listener.exitPrimitive(this);
+        }
+    }
+    public override accept<Result>(visitor: SimpleLangVisitor<Result>): Result | null {
+        if (visitor.visitPrimitive) {
+            return visitor.visitPrimitive(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+export class BracketContext extends ExpressionContext {
+    public constructor(ctx: ExpressionContext) {
+        super(ctx.parent, ctx.invokingState);
+        super.copyFrom(ctx);
+    }
+    public expression(): ExpressionContext {
+        return this.getRuleContext(0, ExpressionContext)!;
+    }
+    public override enterRule(listener: SimpleLangListener): void {
+        if(listener.enterBracket) {
+             listener.enterBracket(this);
+        }
+    }
+    public override exitRule(listener: SimpleLangListener): void {
+        if(listener.exitBracket) {
+             listener.exitBracket(this);
+        }
+    }
+    public override accept<Result>(visitor: SimpleLangVisitor<Result>): Result | null {
+        if (visitor.visitBracket) {
+            return visitor.visitBracket(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+export class BinopContext extends ExpressionContext {
+    public _op?: Token | null;
+    public constructor(ctx: ExpressionContext) {
+        super(ctx.parent, ctx.invokingState);
+        super.copyFrom(ctx);
     }
     public expression(): ExpressionContext[];
     public expression(i: number): ExpressionContext | null;
@@ -450,22 +521,19 @@ export class ExpressionContext extends antlr.ParserRuleContext {
 
         return this.getRuleContext(i, ExpressionContext);
     }
-    public override get ruleIndex(): number {
-        return SimpleLangParser.RULE_expression;
-    }
     public override enterRule(listener: SimpleLangListener): void {
-        if(listener.enterExpression) {
-             listener.enterExpression(this);
+        if(listener.enterBinop) {
+             listener.enterBinop(this);
         }
     }
     public override exitRule(listener: SimpleLangListener): void {
-        if(listener.exitExpression) {
-             listener.exitExpression(this);
+        if(listener.exitBinop) {
+             listener.exitBinop(this);
         }
     }
     public override accept<Result>(visitor: SimpleLangVisitor<Result>): Result | null {
-        if (visitor.visitExpression) {
-            return visitor.visitExpression(this);
+        if (visitor.visitBinop) {
+            return visitor.visitBinop(this);
         } else {
             return visitor.visitChildren(this);
         }

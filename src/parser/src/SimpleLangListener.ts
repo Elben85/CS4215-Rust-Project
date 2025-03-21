@@ -5,7 +5,9 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 
 import { ProgContext } from "./SimpleLangParser.js";
 import { StatementContext } from "./SimpleLangParser.js";
-import { ExpressionContext } from "./SimpleLangParser.js";
+import { PrimitiveContext } from "./SimpleLangParser.js";
+import { BracketContext } from "./SimpleLangParser.js";
+import { BinopContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -34,15 +36,41 @@ export class SimpleLangListener implements ParseTreeListener {
      */
     exitStatement?: (ctx: StatementContext) => void;
     /**
-     * Enter a parse tree produced by `SimpleLangParser.expression`.
+     * Enter a parse tree produced by the `primitive`
+     * labeled alternative in `SimpleLangParser.expression`.
      * @param ctx the parse tree
      */
-    enterExpression?: (ctx: ExpressionContext) => void;
+    enterPrimitive?: (ctx: PrimitiveContext) => void;
     /**
-     * Exit a parse tree produced by `SimpleLangParser.expression`.
+     * Exit a parse tree produced by the `primitive`
+     * labeled alternative in `SimpleLangParser.expression`.
      * @param ctx the parse tree
      */
-    exitExpression?: (ctx: ExpressionContext) => void;
+    exitPrimitive?: (ctx: PrimitiveContext) => void;
+    /**
+     * Enter a parse tree produced by the `bracket`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    enterBracket?: (ctx: BracketContext) => void;
+    /**
+     * Exit a parse tree produced by the `bracket`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    exitBracket?: (ctx: BracketContext) => void;
+    /**
+     * Enter a parse tree produced by the `Binop`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    enterBinop?: (ctx: BinopContext) => void;
+    /**
+     * Exit a parse tree produced by the `Binop`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    exitBinop?: (ctx: BinopContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}
