@@ -30,7 +30,7 @@ const tagToType = (tag: number): typeof Types => {
     }
 }
 
-abstract class Types {
+export abstract class Types {
     public static getTag(): number {
         throw new Error("Type tag not defined")
     }
@@ -44,7 +44,7 @@ abstract class Types {
     }
 }
 
-class Int64 {
+class Int64 implements Types {
     public static getTag(): number { return 0; }
 
     public static allocate(heap: Heap, value: number): number {
@@ -58,7 +58,7 @@ class Int64 {
     }
 }
 
-class Boolean {
+class Boolean implements Types {
     public static getTag(): number { return 1; }
 
     public static allocate(heap: Heap, value: boolean): number {
