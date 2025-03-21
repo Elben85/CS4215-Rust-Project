@@ -1,5 +1,14 @@
 import { AbstractParseTreeVisitor } from 'antlr4ng';
-import { BinopContext, BracketContext, ExpressionContext, PrimitiveContext, ProgContext, StatementContext } from '../parser/src/SimpleLangParser';
+import {
+    BinopContext,
+    BracketContext,
+    ExpressionContext,
+    PrimitiveContext,
+    ProgContext,
+    EmptyStatementContext,
+    ExpressionStatementContext,
+    StatementContext
+} from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
@@ -14,18 +23,19 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitProg(ctx: ProgContext): void {
-        if (ctx.EOF() !== null) {
-            this.instructionArray.push({
-                tag: "DONE"
-            })
-            return;
-        }
+        const statements: StatementContext[] = ctx.statement();
 
-        this.visit(ctx.statement());
-        this.visit(ctx.prog());
+        for (let s of statements) {
+            this.visit(s);
+        }
+        this.instructionArray.push({
+            tag: "DONE"
+        })
     }
 
-    visitStatement(ctx: StatementContext): void {
+    visitEmptyStatement(ctx: EmptyStatementContext): void { };
+
+    visitExpressionStatement(ctx: ExpressionStatementContext): void {
         if (this.isFirstStatement) {
             this.isFirstStatement = false;
         } else {

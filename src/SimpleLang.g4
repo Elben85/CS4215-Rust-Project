@@ -1,10 +1,12 @@
 grammar SimpleLang;
 
 prog
-    : EOF
-    | statement prog;
+    : statement* EOF;
 
-statement: expression ';';
+statement
+    : ';' #EmptyStatement
+    | expression ';' #ExpressionStatement
+    ;
 
 // NOTE: operator precedence matters
 // https://doc.rust-lang.org/reference/expressions.html

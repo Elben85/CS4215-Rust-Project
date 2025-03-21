@@ -4,7 +4,8 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 
 
 import { ProgContext } from "./SimpleLangParser.js";
-import { StatementContext } from "./SimpleLangParser.js";
+import { EmptyStatementContext } from "./SimpleLangParser.js";
+import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { PrimitiveContext } from "./SimpleLangParser.js";
 import { BracketContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
@@ -26,23 +27,37 @@ export class SimpleLangListener implements ParseTreeListener {
      */
     exitProg?: (ctx: ProgContext) => void;
     /**
-     * Enter a parse tree produced by `SimpleLangParser.statement`.
+     * Enter a parse tree produced by the `EmptyStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
      * @param ctx the parse tree
      */
-    enterStatement?: (ctx: StatementContext) => void;
+    enterEmptyStatement?: (ctx: EmptyStatementContext) => void;
     /**
-     * Exit a parse tree produced by `SimpleLangParser.statement`.
+     * Exit a parse tree produced by the `EmptyStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
      * @param ctx the parse tree
      */
-    exitStatement?: (ctx: StatementContext) => void;
+    exitEmptyStatement?: (ctx: EmptyStatementContext) => void;
     /**
-     * Enter a parse tree produced by the `primitive`
+     * Enter a parse tree produced by the `ExpressionStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    enterExpressionStatement?: (ctx: ExpressionStatementContext) => void;
+    /**
+     * Exit a parse tree produced by the `ExpressionStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    exitExpressionStatement?: (ctx: ExpressionStatementContext) => void;
+    /**
+     * Enter a parse tree produced by the `Primitive`
      * labeled alternative in `SimpleLangParser.expression`.
      * @param ctx the parse tree
      */
     enterPrimitive?: (ctx: PrimitiveContext) => void;
     /**
-     * Exit a parse tree produced by the `primitive`
+     * Exit a parse tree produced by the `Primitive`
      * labeled alternative in `SimpleLangParser.expression`.
      * @param ctx the parse tree
      */
