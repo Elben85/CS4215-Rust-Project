@@ -4,9 +4,12 @@ import { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "a
 
 
 import { ProgContext } from "./SimpleLangParser.js";
+import { MutableContext } from "./SimpleLangParser.js";
 import { EmptyStatementContext } from "./SimpleLangParser.js";
+import { LetStatementContext } from "./SimpleLangParser.js";
 import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { PrimitiveContext } from "./SimpleLangParser.js";
+import { AccessIdentifierContext } from "./SimpleLangParser.js";
 import { BracketContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 
@@ -27,6 +30,16 @@ export class SimpleLangListener implements ParseTreeListener {
      */
     exitProg?: (ctx: ProgContext) => void;
     /**
+     * Enter a parse tree produced by `SimpleLangParser.mutable`.
+     * @param ctx the parse tree
+     */
+    enterMutable?: (ctx: MutableContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.mutable`.
+     * @param ctx the parse tree
+     */
+    exitMutable?: (ctx: MutableContext) => void;
+    /**
      * Enter a parse tree produced by the `EmptyStatement`
      * labeled alternative in `SimpleLangParser.statement`.
      * @param ctx the parse tree
@@ -38,6 +51,18 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitEmptyStatement?: (ctx: EmptyStatementContext) => void;
+    /**
+     * Enter a parse tree produced by the `LetStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    enterLetStatement?: (ctx: LetStatementContext) => void;
+    /**
+     * Exit a parse tree produced by the `LetStatement`
+     * labeled alternative in `SimpleLangParser.statement`.
+     * @param ctx the parse tree
+     */
+    exitLetStatement?: (ctx: LetStatementContext) => void;
     /**
      * Enter a parse tree produced by the `ExpressionStatement`
      * labeled alternative in `SimpleLangParser.statement`.
@@ -62,6 +87,18 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitPrimitive?: (ctx: PrimitiveContext) => void;
+    /**
+     * Enter a parse tree produced by the `AccessIdentifier`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    enterAccessIdentifier?: (ctx: AccessIdentifierContext) => void;
+    /**
+     * Exit a parse tree produced by the `AccessIdentifier`
+     * labeled alternative in `SimpleLangParser.expression`.
+     * @param ctx the parse tree
+     */
+    exitAccessIdentifier?: (ctx: AccessIdentifierContext) => void;
     /**
      * Enter a parse tree produced by the `bracket`
      * labeled alternative in `SimpleLangParser.expression`.

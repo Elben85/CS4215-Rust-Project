@@ -1,7 +1,7 @@
 import { Heap } from "./heap";
 import { addressToValue, Types, valueToAddress } from "./types";
 
-class Environment implements Types {
+export class Environment implements Types {
     public static getTag(): number { return 2; }
 
     public static allocate(heap: Heap, numFrames: number): number {
@@ -16,7 +16,7 @@ class Environment implements Types {
         return heap.set(address + frameIndex, frameAddress);
     }
 
-    public static extend(heap: Heap, oldEnv: number, frameAddress: number): number {
+    public static extend(heap: Heap, oldEnv: number, frameSize: number): number {
         const oldEnvSize = heap.getSize(oldEnv);
         const newEnv = heap.reserve(oldEnvSize, oldEnvSize + 1);
 
@@ -26,6 +26,7 @@ class Environment implements Types {
             );
         }
 
+        const frameAddress = Frame.allocate(heap, frameSize);
         this.setFrame(heap, newEnv, oldEnvSize, frameAddress);
 
         return newEnv;
@@ -33,12 +34,13 @@ class Environment implements Types {
 
     public static getValue(heap: Heap, env: number, frameIndex: number, itemIndex: number): number {
         const frameAddress = heap.get(env + frameIndex);
-        return Frame.getValue(heap, frameAddress, frameIndex);
+        return Frame.getValue(heap, frameAddress, itemIndex);
     }
 
     public static setValue(heap: Heap, env: number, frameIndex: number, itemIndex: number, value: any) {
+        // value is an address to the heap
         const frameAddress = heap.get(env + frameIndex);
-        Frame.setValue(heap, frameAddress, frameIndex, value);
+        Frame.setValue(heap, frameAddress, itemIndex, value);
     }
 }
 
