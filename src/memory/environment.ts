@@ -18,7 +18,7 @@ export class Environment implements Types {
 
     public static extend(heap: Heap, oldEnv: number, frameSize: number): number {
         const oldEnvSize = heap.getSize(oldEnv);
-        const newEnv = heap.reserve(oldEnvSize, oldEnvSize + 1);
+        const newEnv = heap.reserve(oldEnvSize + 1, this.getTag());
 
         for (let i = 0; i < oldEnvSize; ++i) {
             this.setFrame(
@@ -65,7 +65,7 @@ class Frame implements Types {
 
     private static checkValidAccess(heap: Heap, address: number, index: number) {
         if (heap.getTag(address) !== this.getTag()) {
-            throw new Error("Trying to set a value of a non-Frame")
+            throw new Error(`Trying to set a value of a non-Frame, got tag: ${heap.getTag(address)}`)
         }
 
         const frameSize = heap.getSize(address);

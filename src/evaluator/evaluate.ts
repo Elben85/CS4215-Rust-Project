@@ -57,7 +57,7 @@ const microcode = {
         PC++;
     },
     POP: (instr) => {
-        stackPop();
+        OS.pop();
         PC++;
     },
     ASSIGN: (instr) => {
