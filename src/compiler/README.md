@@ -40,7 +40,7 @@ Load the value at `frameIndex` and `valueIndex` to the stack
 ```
 
 6. `ENTER_SCOPE`
-Extend the env with a frame of given length. Push the old env to the stack
+Extend the env with a frame of given length. Push the old env to the runtime stack
 ```
 {
     tag: "ENTER_SCOPE",
@@ -50,5 +50,5 @@ Extend the env with a frame of given length. Push the old env to the stack
 
 
 7. `EXIT_SCOPE`
-Restore the address of the env to one on the stack.
+Restore the address of the env to one on top of the runtime stack.
 `{ tag: "EXIT_SCOPE" }`

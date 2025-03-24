@@ -4,6 +4,7 @@ import { Environment } from "../memory/environment";
 
 let HEAP: Heap;
 let OS: number[]; // Stack, list of addresses
+let RTS: number[]; // Runtime stack, list of environment addresses
 let PC: number; // Program counter
 let E: number; // Environment address
 
@@ -12,6 +13,7 @@ let E: number; // Environment address
 export const evaluate = (instructionArray: any[]) => {
     HEAP = new Heap();
     OS = [];
+    RTS = [];
     PC = 0;
     E = Environment.allocate(HEAP, 0);
 
@@ -73,12 +75,12 @@ const microcode = {
         PC++;
     },
     ENTER_SCOPE: (instr) => {
-        OS.push(E);
+        RTS.push(E);
         E = Environment.extend(HEAP, E, instr.frameSize);
         PC++;
     },
     EXIT_SCOPE: (instr) => {
-        E = OS.pop();
+        E = RTS.pop();
         PC++;
     },
 }

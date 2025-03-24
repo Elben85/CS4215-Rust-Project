@@ -13,12 +13,12 @@ export default function Evaluate(program: string) {
 
     // Parse the input
     const tree = parser.prog();
-    console.log(tree.toStringTree());
 
     // Compile the parsed tree
     const visitor = new CompilerVisitor()
     visitor.visit(tree);
     const instructions = visitor.instructionArray;
+    console.log(instructions);
     const result = evaluate(instructions);
 
     return result;

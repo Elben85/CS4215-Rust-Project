@@ -13,6 +13,8 @@ import {
     ComparisonContext,
     AdditionSubstractionContext,
     MultiplicationDivisionContext,
+    BlockExpressionContext,
+    BlockBodyContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 
@@ -163,6 +165,42 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             tag: "LD",
             pos: position
         })
+    }
+
+    visitBlockExpression(ctx: BlockExpressionContext): void {
+        const enterScopeInstr = {
+            tag: "ENTER_SCOPE",
+            frameSize: null
+        }
+        this.instructionArray.push(enterScopeInstr)
+        let body = ctx.blockBody();
+        this.env.push([]);
+        this.visit(body);
+        const frame = this.env.pop();
+        enterScopeInstr.frameSize = frame.length;
+        this.instructionArray.push({ tag: "EXIT_SCOPE" });
+    }
+
+    visitBlockBody(ctx: BlockBodyContext): void {
+        const DEFAULT_VALUE = 0 // TODO: fix this default value
+        const tmp = this.isFirstStatement;
+        this.isFirstStatement = true;
+        for (let s of ctx.statement()) {
+            this.visit(s);
+        }
+        if (!this.isFirstStatement) {
+            // At least have 1 non-empty statement
+            this.instructionArray.push({ tag: "POP" });
+        }
+        if (ctx.expressionWithoutBlock()) {
+            this.visit(ctx.expressionWithoutBlock());
+        } else {
+            this.instructionArray.push({
+                tag: "LDC",
+                value: DEFAULT_VALUE
+            })
+        }
+        this.isFirstStatement = tmp;
     }
 
     visitBracket(ctx: BracketContext): void {
