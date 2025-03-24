@@ -7,30 +7,84 @@ mutable
     : 'mut';
 
 statement
-    : ';' #EmptyStatement
+    : emptyStatement
+    | letStatement
+    | expressionStatement
+    ;
 
-    // LET STATEMENT
-    // NOTE: the let statement is a simplificition without ref, pattern matching, and outer attributes
-    // https://doc.rust-lang.org/reference/statements.html#let-statements
-    | 'let' mutable? IDENTIFIER (: TYPE)? ('=' expression)? #LetStatement
-    | expression ';' #ExpressionStatement
+emptyStatement: ';';
+
+// LET STATEMENT
+// NOTE: the let statement is a simplificition without ref, pattern matching, and outer attributes
+// https://doc.rust-lang.org/reference/statements.html#let-statements
+letStatement
+    : 'let' mutable? IDENTIFIER (':' TYPE)? ('=' expression)? ';'
+    ;
+
+
+expressionStatement
+    : expressionWithoutBlock ';'
+    | expressionWithBlock (';')?
     ;
 
 // NOTE: operator precedence matters
 // https://doc.rust-lang.org/reference/expressions.html
 
-
-// Note: Reordered for proper precedence
 expression
-    : expression op=('*'|'/') expression #Binop
-    | expression op=('+'|'-') expression #Binop
-    | expression op=('<'|'<='|'>'|'>=') expression #Binop
-    | expression '&&' expression #Binop
-    | expression '||' expression #Binop
-    | INT #Primitive
-    | BOOL #Primitive
-    | '(' expression ')' #bracket
-    | IDENTIFIER # AccessIdentifier
+    : expressionWithoutBlock
+    | expressionWithBlock
+    ;
+
+// The following is to prevent left recursion from binary operation
+expressionWithoutBlock
+    : binop 
+    | primary
+    ;
+
+primary: primitive | bracket | accessIdentifier;
+
+// binop terminals are all expressions without binop
+binopTerminals: primary | expressionWithBlock;
+
+// This is to prevent left recursion, note this needs to be done in reverse operator precedence
+binop: logicalOr;
+
+logicalOr: logicalAnd ('||' logicalAnd)*;
+
+logicalAnd: comparison ('&&' comparison)*;
+
+// NOTE: comparison requires parantheses, hence the design
+comparison:  additionSubstraction (op=('<'|'<='|'>'|'>=') additionSubstraction)?;
+
+additionSubstraction: multiplicationDivision (op=('+'|'-') multiplicationDivision)*;
+
+multiplicationDivision: binopTerminals (op=('*'|'/') binopTerminals)*;
+
+primitive
+    : INT 
+    | BOOL
+    ;
+
+accessIdentifier
+    : IDENTIFIER
+    ;
+
+bracket
+    : '(' expression ')'
+    ;
+
+expressionWithBlock
+    : blockExpression
+    ;
+
+// Block expression
+blockExpression
+    : 
+    '{' blockBody '}'
+    ;
+
+blockBody
+    : statement* expressionWithoutBlock?
     ;
 
 INT: [0-9]+;

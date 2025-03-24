@@ -8,8 +8,8 @@ describe('RustEvaluator', () => {
             let b = 2;
             let c = 3;
             let d = 4;
-            a + b + c * d;
+            a * a + b * b + c * c + d * d;
         `
-        expect(Evaluate(program)).toBe(15);
+        expect(Evaluate(program)).toBe(30);
     });
 });

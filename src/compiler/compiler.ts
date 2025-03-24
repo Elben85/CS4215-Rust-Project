@@ -1,15 +1,18 @@
 import { AbstractParseTreeVisitor } from 'antlr4ng';
 import {
-    BinopContext,
     BracketContext,
-    ExpressionContext,
     PrimitiveContext,
     ProgContext,
     EmptyStatementContext,
     LetStatementContext,
     ExpressionStatementContext,
     StatementContext,
-    AccessIdentifierContext
+    AccessIdentifierContext,
+    LogicalOrContext,
+    LogicalAndContext,
+    ComparisonContext,
+    AdditionSubstractionContext,
+    MultiplicationDivisionContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 
@@ -107,20 +110,34 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
                 tag: "POP"
             });
         }
-        this.visit(ctx.expression());
+        this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
     }
 
-    visitBinop(ctx: BinopContext): void {
-        const arg1 = ctx.getChild(0);
-        const arg2 = ctx.getChild(2) as ExpressionContext;
-        const operator = ctx.getChild(1).getText();
-        this.visit(arg1);
-        this.visit(arg2);
-        this.instructionArray.push({
-            tag: "BINOP",
-            op: operator
-        });
+    // BINARY OPERATORS
+    // operator associativity: https://doc.rust-lang.org/reference/expressions.html
+    compileLeftToRightAssociativeBinop(ctx): void {
+        const childCount = ctx.getChildCount();
+        this.visit(ctx.getChild(0));
+
+        for (let i = 1; i < childCount; i += 2) {
+            const operator = ctx.getChild(i).getText();
+            this.visit(ctx.getChild(i + 1));
+            this.instructionArray.push({
+                tag: "BINOP",
+                op: operator
+            })
+        }
     }
+
+    visitLogicalOr(ctx: LogicalOrContext) { this.compileLeftToRightAssociativeBinop(ctx) };
+    visitLogicalAnd(ctx: LogicalAndContext) { this.compileLeftToRightAssociativeBinop(ctx); };
+    visitComparison(ctx: ComparisonContext) { this.compileLeftToRightAssociativeBinop(ctx); };
+    visitAdditionSubstraction(ctx: AdditionSubstractionContext) {
+        this.compileLeftToRightAssociativeBinop(ctx);
+    };
+    visitMultiplicationDivision(ctx: MultiplicationDivisionContext) {
+        this.compileLeftToRightAssociativeBinop(ctx);
+    };
 
     visitPrimitive(ctx: PrimitiveContext): void {
         let value: any;
