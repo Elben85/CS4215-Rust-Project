@@ -18,6 +18,7 @@ import {
     UnopContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
+import * as Instructions from "./instruction";
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -66,12 +67,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitProg(ctx: ProgContext): void {
-        const enterScopeInstr = {
-            tag: "ENTER_SCOPE",
-            frameSize: null
-        }
+        const enterScopeInstr = Instructions.createEnterScope(null)
         this.instructionArray.push(enterScopeInstr)
-        this.instructionArray.push({ tag: "POP" })
 
         const statements: StatementContext[] = ctx.statement();
 
@@ -79,7 +76,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.visit(s);
         }
         enterScopeInstr.frameSize = this.env[0].length;
-        this.instructionArray.push({ tag: "DONE" })
+        this.instructionArray.push(Instructions.createDone())
     }
 
     visitEmptyStatement(_: EmptyStatementContext): void { };
@@ -99,19 +96,14 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             return;
         }
         this.visit(expression);
-        this.instructionArray.push({
-            tag: "ASSIGN",
-            pos: [frameIndex, valueIndex]
-        });
+        this.instructionArray.push(Instructions.createAssign([frameIndex, valueIndex]));
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): void {
         if (this.isFirstStatement) {
             this.isFirstStatement = false;
         } else {
-            this.instructionArray.push({
-                tag: "POP"
-            });
+            this.instructionArray.push(Instructions.createPop());
         }
         this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
     }
@@ -120,10 +112,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(ctx.binopTerminals());
         const op = ctx.getChild(0).getText();
 
-        this.instructionArray.push({
-            tag: "UNOP",
-            op: op
-        })
+        this.instructionArray.push(Instructions.createUnop(op))
     }
 
     // BINARY OPERATORS
@@ -135,10 +124,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         for (let i = 1; i < childCount; i += 2) {
             const operator = ctx.getChild(i).getText();
             this.visit(ctx.getChild(i + 1));
-            this.instructionArray.push({
-                tag: "BINOP",
-                op: operator
-            })
+            this.instructionArray.push(Instructions.createBinop(operator))
         }
     }
 
@@ -162,34 +148,25 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             throw new Error(`unrecognized primitive: ${ctx.getText()}`);
         }
 
-        this.instructionArray.push({
-            tag: "LDC",
-            value: value
-        });
+        this.instructionArray.push(Instructions.createLDC(value));
     }
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): void {
         let identifier: string = ctx.IDENTIFIER().getText();
         let position = this.getIdentifierPosition(identifier);
 
-        this.instructionArray.push({
-            tag: "LD",
-            pos: position
-        })
+        this.instructionArray.push(Instructions.createLD(position))
     }
 
     visitBlockExpression(ctx: BlockExpressionContext): void {
-        const enterScopeInstr = {
-            tag: "ENTER_SCOPE",
-            frameSize: null
-        }
+        const enterScopeInstr = Instructions.createEnterScope(null);
         this.instructionArray.push(enterScopeInstr)
         let body = ctx.blockBody();
         this.env.push([]);
         this.visit(body);
         const frame = this.env.pop();
         enterScopeInstr.frameSize = frame.length;
-        this.instructionArray.push({ tag: "EXIT_SCOPE" });
+        this.instructionArray.push(Instructions.createExitScope());
     }
 
     visitBlockBody(ctx: BlockBodyContext): void {
@@ -201,15 +178,12 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
         if (!this.isFirstStatement) {
             // At least have 1 non-empty statement
-            this.instructionArray.push({ tag: "POP" });
+            this.instructionArray.push(Instructions.createPop());
         }
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
-            this.instructionArray.push({
-                tag: "LDC",
-                value: DEFAULT_VALUE
-            })
+            this.instructionArray.push(Instructions.createLDC(DEFAULT_VALUE))
         }
         this.isFirstStatement = tmp;
     }
