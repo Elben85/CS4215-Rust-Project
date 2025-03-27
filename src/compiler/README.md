@@ -22,7 +22,7 @@ Pop the topmost value on the stack
 `{ tag: "POP" }`
 
 4. `ASSIGN`
-Assign topmost stack value to specified `frameIndex` and `valueIndex`
+Assign topmost stack value to specified `frameIndex` and `valueIndex`. Push the assigned value back to stack.
 ```
 {
     tag: "ASSIGN",

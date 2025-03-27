@@ -72,6 +72,7 @@ const microcode = {
         const valueAddr = OS.pop();
         const [frameIndex, valueIndex] = instr.pos;
         Environment.setValue(HEAP, E, frameIndex, valueIndex, valueAddr);
+        OS.push(valueAddr);
         PC++;
     },
     LD: (instr) => {

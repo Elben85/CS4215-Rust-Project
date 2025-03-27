@@ -23,11 +23,14 @@ import { MultiplicationDivisionContext } from "./SimpleLangParser.js";
 import { PrimitiveContext } from "./SimpleLangParser.js";
 import { AccessIdentifierContext } from "./SimpleLangParser.js";
 import { BracketContext } from "./SimpleLangParser.js";
+import { AssignmentExpressionsContext } from "./SimpleLangParser.js";
 import { ExpressionWithBlockContext } from "./SimpleLangParser.js";
 import { BlockExpressionContext } from "./SimpleLangParser.js";
 import { BlockBodyContext } from "./SimpleLangParser.js";
 import { IfExpressionContext } from "./SimpleLangParser.js";
 import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
+import { LoopExpressionContext } from "./SimpleLangParser.js";
+import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -236,6 +239,16 @@ export class SimpleLangListener implements ParseTreeListener {
      */
     exitBracket?: (ctx: BracketContext) => void;
     /**
+     * Enter a parse tree produced by `SimpleLangParser.assignmentExpressions`.
+     * @param ctx the parse tree
+     */
+    enterAssignmentExpressions?: (ctx: AssignmentExpressionsContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.assignmentExpressions`.
+     * @param ctx the parse tree
+     */
+    exitAssignmentExpressions?: (ctx: AssignmentExpressionsContext) => void;
+    /**
      * Enter a parse tree produced by `SimpleLangParser.expressionWithBlock`.
      * @param ctx the parse tree
      */
@@ -285,6 +298,26 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitIfExpressionAlternative?: (ctx: IfExpressionAlternativeContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.loopExpression`.
+     * @param ctx the parse tree
+     */
+    enterLoopExpression?: (ctx: LoopExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.loopExpression`.
+     * @param ctx the parse tree
+     */
+    exitLoopExpression?: (ctx: LoopExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.predicateLoopExpression`.
+     * @param ctx the parse tree
+     */
+    enterPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.predicateLoopExpression`.
+     * @param ctx the parse tree
+     */
+    exitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

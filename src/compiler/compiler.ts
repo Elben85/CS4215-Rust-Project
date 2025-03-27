@@ -17,11 +17,13 @@ import {
     BlockBodyContext,
     UnopContext,
     IfExpressionContext,
+    PredicateLoopExpressionContext,
+    AssignmentExpressionsContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
 
-const VOID = 0 // TODO: fix value representing void
+export const VOID = 0 // TODO: fix value representing void
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -100,6 +102,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
         this.visit(expression);
         this.instructionArray.push(Instructions.createAssign([frameIndex, valueIndex]));
+        this.instructionArray.push(Instructions.createPop());
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): void {
@@ -209,9 +212,33 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (ctx.ifExpressionAlternative()) {
             this.visit(ctx.ifExpressionAlternative());
         } else {
-            this.instructionArray.push(VOID);
+            this.instructionArray.push(Instructions.createLDC(VOID));
         }
 
         gotoInstr.address = this.instructionArray.length;
+    }
+
+    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): void {
+        const whileLoopAddress = this.instructionArray.length;
+        const predicate = ctx.expression();
+        const body = ctx.blockExpression();
+        this.visit(predicate);
+        const jofInstr = Instructions.createJOF(null);
+        this.instructionArray.push(jofInstr);
+        this.visit(body);
+
+        this.instructionArray.push(Instructions.createPop());
+        this.instructionArray.push(Instructions.createGoto(whileLoopAddress));
+        jofInstr.address = this.instructionArray.length;
+        this.instructionArray.push(Instructions.createLDC(VOID));
+    }
+
+    visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
+        const identifier: string = ctx.accessIdentifier().getText();
+
+        this.visit(ctx.expression());
+
+        const pos = this.getIdentifierPosition(identifier);
+        this.instructionArray.push(Instructions.createAssign(pos));
     }
 }

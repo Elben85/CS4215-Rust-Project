@@ -23,11 +23,14 @@ import { MultiplicationDivisionContext } from "./SimpleLangParser.js";
 import { PrimitiveContext } from "./SimpleLangParser.js";
 import { AccessIdentifierContext } from "./SimpleLangParser.js";
 import { BracketContext } from "./SimpleLangParser.js";
+import { AssignmentExpressionsContext } from "./SimpleLangParser.js";
 import { ExpressionWithBlockContext } from "./SimpleLangParser.js";
 import { BlockExpressionContext } from "./SimpleLangParser.js";
 import { BlockBodyContext } from "./SimpleLangParser.js";
 import { IfExpressionContext } from "./SimpleLangParser.js";
 import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
+import { LoopExpressionContext } from "./SimpleLangParser.js";
+import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -159,6 +162,12 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      */
     visitBracket?: (ctx: BracketContext) => Result;
     /**
+     * Visit a parse tree produced by `SimpleLangParser.assignmentExpressions`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAssignmentExpressions?: (ctx: AssignmentExpressionsContext) => Result;
+    /**
      * Visit a parse tree produced by `SimpleLangParser.expressionWithBlock`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -188,5 +197,17 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitIfExpressionAlternative?: (ctx: IfExpressionAlternativeContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.loopExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLoopExpression?: (ctx: LoopExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.predicateLoopExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => Result;
 }
 

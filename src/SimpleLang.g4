@@ -40,7 +40,7 @@ expressionWithoutBlock
     : binop 
     ;
 
-primary: primitive | bracket | accessIdentifier | unop;
+primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
 
 unop
     : op=('-'|'!') binopTerminals
@@ -76,9 +76,14 @@ bracket
     : '(' expression ')'
     ;
 
+assignmentExpressions
+    : accessIdentifier '=' expression
+    ;
+
 expressionWithBlock
     : blockExpression
     | ifExpression
+    | loopExpression
     ;
 
 // Block expression
@@ -97,6 +102,13 @@ ifExpression
 
 ifExpressionAlternative
     : blockExpression | ifExpression
+    ;
+
+// In case we want to add other type of loops
+loopExpression: predicateLoopExpression;
+
+predicateLoopExpression
+    : 'while' expression blockExpression
     ;
 
 INT: [0-9]+;
