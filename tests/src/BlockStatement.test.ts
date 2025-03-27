@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import Evaluate from "./util";
 
 describe('RustEvaluator', () => {
-    it('Let Statement', () => {
+    it('Block Statement', () => {
         const program = `
             let a = 2;
             let b = {
