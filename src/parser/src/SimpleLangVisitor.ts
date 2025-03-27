@@ -12,6 +12,7 @@ import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
+import { UnopContext } from "./SimpleLangParser.js";
 import { BinopTerminalsContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 import { LogicalOrContext } from "./SimpleLangParser.js";
@@ -89,6 +90,12 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitPrimary?: (ctx: PrimaryContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.unop`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitUnop?: (ctx: UnopContext) => Result;
     /**
      * Visit a parse tree produced by `SimpleLangParser.binopTerminals`.
      * @param ctx the parse tree

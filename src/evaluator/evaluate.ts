@@ -47,6 +47,12 @@ const microcode = {
         stackPush(instr.value);
         PC++;
     },
+    UNOP: (instr) => {
+        const arg = stackPop();
+        let result = evaluate_unop(instr.op, arg);
+        stackPush(result);
+        PC++;
+    },
     BINOP: (instr) => {
         const arg2 = stackPop();
         const arg1 = stackPop();
@@ -106,11 +112,28 @@ const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
             return arg1 > arg2;
         case '>=':
             return arg1 >= arg2;
+        case '==':
+            return arg1 == arg2;
+        case '!=':
+            return arg1 != arg2;
+        case '%':
+            return arg1 % arg2;
         case '&&':
             return arg1 && arg2;
         case '||':
             return arg1 || arg2;
         default:
             throw new Error(`Unrecognized operator ${operator}`)
+    }
+}
+
+const evaluate_unop = (operator: string, arg: any) => {
+    switch (operator) {
+        case '-':
+            return -arg;
+        case '!':
+            return !arg;
+        default:
+            throw new Error(`Unrecognized unary operator ${operator}`)
     }
 }

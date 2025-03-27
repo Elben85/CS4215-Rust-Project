@@ -15,6 +15,7 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
+    UnopContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 
@@ -113,6 +114,16 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             });
         }
         this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
+    }
+
+    visitUnop(ctx: UnopContext): void {
+        this.visit(ctx.binopTerminals());
+        const op = ctx.getChild(0).getText();
+
+        this.instructionArray.push({
+            tag: "UNOP",
+            op: op
+        })
     }
 
     // BINARY OPERATORS

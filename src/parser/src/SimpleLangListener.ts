@@ -12,6 +12,7 @@ import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
+import { UnopContext } from "./SimpleLangParser.js";
 import { BinopTerminalsContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 import { LogicalOrContext } from "./SimpleLangParser.js";
@@ -122,6 +123,16 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitPrimary?: (ctx: PrimaryContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.unop`.
+     * @param ctx the parse tree
+     */
+    enterUnop?: (ctx: UnopContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.unop`.
+     * @param ctx the parse tree
+     */
+    exitUnop?: (ctx: UnopContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.binopTerminals`.
      * @param ctx the parse tree
@@ -253,9 +264,9 @@ export class SimpleLangListener implements ParseTreeListener {
      */
     exitBlockBody?: (ctx: BlockBodyContext) => void;
 
-    visitTerminal(node: TerminalNode): void { }
-    visitErrorNode(node: ErrorNode): void { }
-    enterEveryRule(node: ParserRuleContext): void { }
-    exitEveryRule(node: ParserRuleContext): void { }
+    visitTerminal(node: TerminalNode): void {}
+    visitErrorNode(node: ErrorNode): void {}
+    enterEveryRule(node: ParserRuleContext): void {}
+    exitEveryRule(node: ParserRuleContext): void {}
 }
 

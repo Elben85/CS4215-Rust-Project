@@ -38,10 +38,13 @@ expression
 // The following is to prevent left recursion from binary operation
 expressionWithoutBlock
     : binop 
-    | primary
     ;
 
-primary: primitive | bracket | accessIdentifier;
+primary: primitive | bracket | accessIdentifier | unop;
+
+unop
+    : op=('-'|'!') binopTerminals
+    ;
 
 // binop terminals are all expressions without binop
 binopTerminals: primary | expressionWithBlock;
@@ -54,11 +57,11 @@ logicalOr: logicalAnd ('||' logicalAnd)*;
 logicalAnd: comparison ('&&' comparison)*;
 
 // NOTE: comparison requires parantheses, hence the design
-comparison:  additionSubstraction (op=('<'|'<='|'>'|'>=') additionSubstraction)?;
+comparison:  additionSubstraction (op=('<'|'<='|'>'|'>='|'=='|'!=') additionSubstraction)?;
 
 additionSubstraction: multiplicationDivision (op=('+'|'-') multiplicationDivision)*;
 
-multiplicationDivision: binopTerminals (op=('*'|'/') binopTerminals)*;
+multiplicationDivision: binopTerminals (op=('*'|'/'|'%') binopTerminals)*;
 
 primitive
     : INT 

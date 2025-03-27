@@ -48,7 +48,16 @@ Extend the env with a frame of given length. Push the old env to the runtime sta
 }
 ```
 
-
 7. `EXIT_SCOPE`
 Restore the address of the env to one on top of the runtime stack.
 `{ tag: "EXIT_SCOPE" }`
+
+
+8. `UNOP`
+Execute unary operator. Gets argument from stack
+```
+{
+    tag: "UNOP",
+    op: [OPERATOR]
+}
+```
