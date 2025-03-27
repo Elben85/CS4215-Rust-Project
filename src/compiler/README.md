@@ -61,3 +61,21 @@ Execute unary operator. Gets argument from stack
     op: [OPERATOR]
 }
 ```
+
+9. `JOF`
+jump to address if the top of the stack evaluates to false
+```
+{
+    tag: "JOF",
+    address: [ADDRESS]
+}
+```
+
+10.  `GOTO`
+jump to address
+```
+{
+    tag: "GOTO",
+    address: [ADDRESS]
+}
+```

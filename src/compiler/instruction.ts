@@ -57,3 +57,17 @@ export const createDone = () => {
         tag: "DONE"
     }
 }
+
+export const createJOF = (address: number) => {
+    return {
+        tag: "JOF",
+        address: address
+    }
+}
+
+export const createGoto = (address: number) => {
+    return {
+        tag: "GOTO",
+        address: address
+    }
+}

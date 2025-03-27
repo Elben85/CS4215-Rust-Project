@@ -16,9 +16,12 @@ import {
     BlockExpressionContext,
     BlockBodyContext,
     UnopContext,
+    IfExpressionContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
+
+const VOID = 0 // TODO: fix value representing void
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -170,7 +173,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitBlockBody(ctx: BlockBodyContext): void {
-        const DEFAULT_VALUE = 0 // TODO: fix this default value
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
         for (let s of ctx.statement()) {
@@ -183,12 +185,33 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
-            this.instructionArray.push(Instructions.createLDC(DEFAULT_VALUE))
+            this.instructionArray.push(Instructions.createLDC(VOID))
         }
         this.isFirstStatement = tmp;
     }
 
     visitBracket(ctx: BracketContext): void {
         this.visit(ctx.expression())
+    }
+
+    visitIfExpression(ctx: IfExpressionContext): void {
+        this.visit(ctx.expression())
+
+        const jofInstr = Instructions.createJOF(null);
+        this.instructionArray.push(jofInstr);
+
+        this.visit(ctx.blockExpression());
+
+        const gotoInstr = Instructions.createGoto(null);
+        this.instructionArray.push(gotoInstr);
+        jofInstr.address = this.instructionArray.length;
+
+        if (ctx.ifExpressionAlternative()) {
+            this.visit(ctx.ifExpressionAlternative());
+        } else {
+            this.instructionArray.push(VOID);
+        }
+
+        gotoInstr.address = this.instructionArray.length;
     }
 }

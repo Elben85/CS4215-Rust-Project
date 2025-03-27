@@ -23,16 +23,16 @@ letStatement
 
 
 expressionStatement
-    : expressionWithoutBlock ';'
-    | expressionWithBlock (';')?
+    : expressionWithBlock (';')? 
+    | expressionWithoutBlock ';' 
     ;
 
 // NOTE: operator precedence matters
 // https://doc.rust-lang.org/reference/expressions.html
 
 expression
-    : expressionWithoutBlock
-    | expressionWithBlock
+    : expressionWithBlock
+    | expressionWithoutBlock
     ;
 
 // The following is to prevent left recursion from binary operation
@@ -78,6 +78,7 @@ bracket
 
 expressionWithBlock
     : blockExpression
+    | ifExpression
     ;
 
 // Block expression
@@ -88,6 +89,14 @@ blockExpression
 
 blockBody
     : statement* expressionWithoutBlock?
+    ;
+
+ifExpression
+    : 'if' expression blockExpression ('else' ifExpressionAlternative)?
+    ;
+
+ifExpressionAlternative
+    : blockExpression | ifExpression
     ;
 
 INT: [0-9]+;

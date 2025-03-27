@@ -26,6 +26,8 @@ import { BracketContext } from "./SimpleLangParser.js";
 import { ExpressionWithBlockContext } from "./SimpleLangParser.js";
 import { BlockExpressionContext } from "./SimpleLangParser.js";
 import { BlockBodyContext } from "./SimpleLangParser.js";
+import { IfExpressionContext } from "./SimpleLangParser.js";
+import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -174,5 +176,17 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitBlockBody?: (ctx: BlockBodyContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.ifExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIfExpression?: (ctx: IfExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.ifExpressionAlternative`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIfExpressionAlternative?: (ctx: IfExpressionAlternativeContext) => Result;
 }
 

@@ -89,6 +89,16 @@ const microcode = {
         E = RTS.pop();
         PC++;
     },
+    GOTO: (instr) => {
+        PC = instr.address;
+    },
+    JOF: (instr) => {
+        if (!stackPop()) {
+            PC = instr.address;
+        } else {
+            PC++;
+        }
+    }
 }
 
 const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
