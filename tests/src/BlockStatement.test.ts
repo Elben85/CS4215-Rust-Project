@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import Evaluate from "./util";
+import { Evaluate } from "./util";
 
 describe('RustEvaluator', () => {
     it('Let Statement', () => {

@@ -5,10 +5,12 @@ import { SimpleLangLexer } from './parser/src/SimpleLangLexer';
 import { SimpleLangParser } from './parser/src/SimpleLangParser';
 import { CompilerVisitor } from "./compiler/compiler";
 import { evaluate } from "./evaluator/evaluate";
+import { TypeChecker } from "./typeChecker/TypeChecker";
 
 export class SimpleLangEvaluator extends BasicEvaluator {
     private executionCount: number;
     private visitor: CompilerVisitor;
+    private typeChecker: TypeChecker;
 
     constructor(conductor: IRunnerPlugin) {
         super(conductor);
@@ -27,6 +29,10 @@ export class SimpleLangEvaluator extends BasicEvaluator {
             // Parse the input
             const tree = parser.prog();
             console.log(tree.toStringTree());
+
+            // Check the type
+            // this.typeChecker = new TypeChecker();
+            // const type = this.typeChecker.checkType(tree);
 
             // Compile the parsed tree
             this.visitor = new CompilerVisitor()
