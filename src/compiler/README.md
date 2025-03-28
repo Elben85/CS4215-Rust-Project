@@ -22,7 +22,7 @@ Pop the topmost value on the stack
 `{ tag: "POP" }`
 
 4. `ASSIGN`
-Assign topmost stack value to specified `frameIndex` and `valueIndex`
+Assign topmost stack value to specified `frameIndex` and `valueIndex`. Push the assigned value back to stack.
 ```
 {
     tag: "ASSIGN",
@@ -48,7 +48,34 @@ Extend the env with a frame of given length. Push the old env to the runtime sta
 }
 ```
 
-
 7. `EXIT_SCOPE`
 Restore the address of the env to one on top of the runtime stack.
 `{ tag: "EXIT_SCOPE" }`
+
+
+8. `UNOP`
+Execute unary operator. Gets argument from stack
+```
+{
+    tag: "UNOP",
+    op: [OPERATOR]
+}
+```
+
+9. `JOF`
+jump to address if the top of the stack evaluates to false
+```
+{
+    tag: "JOF",
+    address: [ADDRESS]
+}
+```
+
+10.  `GOTO`
+jump to address
+```
+{
+    tag: "GOTO",
+    address: [ADDRESS]
+}
+```

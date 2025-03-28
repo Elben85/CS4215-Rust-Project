@@ -15,6 +15,7 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
+    UnopContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import { Type } from './Type';
@@ -45,7 +46,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         "<=": "number_comparison_type",
         ">=": "number_comparison_type",
         "&&": "binary_bool_type",
-        "||": "binary_bool_type"
+        "||": "binary_bool_type",
+        "!": "unary_bool_type"
     }; 
     private globalTypeEnvironment = [this.emptyTypeEnvironment, this.globalTypeFrame];
 
@@ -148,6 +150,27 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         return type;
     }
+
+    visitUnop(ctx: UnopContext): Type {
+            const type = this.visit(ctx.binopTerminals());
+            const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv);
+    
+            // TODO: Cleaner Implementation
+            if (op == "binary_arith_type") {
+                if (type != Type.Number) {
+                    throw new Error(`Operand type not correct`)
+                }
+
+            } else if (op == "unary_bool_type") {
+                if (type != Type.Boolean) {
+                    throw new Error(`not Boolean type for Bool`)
+                }
+            } else {
+                throw new Error(`Type not compatible for any Unary Operation ${op}`)
+            }
+            return type;
+
+        }
 
     visitLogicalOr(ctx: LogicalOrContext): Type { 
         return this.checkLeftToRightAssociativeBinop(ctx);

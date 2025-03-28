@@ -55,7 +55,7 @@ describe('RustEvaluator', () => {
 
     it('Type 6', () => {
         const program = `
-            3 > 2 < 1;
+            3*2 > 2*0 ;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
     
@@ -97,6 +97,22 @@ describe('RustEvaluator', () => {
             (1 > 2) && a;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
+    
+    });
+
+    it('Type 11', () => {
+        const program = `
+            !true
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+    
+    });
+
+    it('Type 12', () => {
+        const program = `
+            -10
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
     
     });
 });

@@ -23,25 +23,28 @@ letStatement
 
 
 expressionStatement
-    : expressionWithoutBlock ';'
-    | expressionWithBlock (';')?
+    : expressionWithBlock (';')? 
+    | expressionWithoutBlock ';' 
     ;
 
 // NOTE: operator precedence matters
 // https://doc.rust-lang.org/reference/expressions.html
 
 expression
-    : expressionWithoutBlock
-    | expressionWithBlock
+    : expressionWithBlock
+    | expressionWithoutBlock
     ;
 
 // The following is to prevent left recursion from binary operation
 expressionWithoutBlock
     : binop 
-    | primary
     ;
 
-primary: primitive | bracket | accessIdentifier;
+primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
+
+unop
+    : op=('-'|'!') binopTerminals
+    ;
 
 // binop terminals are all expressions without binop
 binopTerminals: primary | expressionWithBlock;
@@ -54,11 +57,11 @@ logicalOr: logicalAnd ('||' logicalAnd)*;
 logicalAnd: comparison ('&&' comparison)*;
 
 // NOTE: comparison requires parantheses, hence the design
-comparison:  additionSubstraction (op=('<'|'<='|'>'|'>=') additionSubstraction)?;
+comparison:  additionSubstraction (op=('<'|'<='|'>'|'>='|'=='|'!=') additionSubstraction)?;
 
 additionSubstraction: multiplicationDivision (op=('+'|'-') multiplicationDivision)*;
 
-multiplicationDivision: binopTerminals (op=('*'|'/') binopTerminals)*;
+multiplicationDivision: binopTerminals (op=('*'|'/'|'%') binopTerminals)*;
 
 primitive
     : INT 
@@ -73,8 +76,14 @@ bracket
     : '(' expression ')'
     ;
 
+assignmentExpressions
+    : accessIdentifier '=' expression
+    ;
+
 expressionWithBlock
     : blockExpression
+    | ifExpression
+    | loopExpression
     ;
 
 // Block expression
@@ -85,6 +94,21 @@ blockExpression
 
 blockBody
     : statement* expressionWithoutBlock?
+    ;
+
+ifExpression
+    : 'if' expression blockExpression ('else' ifExpressionAlternative)?
+    ;
+
+ifExpressionAlternative
+    : blockExpression | ifExpression
+    ;
+
+// In case we want to add other type of loops
+loopExpression: predicateLoopExpression;
+
+predicateLoopExpression
+    : 'while' expression blockExpression
     ;
 
 INT: [0-9]+;

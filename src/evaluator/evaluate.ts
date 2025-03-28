@@ -47,6 +47,12 @@ const microcode = {
         stackPush(instr.value);
         PC++;
     },
+    UNOP: (instr) => {
+        const arg = stackPop();
+        let result = evaluate_unop(instr.op, arg);
+        stackPush(result);
+        PC++;
+    },
     BINOP: (instr) => {
         const arg2 = stackPop();
         const arg1 = stackPop();
@@ -66,6 +72,7 @@ const microcode = {
         const valueAddr = OS.pop();
         const [frameIndex, valueIndex] = instr.pos;
         Environment.setValue(HEAP, E, frameIndex, valueIndex, valueAddr);
+        OS.push(valueAddr);
         PC++;
     },
     LD: (instr) => {
@@ -83,6 +90,16 @@ const microcode = {
         E = RTS.pop();
         PC++;
     },
+    GOTO: (instr) => {
+        PC = instr.address;
+    },
+    JOF: (instr) => {
+        if (!stackPop()) {
+            PC = instr.address;
+        } else {
+            PC++;
+        }
+    }
 }
 
 const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
@@ -106,11 +123,28 @@ const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
             return arg1 > arg2;
         case '>=':
             return arg1 >= arg2;
+        case '==':
+            return arg1 == arg2;
+        case '!=':
+            return arg1 != arg2;
+        case '%':
+            return arg1 % arg2;
         case '&&':
             return arg1 && arg2;
         case '||':
             return arg1 || arg2;
         default:
             throw new Error(`Unrecognized operator ${operator}`)
+    }
+}
+
+const evaluate_unop = (operator: string, arg: any) => {
+    switch (operator) {
+        case '-':
+            return -arg;
+        case '!':
+            return !arg;
+        default:
+            throw new Error(`Unrecognized unary operator ${operator}`)
     }
 }

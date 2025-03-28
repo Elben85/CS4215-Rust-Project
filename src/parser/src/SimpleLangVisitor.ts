@@ -12,6 +12,7 @@ import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
+import { UnopContext } from "./SimpleLangParser.js";
 import { BinopTerminalsContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 import { LogicalOrContext } from "./SimpleLangParser.js";
@@ -22,9 +23,14 @@ import { MultiplicationDivisionContext } from "./SimpleLangParser.js";
 import { PrimitiveContext } from "./SimpleLangParser.js";
 import { AccessIdentifierContext } from "./SimpleLangParser.js";
 import { BracketContext } from "./SimpleLangParser.js";
+import { AssignmentExpressionsContext } from "./SimpleLangParser.js";
 import { ExpressionWithBlockContext } from "./SimpleLangParser.js";
 import { BlockExpressionContext } from "./SimpleLangParser.js";
 import { BlockBodyContext } from "./SimpleLangParser.js";
+import { IfExpressionContext } from "./SimpleLangParser.js";
+import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
+import { LoopExpressionContext } from "./SimpleLangParser.js";
+import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -90,6 +96,12 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      */
     visitPrimary?: (ctx: PrimaryContext) => Result;
     /**
+     * Visit a parse tree produced by `SimpleLangParser.unop`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitUnop?: (ctx: UnopContext) => Result;
+    /**
      * Visit a parse tree produced by `SimpleLangParser.binopTerminals`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -150,6 +162,12 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      */
     visitBracket?: (ctx: BracketContext) => Result;
     /**
+     * Visit a parse tree produced by `SimpleLangParser.assignmentExpressions`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAssignmentExpressions?: (ctx: AssignmentExpressionsContext) => Result;
+    /**
      * Visit a parse tree produced by `SimpleLangParser.expressionWithBlock`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -167,5 +185,29 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitBlockBody?: (ctx: BlockBodyContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.ifExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIfExpression?: (ctx: IfExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.ifExpressionAlternative`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIfExpressionAlternative?: (ctx: IfExpressionAlternativeContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.loopExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLoopExpression?: (ctx: LoopExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.predicateLoopExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => Result;
 }
 

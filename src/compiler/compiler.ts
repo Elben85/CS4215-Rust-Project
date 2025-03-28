@@ -15,8 +15,15 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
+    UnopContext,
+    IfExpressionContext,
+    PredicateLoopExpressionContext,
+    AssignmentExpressionsContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
+import * as Instructions from "./instruction";
+
+export const VOID = 0 // TODO: fix value representing void
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -65,12 +72,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitProg(ctx: ProgContext): void {
-        const enterScopeInstr = {
-            tag: "ENTER_SCOPE",
-            frameSize: null
-        }
+        const enterScopeInstr = Instructions.createEnterScope(null)
         this.instructionArray.push(enterScopeInstr)
-        this.instructionArray.push({ tag: "POP" })
 
         const statements: StatementContext[] = ctx.statement();
 
@@ -78,7 +81,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.visit(s);
         }
         enterScopeInstr.frameSize = this.env[0].length;
-        this.instructionArray.push({ tag: "DONE" })
+        this.instructionArray.push(Instructions.createDone())
     }
 
     visitEmptyStatement(_: EmptyStatementContext): void { };
@@ -98,21 +101,24 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             return;
         }
         this.visit(expression);
-        this.instructionArray.push({
-            tag: "ASSIGN",
-            pos: [frameIndex, valueIndex]
-        });
+        this.instructionArray.push(Instructions.createAssign([frameIndex, valueIndex]));
+        this.instructionArray.push(Instructions.createPop());
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): void {
         if (this.isFirstStatement) {
             this.isFirstStatement = false;
         } else {
-            this.instructionArray.push({
-                tag: "POP"
-            });
+            this.instructionArray.push(Instructions.createPop());
         }
         this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
+    }
+
+    visitUnop(ctx: UnopContext): void {
+        this.visit(ctx.binopTerminals());
+        const op = ctx.getChild(0).getText();
+
+        this.instructionArray.push(Instructions.createUnop(op))
     }
 
     // BINARY OPERATORS
@@ -124,10 +130,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         for (let i = 1; i < childCount; i += 2) {
             const operator = ctx.getChild(i).getText();
             this.visit(ctx.getChild(i + 1));
-            this.instructionArray.push({
-                tag: "BINOP",
-                op: operator
-            })
+            this.instructionArray.push(Instructions.createBinop(operator))
         }
     }
 
@@ -151,38 +154,28 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             throw new Error(`unrecognized primitive: ${ctx.getText()}`);
         }
 
-        this.instructionArray.push({
-            tag: "LDC",
-            value: value
-        });
+        this.instructionArray.push(Instructions.createLDC(value));
     }
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): void {
         let identifier: string = ctx.IDENTIFIER().getText();
         let position = this.getIdentifierPosition(identifier);
 
-        this.instructionArray.push({
-            tag: "LD",
-            pos: position
-        })
+        this.instructionArray.push(Instructions.createLD(position))
     }
 
     visitBlockExpression(ctx: BlockExpressionContext): void {
-        const enterScopeInstr = {
-            tag: "ENTER_SCOPE",
-            frameSize: null
-        }
+        const enterScopeInstr = Instructions.createEnterScope(null);
         this.instructionArray.push(enterScopeInstr)
         let body = ctx.blockBody();
         this.env.push([]);
         this.visit(body);
         const frame = this.env.pop();
         enterScopeInstr.frameSize = frame.length;
-        this.instructionArray.push({ tag: "EXIT_SCOPE" });
+        this.instructionArray.push(Instructions.createExitScope());
     }
 
     visitBlockBody(ctx: BlockBodyContext): void {
-        const DEFAULT_VALUE = 0 // TODO: fix this default value
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
         for (let s of ctx.statement()) {
@@ -190,20 +183,62 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
         if (!this.isFirstStatement) {
             // At least have 1 non-empty statement
-            this.instructionArray.push({ tag: "POP" });
+            this.instructionArray.push(Instructions.createPop());
         }
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
-            this.instructionArray.push({
-                tag: "LDC",
-                value: DEFAULT_VALUE
-            })
+            this.instructionArray.push(Instructions.createLDC(VOID))
         }
         this.isFirstStatement = tmp;
     }
 
     visitBracket(ctx: BracketContext): void {
         this.visit(ctx.expression())
+    }
+
+    visitIfExpression(ctx: IfExpressionContext): void {
+        this.visit(ctx.expression())
+
+        const jofInstr = Instructions.createJOF(null);
+        this.instructionArray.push(jofInstr);
+
+        this.visit(ctx.blockExpression());
+
+        const gotoInstr = Instructions.createGoto(null);
+        this.instructionArray.push(gotoInstr);
+        jofInstr.address = this.instructionArray.length;
+
+        if (ctx.ifExpressionAlternative()) {
+            this.visit(ctx.ifExpressionAlternative());
+        } else {
+            this.instructionArray.push(Instructions.createLDC(VOID));
+        }
+
+        gotoInstr.address = this.instructionArray.length;
+    }
+
+    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): void {
+        const whileLoopAddress = this.instructionArray.length;
+        const predicate = ctx.expression();
+        const body = ctx.blockExpression();
+        this.visit(predicate);
+        const jofInstr = Instructions.createJOF(null);
+        this.instructionArray.push(jofInstr);
+        this.visit(body);
+
+        this.instructionArray.push(Instructions.createPop());
+        this.instructionArray.push(Instructions.createGoto(whileLoopAddress));
+        jofInstr.address = this.instructionArray.length;
+        this.instructionArray.push(Instructions.createLDC(VOID));
+    }
+
+    visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
+        const identifier: string = ctx.accessIdentifier().getText();
+
+        this.visit(ctx.expression());
+
+        const pos = this.getIdentifierPosition(identifier);
+        this.instructionArray.push(Instructions.createAssign(pos));
     }
 }
