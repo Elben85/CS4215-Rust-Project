@@ -9,7 +9,7 @@ describe('RustEvaluator', () => {
             true;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 2', () => {
@@ -17,7 +17,7 @@ describe('RustEvaluator', () => {
             2+2*4;
         `
         expect(EvaluateType(program)).toBe(Type.Number);
-    
+
     });
 
     it('Type 3', () => {
@@ -26,8 +26,8 @@ describe('RustEvaluator', () => {
             let a = 2+3;
             let c = b * a;
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
-    
+        expect(EvaluateType(program)).toBe(Type.Undefined);
+
     });
 
     it('Type 4 ', () => {
@@ -38,7 +38,7 @@ describe('RustEvaluator', () => {
             c;
         `
         expect(EvaluateType(program)).toBe(Type.Number);
-    
+
     });
 
     it('Type 5', () => {
@@ -50,7 +50,7 @@ describe('RustEvaluator', () => {
             c;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 6', () => {
@@ -58,7 +58,7 @@ describe('RustEvaluator', () => {
             3*2 > 2*0 ;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 7', () => {
@@ -66,7 +66,7 @@ describe('RustEvaluator', () => {
             true || false && true;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 8', () => {
@@ -75,7 +75,7 @@ describe('RustEvaluator', () => {
             true || false && a;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 9', () => {
@@ -88,7 +88,7 @@ describe('RustEvaluator', () => {
             b;
         `
         expect(() => EvaluateType(program)).toThrowError("Lookup Fail, frame is Null");
-    
+
     });
 
     it('Type 10', () => {
@@ -97,22 +97,33 @@ describe('RustEvaluator', () => {
             (1 > 2) && a;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 11', () => {
         const program = `
-            !true
+            !true;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-    
+
     });
 
     it('Type 12', () => {
         const program = `
-            -10
+            -10;
         `
         expect(EvaluateType(program)).toBe(Type.Number);
-    
+
     });
+
+    it('Type 13', () => {
+        let result;
+        try {
+            result = EvaluateType("true + 1;")
+        } catch (e) {
+            // pass
+            return;
+        }
+        throw new Error(`Expected invalid operation, actual resulting type: ${result.toString()}`)
+    })
 });

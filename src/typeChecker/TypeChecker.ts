@@ -35,7 +35,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     // TYPE ENV
     private emptyTypeEnvironment = null;
 
-    private globalTypeFrame = { 
+    private globalTypeFrame = {
         // TODO: Use Better Implementation
         "+": "binary_arith_type",
         "-": "binary_arith_type",
@@ -48,11 +48,11 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         "&&": "binary_bool_type",
         "||": "binary_bool_type",
         "!": "unary_bool_type"
-    }; 
+    };
     private globalTypeEnvironment = [this.emptyTypeEnvironment, this.globalTypeFrame];
 
     lookupType(x: string, te: any[]) {
-        let copiedEnv = [...te]; 
+        let copiedEnv = [...te];
 
         while (copiedEnv.length > 0) {
             const frame = copiedEnv.pop();
@@ -116,7 +116,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         return type;
     }
 
-    visitEmptyStatement(_: EmptyStatementContext): Type { 
+    visitEmptyStatement(_: EmptyStatementContext): Type {
         return Type.Undefined;
     };
 
@@ -137,13 +137,13 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const type = this.visit(expression);
         this.addIdentifierType(identifier, type);
 
-        return type;
+        return Type.Undefined;
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): Type {
         if (this.isFirstStatement) {
             this.isFirstStatement = false;
-        } 
+        }
 
         const type = this.visitWithEnvironment(
             ctx.expressionWithBlock() || ctx.expressionWithoutBlock(), this.typeEnv);
@@ -152,39 +152,40 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitUnop(ctx: UnopContext): Type {
-            const type = this.visit(ctx.binopTerminals());
-            const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv);
-    
-            // TODO: Cleaner Implementation
-            if (op == "binary_arith_type") {
-                if (type != Type.Number) {
-                    throw new Error(`Operand type not correct`)
-                }
+        const type = this.visit(ctx.binopTerminals());
+        const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv);
 
-            } else if (op == "unary_bool_type") {
-                if (type != Type.Boolean) {
-                    throw new Error(`not Boolean type for Bool`)
-                }
-            } else {
-                throw new Error(`Type not compatible for any Unary Operation ${op}`)
+        // TODO: Cleaner Implementation
+        if (op == "binary_arith_type") {
+            // Hack for unary -
+            if (type != Type.Number) {
+                throw new Error(`Operand type not correct`)
             }
-            return type;
+            return Type.Number
 
+        } else if (op == "unary_bool_type") {
+            if (type != Type.Boolean) {
+                throw new Error(`not Boolean type for Bool`)
+            }
+            return Type.Boolean
+        } else {
+            throw new Error(`Type not compatible for any Unary Operation ${op}`)
         }
+    }
 
-    visitLogicalOr(ctx: LogicalOrContext): Type { 
+    visitLogicalOr(ctx: LogicalOrContext): Type {
         return this.checkLeftToRightAssociativeBinop(ctx);
     };
-    visitLogicalAnd(ctx: LogicalAndContext): Type { 
+    visitLogicalAnd(ctx: LogicalAndContext): Type {
         return this.checkLeftToRightAssociativeBinop(ctx);
     };
-    visitComparison(ctx: ComparisonContext): Type { 
+    visitComparison(ctx: ComparisonContext): Type {
         return this.checkLeftToRightAssociativeBinop(ctx);
     };
-    visitAdditionSubstraction(ctx: AdditionSubstractionContext): Type { 
+    visitAdditionSubstraction(ctx: AdditionSubstractionContext): Type {
         return this.checkLeftToRightAssociativeBinop(ctx);
     };
-    visitMultiplicationDivision(ctx: MultiplicationDivisionContext): Type { 
+    visitMultiplicationDivision(ctx: MultiplicationDivisionContext): Type {
         return this.checkLeftToRightAssociativeBinop(ctx);
     };
 
@@ -205,7 +206,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         return type;
     }
 
-    visitBlockExpression(ctx: BlockExpressionContext): Type { 
+    visitBlockExpression(ctx: BlockExpressionContext): Type {
         // Block return the type of the last body statement
         let body = ctx.blockBody();
         const extendedTypeEnv = this.extendTypeEnvironment([], [], [...this.typeEnv]);
@@ -216,21 +217,15 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitBlockBody(ctx: BlockBodyContext): Type {
         // TODO: Implementation not finished
-        const tmp = this.isFirstStatement;
-        this.isFirstStatement = true;
-
         let type = Type.Undefined
         for (let s of ctx.statement()) {
-            type = this.visit(s);
+            this.visit(s);
         }
 
         if (ctx.expressionWithoutBlock()) {
             // TODO:
             type = this.visit(ctx.expressionWithoutBlock());
-        } 
-        
-        this.isFirstStatement = tmp;
-
+        }
         return type;
     }
 
@@ -251,29 +246,30 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             type2 = this.visit(ctx.getChild(i + 1));
 
             // TODO: Cleaner Implementation
-            if (operator == "binary_arith_type" || operator == "number_comparison_type") {
-                if (type2 != Type.Number) {
-                    throw new Error(`Operand type not correct`)
-                }
-            } else if (operator == "binary_bool_type") {
-                if (type2 != Type.Boolean) {
-                    throw new Error(`not Boolean type for Bool`)
-                }
+            switch (operator) {
+                case "binary_arith_type":
+                    if ((type1 != Type.Number) || (type2 != Type.Number)) {
+                        throw new Error(`Operand type not correct for op: ${operator}`)
+                    }
+                    type1 = Type.Number
+                    break;
+                case "number_comparison_type":
+                    if ((type1 != Type.Number) || (type2 != Type.Number)) {
+                        throw new Error(`Operand type not correct for op: ${operator}`)
+                    }
+                    type1 = Type.Boolean
+                    break;
+                case "binary_bool_type":
+                    if ((type1 != Type.Boolean) || (type2 != Type.Boolean)) {
+                        throw new Error(`not Boolean type for Bool op: ${operator}`)
+                    }
+                    type1 = Type.Boolean
+                    break;
+                default:
+                    throw new Error(`unrecognized operator type: ${operator}`)
             }
         }
 
-        if (type2 == Type.Undefined) { // temporary fix to handle unop
-            return type1
-        }
-
-        const firstOperator = this.lookupType(ctx.getChild(1).getText(), this.typeEnv);
-        // TODO: Cleaner Implementation
-        if (firstOperator == "binary_arith_type" || firstOperator == "binary_bool_type") {
-            return type1
-        } else if (firstOperator == "number_comparison_type") { 
-            return Type.Boolean
-        } else {
-            throw new Error(`Operand does not match`)
-        }
+        return type1
     }
 }
