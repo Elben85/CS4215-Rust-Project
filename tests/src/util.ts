@@ -4,6 +4,7 @@ import { CompilerVisitor } from "../../src/compiler/compiler";
 import { SimpleLangLexer } from "../../src/parser/src/SimpleLangLexer";
 import { SimpleLangParser } from "../../src/parser/src/SimpleLangParser";
 import { TypeChecker } from "../../src/typeChecker/TypeChecker";
+import { execPath } from "process";
 
 export function Evaluate(program: string) {
     // Create the lexer and parser
@@ -41,4 +42,14 @@ export function EvaluateType(program: string) {
     console.log(type);
 
     return type;
+}
+
+export function ExpectError(lambda: () => any) {
+    let result: any
+    try {
+        result = lambda()
+    } catch (e) {
+        return;
+    }
+    throw new Error(`Error expected, but execution completed successfully. Result: ${result}`)
 }

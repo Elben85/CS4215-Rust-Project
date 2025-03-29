@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate } from "./util";
+import { Evaluate, EvaluateType } from "./util";
+import { Type } from '../../src/typeChecker/Type';
 
 describe('Operator Test', () => {
     it('*', () => expect(Evaluate(`2 * 3;`)).toBe(6));
@@ -19,3 +20,55 @@ describe('Operator Test', () => {
     it('unary !', () => expect(Evaluate(`!(1 == 7);`)).toBe(true));
 
 });
+
+describe('Operator Type test', () => {
+    it('Operator Type 1', () => {
+        const program = `
+                2;
+                true;
+            `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+
+    it('Operator Type 2', () => {
+        const program = `
+                2+2*4;
+            `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    });
+
+    it('Operator Type 3', () => {
+        const program = `
+            3*2 > 2*0 ;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+
+    it('Operator Type 4', () => {
+        const program = `
+            !true;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+
+    it('Operator Type 5', () => {
+        expect(() => EvaluateType("true + 1;")).toThrowError();
+    });
+
+    it('Operator Type 6', () => {
+        const program = `
+            true || false && true;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+    });
+
+    it('Operator Type 7', () => {
+        const program = `
+            -10;
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    });
+})

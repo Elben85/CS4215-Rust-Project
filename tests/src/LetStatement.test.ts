@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate } from "./util";
+import { Evaluate, EvaluateType } from "./util";
+import { Type } from '../../src/typeChecker/Type';
 
-describe('RustEvaluator', () => {
+describe('Let Statement Test', () => {
     it('Let Statement', () => {
         const program = `
             let a = 1;
@@ -13,3 +14,56 @@ describe('RustEvaluator', () => {
         expect(Evaluate(program)).toBe(30);
     });
 });
+
+describe('Let Statement Type Test', () => {
+    it('Let Type 1', () => {
+        const program = `
+                let b = 4;
+                let a = 2+3;
+                let c = b * a;
+            `
+        expect(EvaluateType(program)).toBe(Type.Void);
+
+    });
+
+    it('Let Type 2 ', () => {
+        const program = `
+            let b = 4;
+            let a = 2+3;
+            let c = b * a;
+            c;
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+
+    });
+
+    it('Let Type 3', () => {
+        const program = `
+            let a = 4;
+            let b = 2+3;
+            let c = true;
+            let d = b * a;
+            c;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+
+    it('Let Type 4', () => {
+        const program = `
+            let a = false;
+            true || false && a;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+
+    it('Let Type 5', () => {
+        const program = `
+            let a = true;
+            (1 > 2) && a;
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean);
+
+    });
+})

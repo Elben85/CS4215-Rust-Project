@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate } from "./util";
+import { Evaluate, EvaluateType } from "./util";
+import { Type } from '../../src/typeChecker/Type';
 
 describe('If Else Tests', () => {
     it('true expression', () => {
@@ -28,4 +29,51 @@ describe('If Else Tests', () => {
         `
         expect(Evaluate(program)).toBe(4);
     });
+});
+
+describe('If Else Type Tests', () => {
+    it('If Else Type 1', () => {
+        const program = `
+            if (true) { 1 } else { 2 }
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    });
+
+    it('If Else Type 2', () => {
+        const program = `
+            if (false) { 1; }
+        `
+        expect(EvaluateType(program)).toBe(Type.Void);
+    });
+
+    it('If Else Type 3', () => {
+        const program = `
+            if (false) {
+                1
+            } else {
+                true 
+            }
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    });
+
+    it('If Else Type 4', () => {
+        const program = `
+            if (true) { 1 }
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
+
+    it('If Else Type 5', () => {
+        const program = `
+            if (true) {
+                true
+            } else if (true) {
+                false
+            } else {
+                1 >= 2
+            }
+        `
+        expect(EvaluateType(program)).toBe(Type.Boolean)
+    })
 });

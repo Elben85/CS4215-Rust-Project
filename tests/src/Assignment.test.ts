@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate } from "./util";
+import { Evaluate, EvaluateType } from "./util";
+import { Type } from '../../src/typeChecker/Type';
 
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
@@ -19,4 +20,32 @@ describe('Assignment Tests', () => {
         `
         expect(Evaluate(program)).toBe(100);
     });
+});
+
+describe('Assignment Type Tests', () => {
+    it('assignments type 1', () => {
+        const program = `
+            let i = 0;
+            i = 69;
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    });
+
+    it('assignment type 2', () => {
+        const program = `
+            let i = 0;
+            let j = 0;
+            i = j = 10;
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    });
+
+    it(`assignment type 3`, () => {
+        const program = `
+        let i = true;
+        let j = 0;
+        i = j = 10;
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
 });
