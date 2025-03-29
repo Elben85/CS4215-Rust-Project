@@ -5,7 +5,7 @@ import { Type } from '../../src/typeChecker/Type';
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             i = 69;
         `
         expect(Evaluate(program)).toBe(69);
@@ -13,8 +13,8 @@ describe('Assignment Tests', () => {
 
     it('nested assignments', () => {
         const program = `
-            let i = 0;
-            let j = 0;
+            let mut i = 0;
+            let mut j = 0;
             i = j = 10;
             i * j;
         `
@@ -25,7 +25,7 @@ describe('Assignment Tests', () => {
 describe('Assignment Type Tests', () => {
     it('assignments type 1', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             i = 69;
         `
         expect(EvaluateType(program)).toBe(Type.Number);
@@ -33,8 +33,8 @@ describe('Assignment Type Tests', () => {
 
     it('assignment type 2', () => {
         const program = `
-            let i = 0;
-            let j = 0;
+            let mut i = 0;
+            let mut j = 0;
             i = j = 10;
         `
         expect(EvaluateType(program)).toBe(Type.Number);
@@ -42,9 +42,25 @@ describe('Assignment Type Tests', () => {
 
     it(`assignment type 3`, () => {
         const program = `
-        let i = true;
-        let j = 0;
+        let mut i = true;
+        let mut j = 0;
         i = j = 10;
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
+
+    it(`test deferred assignment`, () => {
+        const program = `
+        let i;
+        i = 10;
+        `
+        expect(EvaluateType(program)).toBe(Type.Number);
+    })
+
+    it(`test reassignment`, () => {
+        const program = `
+        let i = 10;
+        i = 20
         `
         expect(() => EvaluateType(program)).toThrowError();
     })

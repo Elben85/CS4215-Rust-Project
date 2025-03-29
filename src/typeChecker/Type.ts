@@ -11,3 +11,14 @@ export class Type {
     return this.value;
   }
 }
+
+export function stringToType(str: string): Type {
+  switch (str) {
+    case "f64":
+      return Type.Number;
+    case "bool":
+      return Type.Boolean;
+    default:
+      throw new Error(`Unknown type ${str}`)
+  }
+}

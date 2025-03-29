@@ -64,6 +64,24 @@ describe('Let Statement Type Test', () => {
             (1 > 2) && a;
         `
         expect(EvaluateType(program)).toBe(Type.Boolean);
-
     });
+
+    it('Access uninitialized', () => {
+        const program = `
+            let a;
+            a * 1;
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
+
+    it('Conflicting declared type', () => {
+        const program = `
+            let a: f64 = true;
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
+
+    it('Correct declared type', () => {
+        expect(EvaluateType(`let a: bool = true;`)).toBe(Type.Void);
+    })
 })

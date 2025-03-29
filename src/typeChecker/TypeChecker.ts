@@ -1,4 +1,4 @@
-import { AbstractParseTreeVisitor, predictionContextFromRuleContext } from 'antlr4ng';
+import { AbstractParseTreeVisitor } from 'antlr4ng';
 import {
     BracketContext,
     PrimitiveContext,
@@ -21,8 +21,13 @@ import {
     AssignmentExpressionsContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { Type } from './Type';
+import { stringToType, Type } from './Type';
 
+interface identifierInformation {
+    type: Type | string,
+    is_mutable: boolean,
+    assigned: true
+}
 
 export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
     private typeEnv: any[];
@@ -34,23 +39,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         this.isFirstStatement = true;
     }
 
-
     // TYPE ENV
     private emptyTypeEnvironment = null;
 
     private globalTypeFrame = {
         // TODO: Use Better Implementation
-        "+": "binary_arith_type",
-        "-": "binary_arith_type",
-        "*": "binary_arith_type",
-        "/": "binary_arith_type",
-        "<": "number_comparison_type",
-        ">": "number_comparison_type",
-        "<=": "number_comparison_type",
-        ">=": "number_comparison_type",
-        "&&": "binary_bool_type",
-        "||": "binary_bool_type",
-        "!": "unary_bool_type"
+        "+": { type: "binary_arith_type" },
+        "-": { type: "binary_arith_type" },
+        "*": { type: "binary_arith_type" },
+        "/": { type: "binary_arith_type" },
+        "<": { type: "number_comparison_type" },
+        ">": { type: "number_comparison_type" },
+        "<=": { type: "number_comparison_type" },
+        ">=": { type: "number_comparison_type" },
+        "&&": { type: "binary_bool_type" },
+        "||": { type: "binary_bool_type" },
+        "!": { type: "unary_bool_type" }
     };
     private globalTypeEnvironment = [this.emptyTypeEnvironment, this.globalTypeFrame];
 
@@ -69,22 +73,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         throw new Error(`unbound name: ${x}`);
     };
 
-    addIdentifierType(x: string, type: Type) {
+    addIdentifierType(x: string, info: identifierInformation) {
         const frame = this.typeEnv.pop();
 
         if (!frame) {
             throw new Error(`Add Identifier ${x} Fail, frame is Null`);
         }
 
-        frame[x] = type;
+        frame[x] = info;
         this.typeEnv.push(frame);
     }
 
-    extendTypeEnvironment(xs: string[], ts: any[], te: any[]) {
+    extendTypeEnvironment(xs: string[], ts: identifierInformation[], te: any[]) {
         if (ts.length > xs.length) throw new Error('too few parameters in declaration');
         if (ts.length < xs.length) throw new Error('too many parameters in declaration');
 
-        const newFrame: { [key: string]: any } = {};
+        const newFrame: { [key: string]: identifierInformation } = {};
         for (let i = 0; i < xs.length; i++) {
             newFrame[xs[i]] = ts[i];
         }
@@ -124,21 +128,40 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     };
 
     visitLetStatement(ctx: LetStatementContext): Type {
+        let declaredType = null;
         if (ctx.TYPE()) {
-            throw new Error("Compiling type annotation not yet implemented");
+            declaredType = stringToType(ctx.TYPE().getText());
         }
+        let is_mutable = false;
         if (ctx.mutable()) {
-            throw new Error("Mutable declaration not yet implemented");
+            is_mutable = true;
         }
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
 
-        this.addIdentifierType(identifier, Type.Void);
-        if (expression === null) {
-            return Type.Void;
+        let expressionType = Type.Void;
+        let assigned = false;
+
+        if (expression) {
+            expressionType = this.visit(expression);
+            assigned = true;
+
+            if (declaredType === null) {
+                declaredType = expressionType;
+            } else {
+                if (declaredType !== expressionType) {
+                    throw new Error(
+                        `${ctx.getText()}\nExpected ${declaredType.toString()}, got ${expressionType.toString()}`
+                    )
+                }
+            }
         }
-        const type = this.visit(expression);
-        this.addIdentifierType(identifier, type);
+
+        this.addIdentifierType(identifier, <identifierInformation>{
+            type: declaredType,
+            is_mutable: is_mutable,
+            assigned: assigned
+        });
 
         return Type.Void;
     }
@@ -156,7 +179,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitUnop(ctx: UnopContext): Type {
         const type = this.visit(ctx.binopTerminals());
-        const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv);
+        const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv).type;
 
         // TODO: Cleaner Implementation
         if (op == "binary_arith_type") {
@@ -204,7 +227,13 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): Type {
         let identifier: string = ctx.IDENTIFIER().getText();
-        const type = this.lookupType(identifier, this.typeEnv);
+        const identifierInfo = this.lookupType(identifier, this.typeEnv);
+
+        if (!identifierInfo.assigned) {
+            throw new Error(`Trying to access unassigned variable ${identifier}`)
+        }
+
+        const type = identifierInfo.type;
 
         return type;
     }
@@ -245,7 +274,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let type2 = Type.Void;
         for (let i = 1; i < childCount; i += 2) {
-            const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv);
+            const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv).type;
             type2 = this.visit(ctx.getChild(i + 1));
 
             // TODO: Cleaner Implementation
@@ -319,13 +348,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
         const identifier: string = ctx.accessIdentifier().getText();
-        const identifierType: Type = this.lookupType(identifier, this.typeEnv);
+        const identifierInfo: identifierInformation = this.lookupType(identifier, this.typeEnv)
+
+        if (identifierInfo.assigned && !identifierInfo.is_mutable) {
+            throw new Error(`Trying to reassign to immutable variable: ${identifier}`)
+        }
+
+        let identifierType: Type = <Type>identifierInfo.type;
         const expressionType: Type = this.visit(ctx.expression());
 
-        if (identifierType !== expressionType) {
+        if (identifierType === null) {
+            identifierInfo.type = expressionType;
+            identifierType = expressionType;
+        } else if (identifierType !== expressionType) {
             throw new Error(
                 `Incompatible types: trying to assign ${expressionType} to variable`
-                + `${identifier} of type ${identifierType}`
+                + ` ${identifier} of type ${identifierType}`
             );
         }
 

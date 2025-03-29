@@ -6,7 +6,7 @@ import { VOID } from '../../src/compiler/compiler';
 describe('While Loop Tests', () => {
     it('normal loop', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             while i < 10 {
                 i = i + 1;
             }
@@ -17,7 +17,7 @@ describe('While Loop Tests', () => {
 
     it('while produce void', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             while i < 10 {
                 i = i + 1;
             }
@@ -29,7 +29,7 @@ describe('While Loop Tests', () => {
 describe('While Loop Type Tests', () => {
     it('Predicate wrong type', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             while i {
                 i = i + 1;
             }
@@ -39,7 +39,7 @@ describe('While Loop Type Tests', () => {
 
     it('While loop always evaluate to type void', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             while i < 10 {
                 i = i + 1;
             }
@@ -49,9 +49,9 @@ describe('While Loop Type Tests', () => {
 
     it('While loop body must be of type void', () => {
         const program = `
-            let i = 0;
+            let mut i = 0;
             while i < 10 {
-                i
+                i + 1
             }
         `
 

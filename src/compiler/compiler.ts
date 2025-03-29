@@ -25,6 +25,8 @@ import * as Instructions from "./instruction";
 
 export const VOID = null;
 
+// interface identifierInformation =
+
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
     public instructionArray: any[];
@@ -89,9 +91,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitLetStatement(ctx: LetStatementContext): void {
         if (ctx.TYPE()) {
             throw new Error("Compiling type annotation not yet implemented");
-        }
-        if (ctx.mutable()) {
-            throw new Error("Mutable declaration not yet implemented");
         }
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
