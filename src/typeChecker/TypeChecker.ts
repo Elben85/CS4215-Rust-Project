@@ -1,4 +1,4 @@
-import { AbstractParseTreeVisitor } from 'antlr4ng';
+import { AbstractParseTreeVisitor, predictionContextFromRuleContext } from 'antlr4ng';
 import {
     BracketContext,
     PrimitiveContext,
@@ -15,7 +15,10 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
-    UnopContext
+    UnopContext,
+    IfExpressionContext,
+    PredicateLoopExpressionContext,
+    AssignmentExpressionsContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import { Type } from './Type';
@@ -108,7 +111,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     visitProg(ctx: ProgContext): Type {
         const statements: StatementContext[] = ctx.statement();
 
-        let type = Type.Undefined;
+        let type = Type.Void;
         for (let s of statements) {
             type = this.visitWithEnvironment(s, this.typeEnv);
         }
@@ -117,7 +120,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitEmptyStatement(_: EmptyStatementContext): Type {
-        return Type.Undefined;
+        return Type.Void;
     };
 
     visitLetStatement(ctx: LetStatementContext): Type {
@@ -130,14 +133,14 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
 
-        this.addIdentifierType(identifier, Type.Null);
+        this.addIdentifierType(identifier, Type.Void);
         if (expression === null) {
-            return Type.Undefined;
+            return Type.Void;
         }
         const type = this.visit(expression);
         this.addIdentifierType(identifier, type);
 
-        return Type.Undefined;
+        return Type.Void;
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): Type {
@@ -217,7 +220,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitBlockBody(ctx: BlockBodyContext): Type {
         // TODO: Implementation not finished
-        let type = Type.Undefined
+        let type = Type.Void
         for (let s of ctx.statement()) {
             this.visit(s);
         }
@@ -240,7 +243,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let type1 = this.visit(ctx.getChild(0));
 
-        let type2 = Type.Undefined;
+        let type2 = Type.Void;
         for (let i = 1; i < childCount; i += 2) {
             const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv);
             type2 = this.visit(ctx.getChild(i + 1));
@@ -271,5 +274,61 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         }
 
         return type1
+    }
+
+    visitIfExpression(ctx: IfExpressionContext): Type {
+        const predicateType = this.visit(ctx.expression());
+
+        if (predicateType != Type.Boolean) {
+            throw new Error(
+                `If expression predicate must be boolean. ${ctx.expression().getText()}`
+                + `has type ${predicateType}`
+            );
+        }
+
+        const blockType1: Type = this.visit(ctx.blockExpression());
+        const blockType2: Type = ctx.ifExpressionAlternative()
+            ? this.visit(ctx.ifExpressionAlternative())
+            : Type.Void;
+
+        if (blockType1 !== blockType2) {
+            throw new Error(`An if expression must have the same type in all situations: \n ${ctx.getText()}`);
+        }
+
+        return blockType1;
+    }
+
+    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): Type {
+        const predicateType = this.visit(ctx.expression());
+
+        if (predicateType != Type.Boolean) {
+            throw new Error(
+                `Predicate loop expression predicate must be boolean. ${ctx.expression().getText()}`
+                + `has type ${predicateType}`
+            );
+        }
+
+        const bodyType = this.visit(ctx.blockExpression());
+
+        if (bodyType != Type.Void) {
+            throw new Error(`${ctx.getText()}\nexpected block body to be ${Type.Void}, got ${bodyType}`);
+        }
+
+        return bodyType;
+    }
+
+    visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
+        const identifier: string = ctx.accessIdentifier().getText();
+        const identifierType: Type = this.lookupType(identifier, this.typeEnv);
+        const expressionType: Type = this.visit(ctx.expression());
+
+        if (identifierType !== expressionType) {
+            throw new Error(
+                `Incompatible types: trying to assign ${expressionType} to variable`
+                + `${identifier} of type ${identifierType}`
+            );
+        }
+
+        return identifierType;
     }
 }
