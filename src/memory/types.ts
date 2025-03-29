@@ -10,8 +10,10 @@ export const addressToValue = (heap: Heap, address: number): any => {
 }
 
 const valueToType = (value: any): typeof Types => {
-    if (Number.isInteger(value)) {
-        return Int64
+    if (value === null) {
+        return Void
+    } else if (typeof value === 'number') {
+        return Float64
     } else if (typeof value === 'boolean') {
         return Boolean
     } else {
@@ -21,10 +23,12 @@ const valueToType = (value: any): typeof Types => {
 
 const tagToType = (tag: number): typeof Types => {
     switch (tag) {
-        case Int64.getTag():
-            return Int64
+        case Float64.getTag():
+            return Float64
         case Boolean.getTag():
             return Boolean
+        case Void.getTag():
+            return Void
         default:
             throw new Error(`Unrecognized type tag: ${tag}`);
     }
@@ -44,8 +48,8 @@ export abstract class Types {
     }
 }
 
-class Int64 implements Types {
-    public static getTag(): number { return 0; }
+class Float64 implements Types {
+    public static getTag(): number { return 2; }
 
     public static allocate(heap: Heap, value: number): number {
         const address = heap.reserve(1, this.getTag())
@@ -59,7 +63,7 @@ class Int64 implements Types {
 }
 
 class Boolean implements Types {
-    public static getTag(): number { return 1; }
+    public static getTag(): number { return 3; }
 
     public static allocate(heap: Heap, value: boolean): number {
         const address = heap.reserve(1, this.getTag())
@@ -72,5 +76,17 @@ class Boolean implements Types {
     }
 }
 
+class Void implements Types {
+    public static getTag(): number { return 4; }
+
+    public static allocate(heap: Heap, _: any): number {
+        return heap.reserve(0, this.getTag());
+    }
+
+    public static addressToValue(heap: Heap, address: number) {
+        return null
+    }
+}
+
 // TODO
-class Float { }
+class Int64 { }

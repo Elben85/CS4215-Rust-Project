@@ -2,7 +2,7 @@ import { Heap } from "./heap";
 import { addressToValue, Types, valueToAddress } from "./types";
 
 export class Environment implements Types {
-    public static getTag(): number { return 2; }
+    public static getTag(): number { return 0; }
 
     public static allocate(heap: Heap, numFrames: number): number {
         return heap.reserve(numFrames, this.getTag());
@@ -45,7 +45,7 @@ export class Environment implements Types {
 }
 
 class Frame implements Types {
-    public static getTag(): number { return 3; }
+    public static getTag(): number { return 1; }
 
     public static allocate(heap: Heap, numVariables: number): number {
         return heap.reserve(numVariables, this.getTag());

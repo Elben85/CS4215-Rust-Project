@@ -90,5 +90,5 @@ export class Heap {
     }
 
     // TODO: deallocation
-    public deallocate(address: number) {}
+    public deallocate(address: number) { }
 }
