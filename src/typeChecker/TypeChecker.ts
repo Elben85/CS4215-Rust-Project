@@ -21,7 +21,7 @@ import {
     AssignmentExpressionsContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { stringToType, Type } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, stringToType, Type, VOID_TYPE } from './Type';
 
 interface identifierInformation {
     type: Type | string,
@@ -115,7 +115,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     visitProg(ctx: ProgContext): Type {
         const statements: StatementContext[] = ctx.statement();
 
-        let type = Type.Void;
+        let type = VOID_TYPE;
         for (let s of statements) {
             type = this.visitWithEnvironment(s, this.typeEnv);
         }
@@ -124,7 +124,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitEmptyStatement(_: EmptyStatementContext): Type {
-        return Type.Void;
+        return VOID_TYPE;
     };
 
     visitLetStatement(ctx: LetStatementContext): Type {
@@ -139,7 +139,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
 
-        let expressionType = Type.Void;
+        let expressionType = VOID_TYPE;
         let assigned = false;
 
         if (expression) {
@@ -163,7 +163,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             assigned: assigned
         });
 
-        return Type.Void;
+        return VOID_TYPE;
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): Type {
@@ -184,16 +184,16 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         // TODO: Cleaner Implementation
         if (op == "binary_arith_type") {
             // Hack for unary -
-            if (type != Type.Number) {
+            if (type != NUMBER_TYPE) {
                 throw new Error(`Operand type not correct`)
             }
-            return Type.Number
+            return NUMBER_TYPE
 
         } else if (op == "unary_bool_type") {
-            if (type != Type.Boolean) {
+            if (type != BOOLEAN_TYPE) {
                 throw new Error(`not Boolean type for Bool`)
             }
-            return Type.Boolean
+            return BOOLEAN_TYPE
         } else {
             throw new Error(`Type not compatible for any Unary Operation ${op}`)
         }
@@ -217,9 +217,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitPrimitive(ctx: PrimitiveContext): Type {
         if (ctx.INT()) {
-            return Type.Number
+            return NUMBER_TYPE
         } else if (ctx.BOOL()) {
-            return Type.Boolean
+            return BOOLEAN_TYPE
         } else {
             throw new Error(`unrecognized primitive type: ${ctx.getText()}`);
         }
@@ -249,7 +249,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitBlockBody(ctx: BlockBodyContext): Type {
         // TODO: Implementation not finished
-        let type = Type.Void
+        let type = VOID_TYPE
         for (let s of ctx.statement()) {
             this.visit(s);
         }
@@ -272,7 +272,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let type1 = this.visit(ctx.getChild(0));
 
-        let type2 = Type.Void;
+        let type2 = VOID_TYPE;
         for (let i = 1; i < childCount; i += 2) {
             const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv).type;
             type2 = this.visit(ctx.getChild(i + 1));
@@ -280,22 +280,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             // TODO: Cleaner Implementation
             switch (operator) {
                 case "binary_arith_type":
-                    if ((type1 != Type.Number) || (type2 != Type.Number)) {
+                    if ((type1 != NUMBER_TYPE) || (type2 != NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
-                    type1 = Type.Number
+                    type1 = NUMBER_TYPE
                     break;
                 case "number_comparison_type":
-                    if ((type1 != Type.Number) || (type2 != Type.Number)) {
+                    if ((type1 != NUMBER_TYPE) || (type2 != NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
-                    type1 = Type.Boolean
+                    type1 = BOOLEAN_TYPE
                     break;
                 case "binary_bool_type":
-                    if ((type1 != Type.Boolean) || (type2 != Type.Boolean)) {
+                    if ((type1 != BOOLEAN_TYPE) || (type2 != BOOLEAN_TYPE)) {
                         throw new Error(`not Boolean type for Bool op: ${operator}`)
                     }
-                    type1 = Type.Boolean
+                    type1 = BOOLEAN_TYPE
                     break;
                 default:
                     throw new Error(`unrecognized operator type: ${operator}`)
@@ -308,7 +308,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     visitIfExpression(ctx: IfExpressionContext): Type {
         const predicateType = this.visit(ctx.expression());
 
-        if (predicateType != Type.Boolean) {
+        if (predicateType != BOOLEAN_TYPE) {
             throw new Error(
                 `If expression predicate must be boolean. ${ctx.expression().getText()}`
                 + `has type ${predicateType}`
@@ -318,7 +318,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const blockType1: Type = this.visit(ctx.blockExpression());
         const blockType2: Type = ctx.ifExpressionAlternative()
             ? this.visit(ctx.ifExpressionAlternative())
-            : Type.Void;
+            : VOID_TYPE;
 
         if (blockType1 !== blockType2) {
             throw new Error(`An if expression must have the same type in all situations: \n ${ctx.getText()}`);
@@ -330,7 +330,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): Type {
         const predicateType = this.visit(ctx.expression());
 
-        if (predicateType != Type.Boolean) {
+        if (predicateType != BOOLEAN_TYPE) {
             throw new Error(
                 `Predicate loop expression predicate must be boolean. ${ctx.expression().getText()}`
                 + `has type ${predicateType}`
@@ -339,8 +339,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         const bodyType = this.visit(ctx.blockExpression());
 
-        if (bodyType != Type.Void) {
-            throw new Error(`${ctx.getText()}\nexpected block body to be ${Type.Void}, got ${bodyType}`);
+        if (bodyType != VOID_TYPE) {
+            throw new Error(`${ctx.getText()}\nexpected block body to be ${VOID_TYPE}, got ${bodyType}`);
         }
 
         return bodyType;

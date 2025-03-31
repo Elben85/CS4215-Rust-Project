@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./util";
-import { Type } from '../../src/typeChecker/Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
 
 describe('Let Statement Test', () => {
     it('Let Statement', () => {
@@ -22,7 +22,7 @@ describe('Let Statement Type Test', () => {
                 let a = 2+3;
                 let c = b * a;
             `
-        expect(EvaluateType(program)).toBe(Type.Void);
+        expect(EvaluateType(program)).toBe(VOID_TYPE);
 
     });
 
@@ -33,7 +33,7 @@ describe('Let Statement Type Test', () => {
             let c = b * a;
             c;
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
+        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
 
     });
 
@@ -45,7 +45,7 @@ describe('Let Statement Type Test', () => {
             let d = b * a;
             c;
         `
-        expect(EvaluateType(program)).toBe(Type.Boolean);
+        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
 
     });
 
@@ -54,7 +54,7 @@ describe('Let Statement Type Test', () => {
             let a = false;
             true || false && a;
         `
-        expect(EvaluateType(program)).toBe(Type.Boolean);
+        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
 
     });
 
@@ -63,7 +63,7 @@ describe('Let Statement Type Test', () => {
             let a = true;
             (1 > 2) && a;
         `
-        expect(EvaluateType(program)).toBe(Type.Boolean);
+        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
     });
 
     it('Access uninitialized', () => {
@@ -82,6 +82,6 @@ describe('Let Statement Type Test', () => {
     })
 
     it('Correct declared type', () => {
-        expect(EvaluateType(`let a: bool = true;`)).toBe(Type.Void);
+        expect(EvaluateType(`let a: bool = true;`)).toBe(VOID_TYPE);
     })
 })

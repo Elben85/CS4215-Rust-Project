@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./util";
-import { Type } from '../../src/typeChecker/Type';
+import { NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
 
 describe('Block statement test', () => {
     it('Block Statement', () => {
@@ -39,7 +39,7 @@ describe('Block statement type test', () => {
             b;
         }
         `
-        expect(EvaluateType(program)).toBe(Type.Void);
+        expect(EvaluateType(program)).toBe(VOID_TYPE);
     })
 
     it(`Block type 3`, () => {
@@ -49,6 +49,6 @@ describe('Block statement type test', () => {
             b + 11
         }
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
+        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
     })
 })

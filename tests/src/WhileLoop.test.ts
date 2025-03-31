@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./util";
-import { Type } from '../../src/typeChecker/Type';
+import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
 import { VOID } from '../../src/compiler/compiler';
 
 describe('While Loop Tests', () => {
@@ -44,7 +44,7 @@ describe('While Loop Type Tests', () => {
                 i = i + 1;
             }
         `
-        expect(EvaluateType(program)).toBe(Type.Void);
+        expect(EvaluateType(program)).toBe(VOID_TYPE);
     });
 
     it('While loop body must be of type void', () => {

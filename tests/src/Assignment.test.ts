@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./util";
-import { Type } from '../../src/typeChecker/Type';
+import { NUMBER_TYPE, Type } from '../../src/typeChecker/Type';
 
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
@@ -28,7 +28,7 @@ describe('Assignment Type Tests', () => {
             let mut i = 0;
             i = 69;
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
+        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
     });
 
     it('assignment type 2', () => {
@@ -37,7 +37,7 @@ describe('Assignment Type Tests', () => {
             let mut j = 0;
             i = j = 10;
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
+        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
     });
 
     it(`assignment type 3`, () => {
@@ -54,7 +54,7 @@ describe('Assignment Type Tests', () => {
         let i;
         i = 10;
         `
-        expect(EvaluateType(program)).toBe(Type.Number);
+        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
     })
 
     it(`test reassignment`, () => {
