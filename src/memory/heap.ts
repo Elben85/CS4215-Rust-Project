@@ -11,7 +11,7 @@
 export class Heap {
     private static WORD_SIZE: number = 2 ** 3; // word size (in bytes)
     private static HEAP_SIZE: number = 2 ** 16; // heap size (in bytes)
-    private static METADATA_SIZE: number = 1; // size of object metadata in words 
+    public static METADATA_SIZE: number = 1; // size of object metadata in words 
 
     // metadata offsets (in bytes)
     private size_offset = 1;
@@ -74,18 +74,16 @@ export class Heap {
         )
     }
 
-    // public utility functions, assumes address passed is the allocated address, but will
-    // get or set the data offsetted by metadata size.
-    // the design decision is done so that types will act as if metadata does not exist
+    // public utility functions
     public get(address: number): number {
         return this.heap.getFloat64(
-            Heap.addressToBytes(address + Heap.METADATA_SIZE)
+            Heap.addressToBytes(address)
         );
     }
 
     public set(address: number, value: number): void {
         this.heap.setFloat64(
-            Heap.addressToBytes(address + Heap.METADATA_SIZE), value
+            Heap.addressToBytes(address), value
         );
     }
 
