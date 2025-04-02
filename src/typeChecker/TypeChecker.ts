@@ -18,7 +18,8 @@ import {
     UnopContext,
     IfExpressionContext,
     PredicateLoopExpressionContext,
-    AssignmentExpressionsContext
+    AssignmentExpressionsContext,
+    NegationExpressionContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import { stringToType, Type } from './Type';
@@ -177,25 +178,23 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         return type;
     }
 
-    visitUnop(ctx: UnopContext): Type {
+    visitNegationExpression(ctx: NegationExpressionContext): Type {
         const type = this.visit(ctx.binopTerminals());
-        const op = this.lookupType(ctx.getChild(0).getText(), this.typeEnv).type;
+        const op = ctx.getChild(0).getText();
 
-        // TODO: Cleaner Implementation
-        if (op == "binary_arith_type") {
-            // Hack for unary -
-            if (type != Type.Number) {
-                throw new Error(`Operand type not correct`)
-            }
-            return Type.Number
-
-        } else if (op == "unary_bool_type") {
-            if (type != Type.Boolean) {
-                throw new Error(`not Boolean type for Bool`)
-            }
-            return Type.Boolean
-        } else {
-            throw new Error(`Type not compatible for any Unary Operation ${op}`)
+        switch (op) {
+            case '-':
+                if (type != Type.Number) {
+                    throw new Error(`Operand type not correct`)
+                }
+                return Type.Number
+            case '!':
+                if (type != Type.Boolean) {
+                    throw new Error(`not Boolean type for Bool`)
+                }
+                return Type.Boolean
+            default:
+                throw new Error(`Unknown negation expression op: ${op}`)
         }
     }
 

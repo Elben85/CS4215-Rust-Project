@@ -51,6 +51,11 @@ export class Heap {
 
     // METADATA MANAGEMENT
     // tags
+    public setMetadata(address: number, tag: number, size: number) {
+        this.setTag(address, tag);
+        this.setTag(address, size);
+    }
+
     public getTag(address: number): number {
         return this.heap.getUint8(Heap.addressToBytes(address));
     }

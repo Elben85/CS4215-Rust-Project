@@ -1,5 +1,5 @@
 List of instructions:
-1. `LDC`
+- `LDC`
 Push literal into stack
 ```
 {
@@ -8,7 +8,7 @@ Push literal into stack
 }
 ```
 
-2. `BINOP`
+- `BINOP`
 Apply `op` to `Arg1` and `Arg2`. Both args are expected to be on the stack
 ```
 {
@@ -17,20 +17,29 @@ Apply `op` to `Arg1` and `Arg2`. Both args are expected to be on the stack
 }
 ```
 
-3. `POP`
+- `POP`
 Pop the topmost value on the stack
 `{ tag: "POP" }`
 
-4. `ASSIGN`
-Assign topmost stack value to specified `frameIndex` and `valueIndex`. Push the assigned value back to stack.
+- `ASSIGN`
+Assign topmost stack value to specified address (which should be a pointer). Push the assigned value back to stack.
+The instructions expects both the pointer address and the value on the stack.
 ```
 {
     tag: "ASSIGN",
+}
+```
+
+- `LDA`
+Load the address of the pointer at `frameIndex` and `valueIndex` to the stack
+```
+{
+    tag: "LDA",
     pos: [frameIndex, valueIndex]
 }
 ```
 
-5. `LD`
+- `LD`
 Load the value at `frameIndex` and `valueIndex` to the stack
 ```
 {
@@ -39,7 +48,7 @@ Load the value at `frameIndex` and `valueIndex` to the stack
 }
 ```
 
-6. `ENTER_SCOPE`
+- `ENTER_SCOPE`
 Extend the env with a frame of given length. Push the old env to the runtime stack
 ```
 {
@@ -48,12 +57,12 @@ Extend the env with a frame of given length. Push the old env to the runtime sta
 }
 ```
 
-7. `EXIT_SCOPE`
+- `EXIT_SCOPE`
 Restore the address of the env to one on top of the runtime stack.
 `{ tag: "EXIT_SCOPE" }`
 
 
-8. `UNOP`
+- `UNOP`
 Execute unary operator. Gets argument from stack
 ```
 {
@@ -62,7 +71,7 @@ Execute unary operator. Gets argument from stack
 }
 ```
 
-9. `JOF`
+- `JOF`
 jump to address if the top of the stack evaluates to false
 ```
 {
@@ -71,11 +80,27 @@ jump to address if the top of the stack evaluates to false
 }
 ```
 
-10.  `GOTO`
+-  `GOTO`
 jump to address
 ```
 {
     tag: "GOTO",
     address: [ADDRESS]
+}
+```
+
+- `DEREF`
+dereference a pointer to the location it points to. expects a pointer on top of the stack
+```
+{
+    tag: "DEREF"
+}
+```
+
+- `BORROW`
+Produce a pointer to a heap address of the borrowed value. Expects the address of the borrowed value on top of the stack. 
+```
+{
+    tag: "BORROW"
 }
 ```

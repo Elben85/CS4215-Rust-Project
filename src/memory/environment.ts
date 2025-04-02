@@ -1,5 +1,5 @@
 import { Heap } from "./heap";
-import { addressToValue, Types, valueToAddress, Pointer } from "./types";
+import { Types, Pointer } from "./types";
 
 /**
  * Heap metadata followed by n bytes of frame addresses
@@ -9,6 +9,10 @@ export class Environment implements Types {
 
     public static allocate(heap: Heap, numFrames: number): number {
         return heap.reserve(numFrames, this.getTag());
+    }
+
+    public static getPointerAddress(heap: Heap, env: number, frameIndex: number, itemIndex: number) {
+        return Frame.getAddress(this.getFrame(heap, env, frameIndex), itemIndex);
     }
 
     public static getFrame(heap: Heap, address: number, frameIndex: number): number {
@@ -36,14 +40,13 @@ export class Environment implements Types {
     }
 
     public static getValue(heap: Heap, env: number, frameIndex: number, itemIndex: number): number {
-        const frameAddress = heap.get(env + frameIndex + Heap.METADATA_SIZE);
+        const frameAddress = this.getFrame(heap, env, frameIndex);
         return Frame.getValue(heap, frameAddress, itemIndex);
     }
 
-    public static setValue(heap: Heap, env: number, frameIndex: number, itemIndex: number, value: any) {
-        // value is an address to the heap
-        const frameAddress = heap.get(env + frameIndex + Heap.METADATA_SIZE);
-        Frame.setValue(heap, frameAddress, itemIndex, value);
+    public static setValue(heap: Heap, env: number, frameIndex: number, itemIndex: number, itemAddress: number) {
+        const frameAddress = this.getFrame(heap, env, frameIndex);
+        Frame.setValue(heap, frameAddress, itemIndex, itemAddress);
     }
 }
 
@@ -57,22 +60,31 @@ class Frame implements Types {
         return (Heap.METADATA_SIZE + 1) * index
     }
 
-    public static allocate(heap: Heap, numVariables: number): number {
-        return heap.reserve(this.indexToOffset(numVariables), this.getTag());
+    public static getAddress(frameAddress: number, index: number) {
+        return frameAddress + Heap.METADATA_SIZE + this.indexToOffset(index);
     }
 
-    public static setValue(heap: Heap, address: number, index: number, value: any): void {
+    public static allocate(heap: Heap, numVariables: number): number {
+        const frameAddress = heap.reserve(this.indexToOffset(numVariables), this.getTag());
+        for (let i = 0; i < numVariables; ++i) {
+            heap.setMetadata(
+                this.getAddress(frameAddress, i), Pointer.getTag(), 1
+            )
+        }
+        return frameAddress
+    }
+
+    public static setValue(heap: Heap, address: number, index: number, itemAddress: number): void {
         this.checkValidAccess(heap, address, index);
-        const itemAddress = valueToAddress(heap, value);
-        const pointerAddress = address + Heap.METADATA_SIZE + this.indexToOffset(index)
+        const pointerAddress = this.getAddress(address, index);
         Pointer.setPointer(heap, pointerAddress, itemAddress)
     }
 
     public static getValue(heap: Heap, address: number, index: number): any {
         this.checkValidAccess(heap, address, index);
-        const pointerAddress = address + Heap.METADATA_SIZE + this.indexToOffset(index);
+        const pointerAddress = this.getAddress(address, index);
         const itemAddress = Pointer.addressToValue(heap, pointerAddress);
-        return addressToValue(heap, itemAddress)
+        return itemAddress;
     }
 
     private static checkValidAccess(heap: Heap, address: number, index: number) {

@@ -19,6 +19,9 @@ import {
     IfExpressionContext,
     PredicateLoopExpressionContext,
     AssignmentExpressionsContext,
+    NegationExpressionContext,
+    DereferenceExpressionContext,
+    BorrowExpressionContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
@@ -73,6 +76,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         return null;
     }
 
+    private compileVarReference(identifier: string) {
+        const pos = this.getIdentifierPosition(identifier);
+        this.instructionArray.push(Instructions.createLDA(pos))
+    }
+
     visitProg(ctx: ProgContext): void {
         const enterScopeInstr = Instructions.createEnterScope(null)
         this.instructionArray.push(enterScopeInstr)
@@ -100,7 +108,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             return;
         }
         this.visit(expression);
-        this.instructionArray.push(Instructions.createAssign([frameIndex, valueIndex]));
+        this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
+        this.instructionArray.push(Instructions.createAssign());
         this.instructionArray.push(Instructions.createPop());
     }
 
@@ -113,11 +122,26 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
     }
 
-    visitUnop(ctx: UnopContext): void {
+    visitNegationExpression(ctx: NegationExpressionContext): void {
         this.visit(ctx.binopTerminals());
         const op = ctx.getChild(0).getText();
-
         this.instructionArray.push(Instructions.createUnop(op))
+    }
+
+    visitDereferenceExpression(ctx: DereferenceExpressionContext): void {
+        if (ctx.accessIdentifier()) {
+            this.visit(ctx.accessIdentifier());
+            // this.compileVarReference(ctx.accessIdentifier().getText());
+        } else {
+            this.visit(ctx.dereferenceExpression());
+        }
+        this.instructionArray.push(Instructions.createDeref());
+    }
+
+    visitBorrowExpression(ctx: BorrowExpressionContext): void {
+        // this.visit(ctx.accessIdentifier());
+        this.compileVarReference(ctx.accessIdentifier().getText());
+        this.instructionArray.push(Instructions.createBorrow());
     }
 
     // BINARY OPERATORS
@@ -233,11 +257,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
-        const identifier: string = ctx.accessIdentifier().getText();
-
         this.visit(ctx.expression());
-
-        const pos = this.getIdentifierPosition(identifier);
-        this.instructionArray.push(Instructions.createAssign(pos));
+        const identifier: string = ctx.accessIdentifier().getText();
+        this.compileVarReference(identifier);
+        this.instructionArray.push(Instructions.createAssign());
     }
 }

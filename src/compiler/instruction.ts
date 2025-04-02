@@ -32,10 +32,16 @@ export const createLD = (pos: [number, number]) => {
     }
 }
 
-export const createAssign = (pos: [number, number]) => {
+export const createLDA = (pos: [number, number]) => {
+    return {
+        tag: "LDA",
+        pos: pos
+    }
+}
+
+export const createAssign = () => {
     return {
         tag: "ASSIGN",
-        pos: pos
     }
 }
 
@@ -69,5 +75,17 @@ export const createGoto = (address: number) => {
     return {
         tag: "GOTO",
         address: address
+    }
+}
+
+export const createDeref = () => {
+    return {
+        tag: "DEREF"
+    }
+}
+
+export const createBorrow = () => {
+    return {
+        tag: "BORROW"
     }
 }
