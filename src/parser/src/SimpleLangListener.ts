@@ -13,6 +13,9 @@ import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
 import { UnopContext } from "./SimpleLangParser.js";
+import { NegationExpressionContext } from "./SimpleLangParser.js";
+import { DereferenceExpressionContext } from "./SimpleLangParser.js";
+import { BorrowExpressionContext } from "./SimpleLangParser.js";
 import { BinopTerminalsContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 import { LogicalOrContext } from "./SimpleLangParser.js";
@@ -140,6 +143,36 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitUnop?: (ctx: UnopContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.negationExpression`.
+     * @param ctx the parse tree
+     */
+    enterNegationExpression?: (ctx: NegationExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.negationExpression`.
+     * @param ctx the parse tree
+     */
+    exitNegationExpression?: (ctx: NegationExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.dereferenceExpression`.
+     * @param ctx the parse tree
+     */
+    enterDereferenceExpression?: (ctx: DereferenceExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.dereferenceExpression`.
+     * @param ctx the parse tree
+     */
+    exitDereferenceExpression?: (ctx: DereferenceExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.borrowExpression`.
+     * @param ctx the parse tree
+     */
+    enterBorrowExpression?: (ctx: BorrowExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.borrowExpression`.
+     * @param ctx the parse tree
+     */
+    exitBorrowExpression?: (ctx: BorrowExpressionContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.binopTerminals`.
      * @param ctx the parse tree

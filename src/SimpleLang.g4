@@ -45,7 +45,18 @@ expressionWithoutBlock
 primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
 
 unop
-    : op=('-'|'!') binopTerminals
+    : negationExpression
+    | dereferenceExpression
+    | borrowExpression
+    ;
+
+negationExpression: op=('-'|'!') binopTerminals;
+
+// For now only allows dereference and borrows for variables
+dereferenceExpression: '*' (dereferenceExpression | accessIdentifier);
+
+borrowExpression
+    : '&' (mutable)? accessIdentifier
     ;
 
 // binop terminals are all expressions without binop
@@ -80,6 +91,7 @@ bracket
 
 assignmentExpressions
     : accessIdentifier '=' expression
+    //| dereferenceExpression '=' expression
     ;
 
 expressionWithBlock

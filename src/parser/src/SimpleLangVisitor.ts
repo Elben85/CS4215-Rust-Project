@@ -13,6 +13,9 @@ import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
 import { UnopContext } from "./SimpleLangParser.js";
+import { NegationExpressionContext } from "./SimpleLangParser.js";
+import { DereferenceExpressionContext } from "./SimpleLangParser.js";
+import { BorrowExpressionContext } from "./SimpleLangParser.js";
 import { BinopTerminalsContext } from "./SimpleLangParser.js";
 import { BinopContext } from "./SimpleLangParser.js";
 import { LogicalOrContext } from "./SimpleLangParser.js";
@@ -103,6 +106,24 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitUnop?: (ctx: UnopContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.negationExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitNegationExpression?: (ctx: NegationExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.dereferenceExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDereferenceExpression?: (ctx: DereferenceExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.borrowExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBorrowExpression?: (ctx: BorrowExpressionContext) => Result;
     /**
      * Visit a parse tree produced by `SimpleLangParser.binopTerminals`.
      * @param ctx the parse tree

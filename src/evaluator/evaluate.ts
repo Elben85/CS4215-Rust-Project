@@ -1,5 +1,5 @@
 import { Heap } from "../memory/heap";
-import { addressToValue, valueToAddress } from "../memory/types";
+import { addressToValue, valueToAddress, Pointer } from "../memory/types";
 import { Environment } from "../memory/environment";
 
 let HEAP: Heap;
@@ -18,10 +18,14 @@ export const evaluate = (instructionArray: any[]) => {
     E = Environment.allocate(HEAP, 0);
 
     while (instructionArray[PC].tag !== 'DONE') {
+        // console.log(PC);
+        console.log(OS);
+        console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);
     }
+    console.log(OS);
     return OS.length === 0
         ? undefined
         : stackPop();
@@ -69,9 +73,9 @@ const microcode = {
         PC++;
     },
     ASSIGN: (instr) => {
+        const pointerAddr = OS.pop();
         const valueAddr = OS.pop();
-        const [frameIndex, valueIndex] = instr.pos;
-        Environment.setValue(HEAP, E, frameIndex, valueIndex, valueAddr);
+        Pointer.setPointer(HEAP, pointerAddr, valueAddr)
         OS.push(valueAddr);
         PC++;
     },
@@ -79,6 +83,11 @@ const microcode = {
         const [frameIndex, valueIndex] = instr.pos;
         const addr = Environment.getValue(HEAP, E, frameIndex, valueIndex);
         OS.push(addr);
+        PC++;
+    },
+    LDA: (instr) => {
+        const [frameIndex, valueIndex] = instr.pos;
+        OS.push(Environment.getPointerAddress(HEAP, E, frameIndex, valueIndex));
         PC++;
     },
     ENTER_SCOPE: (instr) => {
@@ -99,6 +108,25 @@ const microcode = {
         } else {
             PC++;
         }
+    },
+    DEREF: (instr) => {
+        const pointerAddr = OS.pop();
+        // const itemAddr = Pointer.addressToValue(HEAP, pointerAddr);
+        const derefAddr = Pointer.addressToValue(HEAP, pointerAddr);
+        OS.push(derefAddr);
+        PC++;
+    },
+    BORROW: (instr) => {
+        const itemAddr = OS.pop();
+        let pointerAddr;
+        if (HEAP.getTag(itemAddr) === Pointer.getTag()) {
+            pointerAddr = Pointer.allocate(HEAP, itemAddr);
+        } else {
+            pointerAddr = itemAddr;
+        }
+        // const pointerAddr = Pointer.allocate(HEAP, itemAddr);
+        OS.push(pointerAddr);
+        PC++;
     }
 }
 

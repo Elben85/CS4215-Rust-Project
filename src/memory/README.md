@@ -4,3 +4,4 @@ Type tags:
 2: Float64
 3: Boolean
 4: Void
+5: Pointer
