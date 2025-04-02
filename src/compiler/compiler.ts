@@ -38,6 +38,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     private env: string[][];
     private breakStack: any[];
     private continueStack: any[];
+    private expectLvalue: boolean;
 
     public constructor() {
         super();
@@ -46,6 +47,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.env = [[]];
         this.breakStack = [];
         this.continueStack = [];
+        this.expectLvalue = false;
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
@@ -79,11 +81,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             if (frame[i] === identifier) return i;
         }
         return null;
-    }
-
-    private compileVarReference(identifier: string) {
-        const pos = this.getIdentifierPosition(identifier);
-        this.instructionArray.push(Instructions.createLDA(pos))
     }
 
     visitProg(ctx: ProgContext): void {
@@ -136,7 +133,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitDereferenceExpression(ctx: DereferenceExpressionContext): void {
         if (ctx.accessIdentifier()) {
             this.visit(ctx.accessIdentifier());
-            // this.compileVarReference(ctx.accessIdentifier().getText());
         } else {
             this.visit(ctx.dereferenceExpression());
         }
@@ -144,8 +140,10 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitBorrowExpression(ctx: BorrowExpressionContext): void {
-        // this.visit(ctx.accessIdentifier());
-        this.compileVarReference(ctx.accessIdentifier().getText());
+        const tmp = this.expectLvalue;
+        this.expectLvalue = true;
+        this.visit(ctx.accessIdentifier());
+        this.expectLvalue = tmp;
         this.instructionArray.push(Instructions.createBorrow());
     }
 
@@ -189,7 +187,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         let identifier: string = ctx.IDENTIFIER().getText();
         let position = this.getIdentifierPosition(identifier);
 
-        this.instructionArray.push(Instructions.createLD(position))
+        if (this.expectLvalue) {
+            this.instructionArray.push(Instructions.createLDA(position))
+        } else {
+            this.instructionArray.push(Instructions.createLD(position))
+        }
     }
 
     visitBlockExpression(ctx: BlockExpressionContext): void {
@@ -302,8 +304,10 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
         this.visit(ctx.expression());
-        const identifier: string = ctx.accessIdentifier().getText();
-        this.compileVarReference(identifier);
+        const tmp = this.expectLvalue;
+        this.expectLvalue = true;
+        this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
+        this.expectLvalue = tmp;
         this.instructionArray.push(Instructions.createAssign());
     }
 }

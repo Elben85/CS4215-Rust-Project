@@ -91,7 +91,7 @@ bracket
 
 assignmentExpressions
     : accessIdentifier '=' expression
-    //| dereferenceExpression '=' expression
+    | dereferenceExpression '=' expression
     ;
 
 expressionWithBlock
