@@ -84,8 +84,19 @@ describe('Deref Borrow Type test', () => {
         expect(EvaluateType(program).compare(expected)).toBe(true);
     })
 
+    it('deref borrow 6', () => {
+        const program = `
+            let mut a = 1;
+            let b = &mut a;
+            let mut c = b;
+            c;
+        `
+        const expected = new PointerType(NUMBER_TYPE, true);
+        expect(EvaluateType(program).compare(expected)).toBe(true);
+    })
+
     // TODO
-    // it('deref borrow 6', () => {
+    // it('deref borrow 7', () => {
     //     const program = `
     //         let mut a = 1;
     //         let b = &mut a;
