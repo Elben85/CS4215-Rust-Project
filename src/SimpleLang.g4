@@ -38,6 +38,8 @@ expression
 // The following is to prevent left recursion from binary operation
 expressionWithoutBlock
     : binop 
+    | breakExpression
+    | continueExpression
     ;
 
 primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
@@ -109,6 +111,14 @@ loopExpression: predicateLoopExpression;
 
 predicateLoopExpression
     : 'while' expression blockExpression
+    ;
+
+breakExpression
+    : 'break'
+    ;
+
+continueExpression 
+    : 'continue'
     ;
 
 INT: [0-9]+;

@@ -44,6 +44,24 @@ export function EvaluateType(program: string) {
     return type;
 }
 
+export function Compile(program: string) {
+    // Create the lexer and parser
+    const inputStream = CharStream.fromString(program);
+    const lexer = new SimpleLangLexer(inputStream);
+    const tokenStream = new CommonTokenStream(lexer);
+    const parser = new SimpleLangParser(tokenStream);
+
+    // Parse the input
+    const tree = parser.prog();
+
+    // Compile the parsed tree
+    const visitor = new CompilerVisitor()
+    visitor.visit(tree);
+    const instructions = visitor.instructionArray;
+
+    return instructions;
+}
+
 export function ExpectError(lambda: () => any) {
     let result: any
     try {

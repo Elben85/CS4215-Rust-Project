@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
+import { Compile, Evaluate, EvaluateType } from "./util";
 import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
 import { VOID } from '../../src/compiler/compiler';
 
@@ -23,6 +23,81 @@ describe('While Loop Tests', () => {
             }
         `
         expect(Evaluate(program)).toBe(VOID);
+    });
+
+    it('normal loop with break statement', () => {
+        const program = `
+            let mut i = 0;
+            while i < 10 {
+                i = i + 1;
+                break;
+            }
+            i;
+        `
+        expect(Evaluate(program)).toBe(1);
+    });
+
+    it('double while loop with break statement', () => {
+        const program = `
+            let mut i = 0;
+            let mut j = 0;
+            while i < 10 {
+                i = i + 1;
+                let k = 31;
+                if (i > 1) {
+                    while j < 5 {
+                        j = j + 1;
+                        if (j > 2) {
+                            break;
+                        }
+                    }
+                }
+                
+                if (j >2) {
+                    break;
+                }
+            }
+            j;
+        `
+        expect(Evaluate(program)).toBe(3);
+    });
+
+    it('loop with deep break statement', () => {
+        const program = `
+            let mut i = 0;
+            let mut j = 0;
+            if (i < 1) {
+                let cc = 1;
+                while i < 10 {
+                    i = i + 1;
+                    if (i > 0) {
+                        let k = 11;
+                        if (i > 1) {
+                            let a = 11;
+                            break;
+                        }
+                    }
+                }
+            }
+            i;
+        `
+        expect(Evaluate(program)).toBe(2);
+    });
+
+    it('normal loop with continue statement', () => {
+        const program = `
+            let mut i = 0;
+            let mut j = 0;
+            while i < 10 {
+                i = i + 1;
+                if (i > 2 && i < 4) {
+                    continue;
+                }
+                j = j + 1;
+            }
+            j;
+        `
+        expect(Evaluate(program)).toBe(9);
     });
 });
 

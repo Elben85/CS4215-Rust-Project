@@ -31,6 +31,8 @@ import { IfExpressionContext } from "./SimpleLangParser.js";
 import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
 import { LoopExpressionContext } from "./SimpleLangParser.js";
 import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
+import { BreakExpressionContext } from "./SimpleLangParser.js";
+import { ContinueExpressionContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -318,6 +320,26 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.breakExpression`.
+     * @param ctx the parse tree
+     */
+    enterBreakExpression?: (ctx: BreakExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.breakExpression`.
+     * @param ctx the parse tree
+     */
+    exitBreakExpression?: (ctx: BreakExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.continueExpression`.
+     * @param ctx the parse tree
+     */
+    enterContinueExpression?: (ctx: ContinueExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.continueExpression`.
+     * @param ctx the parse tree
+     */
+    exitContinueExpression?: (ctx: ContinueExpressionContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

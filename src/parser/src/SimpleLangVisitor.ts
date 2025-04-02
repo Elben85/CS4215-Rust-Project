@@ -31,6 +31,8 @@ import { IfExpressionContext } from "./SimpleLangParser.js";
 import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
 import { LoopExpressionContext } from "./SimpleLangParser.js";
 import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
+import { BreakExpressionContext } from "./SimpleLangParser.js";
+import { ContinueExpressionContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -209,5 +211,17 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.breakExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBreakExpression?: (ctx: BreakExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.continueExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitContinueExpression?: (ctx: ContinueExpressionContext) => Result;
 }
 

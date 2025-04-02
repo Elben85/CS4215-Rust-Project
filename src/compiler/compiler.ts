@@ -19,6 +19,8 @@ import {
     IfExpressionContext,
     PredicateLoopExpressionContext,
     AssignmentExpressionsContext,
+    BreakExpressionContext,
+    ContinueExpressionContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
@@ -32,12 +34,16 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     public instructionArray: any[];
     private isFirstStatement: boolean;
     private env: string[][];
+    private breakStack: any[];
+    private continueStack: any[];
 
     public constructor() {
         super();
         this.instructionArray = [];
         this.isFirstStatement = true;
         this.env = [[]];
+        this.breakStack = [];
+        this.continueStack = [];
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
@@ -224,12 +230,51 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(predicate);
         const jofInstr = Instructions.createJOF(null);
         this.instructionArray.push(jofInstr);
+
+        // Stores Instruction and the Env depth
+        this.breakStack.push([jofInstr, this.env.length]); 
+        this.continueStack.push([Instructions.createGoto(whileLoopAddress), this.env.length]);
+
         this.visit(body);
 
         this.instructionArray.push(Instructions.createPop());
         this.instructionArray.push(Instructions.createGoto(whileLoopAddress));
         jofInstr.address = this.instructionArray.length;
+
+        this.breakStack.pop();
+        this.continueStack.pop();
+
         this.instructionArray.push(Instructions.createLDC(VOID));
+    }
+
+    visitBreakExpression(ctx: BreakExpressionContext): void {
+        if (this.breakStack.length === 0) {
+            throw new Error("Break statement not within a loop");
+        }
+
+        const depth = this. env.length - this.breakStack[this.breakStack.length - 1][1];
+        
+        for (let i = 0; i < depth; i++) {
+            this.instructionArray.push(Instructions.createExitScope());
+        }
+        
+        this.instructionArray.push(Instructions.createLDC(false));
+        this.instructionArray.push(this.breakStack[this.breakStack.length - 1][0]);
+    }
+
+    visitContinueExpression (ctx: ContinueExpressionContext): void {
+        if (this.continueStack.length === 0) {
+            throw new Error("Continue statement not within a loop");
+        }
+
+        const depth = this. env.length - this.continueStack[this.continueStack.length - 1][1];
+        
+        for (let i = 0; i < depth; i++) {
+            this.instructionArray.push(Instructions.createExitScope());
+        }
+
+        this.instructionArray.push(this.continueStack[this.continueStack.length-1][0]);
+
     }
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {

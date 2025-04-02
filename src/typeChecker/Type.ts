@@ -1,43 +1,22 @@
-// export class Type {
-//   static readonly String = new Type("string");
-//   static readonly Number = new Type("number");
-//   static readonly Boolean = new Type("boolean");
-//   static readonly Object = new Type("object");
-//   static readonly Void = new Type("()");
-
-//   private constructor(public readonly value: string) { }
-
-//   toString(): string {
-//     return this.value;
-//   }
-// }
-
-// export function stringToType(str: string): Type {
-//   switch (str) {
-//     case "f64":
-//       return Type.Number;
-//     case "bool":
-//       return Type.Boolean;
-//     default:
-//       throw new Error(`Unknown type ${str}`)
-//   }
-// }
-
-
 export abstract class Type {
   abstract toString(): string;
   abstract compare(other: Type): boolean;
 }
 
-// Singleton Types
 export class StringType extends Type {
   private static instance: StringType | null = null;
   private constructor() { super(); }
   static getInstance(): StringType {
     return this.instance ?? (this.instance = new StringType());
   }
-  toString(): string { return "string"; }
-  compare(other: Type): boolean { return other instanceof StringType; }
+
+  toString(): string { 
+    return "string"; 
+  }
+
+  compare(other: Type): boolean { 
+    return other instanceof StringType; 
+  }
 }
 
 export class NumberType extends Type {
@@ -80,7 +59,6 @@ export class VoidType extends Type {
   compare(other: Type): boolean { return other instanceof VoidType; }
 }
 
-// Function Type
 export class FunctionType extends Type {
   private constructor(
     public readonly args: Type[],
@@ -95,7 +73,7 @@ export class FunctionType extends Type {
 
   toString(): string {
     const argsStr = this.args.map(arg => arg.toString()).join(", ");
-    return `(${argsStr}) -> ${this.returnType.toString()}`;
+    return `fn(${argsStr}) -> ${this.returnType.toString()}`;
   }
 
   compare(other: Type): boolean {
@@ -108,7 +86,6 @@ export class FunctionType extends Type {
   }
 }
 
-// Pointer Type
 export class PointerType extends Type {
   constructor(public readonly baseType: Type) {
     super();
