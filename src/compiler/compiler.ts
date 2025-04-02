@@ -15,7 +15,6 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
-    UnopContext,
     IfExpressionContext,
     PredicateLoopExpressionContext,
     AssignmentExpressionsContext,
@@ -256,7 +255,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.instructionArray.push(jofInstr);
 
         // Stores Instruction and the Env depth
-        this.breakStack.push([jofInstr, this.env.length]); 
+        this.breakStack.push([jofInstr, this.env.length]);
         this.continueStack.push([Instructions.createGoto(whileLoopAddress), this.env.length]);
 
         this.visit(body);
@@ -276,28 +275,28 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             throw new Error("Break statement not within a loop");
         }
 
-        const depth = this. env.length - this.breakStack[this.breakStack.length - 1][1];
-        
+        const depth = this.env.length - this.breakStack[this.breakStack.length - 1][1];
+
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
-        
-        this.instructionArray.push(Instructions.createLDC(false));
+
+        this.instructionArray.push(Instructions.createLDC(VOID));
         this.instructionArray.push(this.breakStack[this.breakStack.length - 1][0]);
     }
 
-    visitContinueExpression (ctx: ContinueExpressionContext): void {
+    visitContinueExpression(ctx: ContinueExpressionContext): void {
         if (this.continueStack.length === 0) {
             throw new Error("Continue statement not within a loop");
         }
 
-        const depth = this. env.length - this.continueStack[this.continueStack.length - 1][1];
-        
+        const depth = this.env.length - this.continueStack[this.continueStack.length - 1][1];
+
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
 
-        this.instructionArray.push(this.continueStack[this.continueStack.length-1][0]);
+        this.instructionArray.push(this.continueStack[this.continueStack.length - 1][0]);
 
     }
 

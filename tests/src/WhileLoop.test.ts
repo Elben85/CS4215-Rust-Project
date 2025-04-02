@@ -99,6 +99,64 @@ describe('While Loop Tests', () => {
         `
         expect(Evaluate(program)).toBe(9);
     });
+
+    it(`test break return correct value`, () => {
+        const program = `
+            let mut i = 0;
+            let mut j = while i < 10 {
+                i;
+                break;
+            };
+            j;
+        `
+        expect(Evaluate(program)).toBe(VOID);
+    })
+
+    it(`test continue return correct value`, () => {
+        const program = `
+            let mut i = 0;
+            let mut j = while i < 10 {
+                i = i + 1;
+            };
+            j;
+            
+        `
+        expect(Evaluate(program)).toBe(VOID);
+    })
+
+    it(`test break env restoration`, () => {
+        const program = `
+            let mut i = 0;
+            while true {
+                let mut i = 1;
+                {
+                    let mut i = 2;
+                    break;
+                }
+            };
+            i;
+        `
+        expect(Evaluate(program)).toBe(0);
+    })
+
+    it(`test continue env restoration`, () => {
+        const program = `
+            let mut i = 0;
+            let mut j = 0;
+
+            while j < 10 {
+                let mut i = 1;
+                {
+                    let mut i = 2;
+                    j = j + 1;
+                    continue;
+                }
+                let mut i = 2;
+            };
+            i;
+        `
+        expect(Evaluate(program)).toBe(0);
+    })
 });
 
 describe('While Loop Type Tests', () => {
