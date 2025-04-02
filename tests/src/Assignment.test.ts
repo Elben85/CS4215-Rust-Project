@@ -60,7 +60,15 @@ describe('Assignment Type Tests', () => {
     it(`test reassignment`, () => {
         const program = `
         let i = 10;
-        i = 20
+        i = 20;
+        `
+        expect(() => EvaluateType(program)).toThrowError();
+    })
+
+    it(`access unitialized var`, () => {
+        const program = `
+        let i: i32;
+        i;
         `
         expect(() => EvaluateType(program)).toThrowError();
     })

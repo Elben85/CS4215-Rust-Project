@@ -10,12 +10,12 @@ export class StringType extends Type {
     return this.instance ?? (this.instance = new StringType());
   }
 
-  toString(): string { 
-    return "string"; 
+  toString(): string {
+    return "string";
   }
 
-  compare(other: Type): boolean { 
-    return other instanceof StringType; 
+  compare(other: Type): boolean {
+    return other instanceof StringType;
   }
 }
 
@@ -53,7 +53,7 @@ export class VoidType extends Type {
   private static instance: VoidType | null = null;
   private constructor() { super(); }
   static getInstance(): VoidType {
-    return this.instance == null ? (new VoidType()): new VoidType();
+    return this.instance == null ? (new VoidType()) : new VoidType();
   }
   toString(): string { return "()"; }
   compare(other: Type): boolean { return other instanceof VoidType; }
@@ -87,7 +87,10 @@ export class FunctionType extends Type {
 }
 
 export class PointerType extends Type {
-  constructor(public readonly baseType: Type) {
+  constructor(
+    public readonly baseType: Type,
+    public isMutable: boolean
+  ) {
     super();
   }
 
@@ -96,7 +99,14 @@ export class PointerType extends Type {
   }
 
   compare(other: Type): boolean {
-    return other instanceof PointerType && this.baseType.compare(other.baseType);
+    return other instanceof PointerType
+      && this.baseType.compare(other.baseType)
+      && this.isMutable === other.isMutable
+      ;
+  }
+
+  copy(): PointerType {
+    return new PointerType(this.baseType, this.isMutable);
   }
 }
 

@@ -15,14 +15,17 @@ import {
     MultiplicationDivisionContext,
     BlockExpressionContext,
     BlockBodyContext,
-    UnopContext,
     IfExpressionContext,
     PredicateLoopExpressionContext,
     AssignmentExpressionsContext,
-    NegationExpressionContext
+    NegationExpressionContext,
+    ContinueExpressionContext,
+    BreakExpressionContext,
+    DereferenceExpressionContext,
+    BorrowExpressionContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, NUMBER_TYPE, stringToType, Type, VOID_TYPE } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, stringToType, Type, VOID_TYPE } from './Type';
 
 interface identifierInformation {
     type: Type | string,
@@ -33,11 +36,13 @@ interface identifierInformation {
 export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
     private typeEnv: any[];
     private isFirstStatement: boolean;
+    private expectLvalue: boolean;
 
     public constructor() {
         super();
         this.typeEnv = [];
         this.isFirstStatement = true;
+        this.expectLvalue = false;
     }
 
     // TYPE ENV
@@ -233,8 +238,11 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         }
 
         const type = identifierInfo.type;
-
-        return type;
+        if (this.expectLvalue) {
+            return new PointerType(type, identifierInfo.is_mutable);
+        } else {
+            return type
+        }
     }
 
     visitBlockExpression(ctx: BlockExpressionContext): Type {
@@ -345,27 +353,76 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         return bodyType;
     }
 
+    visitContinueExpression(ctx: ContinueExpressionContext): Type { return VOID_TYPE }
+    visitBreakExpression(ctx: BreakExpressionContext): Type { return VOID_TYPE };
+
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
-        const identifier: string = ctx.accessIdentifier().getText();
-        const identifierInfo: identifierInformation = this.lookupType(identifier, this.typeEnv)
-
-        if (identifierInfo.assigned && !identifierInfo.is_mutable) {
-            throw new Error(`Trying to reassign to immutable variable: ${identifier}`)
-        }
-
-        let identifierType: Type = <Type>identifierInfo.type;
         const expressionType: Type = this.visit(ctx.expression());
 
-        if (identifierType === null) {
-            identifierInfo.type = expressionType;
-            identifierType = expressionType;
-        } else if (identifierType !== expressionType) {
+        if (ctx.accessIdentifier()) {
+            const identifier: string = ctx.accessIdentifier().getText();
+            const identifierInfo: identifierInformation = this.lookupType(identifier, this.typeEnv)
+            if (identifierInfo.type === null) {
+                identifierInfo.type = expressionType;
+                return expressionType;
+            }
+        }
+
+        const tmp = this.expectLvalue;
+        this.expectLvalue = true;
+        const assigneeType = this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
+        this.expectLvalue = tmp;
+
+        if (!(assigneeType instanceof PointerType)) {
+            throw new Error(`Invalid assignee expression:\n${ctx.getText()}`);
+        }
+
+        if (!(<PointerType>assigneeType).isMutable) {
+            throw new Error(`Trying to assign to an immutable reference:\n${ctx.getText()}`);
+        }
+
+        const expectedType: Type = assigneeType.baseType;
+        if (!expectedType.compare(expressionType)) {
             throw new Error(
-                `Incompatible types: trying to assign ${expressionType} to variable`
-                + ` ${identifier} of type ${identifierType}`
+                `Incompatible types in assignment expression ${ctx.getText()}. Received:`
+                + ` ${expressionType.toString()}, Expected: ${expectedType.toString()}`
             );
         }
 
-        return identifierType;
+        return expressionType;
+    }
+
+    visitDereferenceExpression(ctx: DereferenceExpressionContext): Type {
+        let type: Type;
+        if (ctx.accessIdentifier()) {
+            type = this.visit(ctx.accessIdentifier());
+        } else {
+            type = this.visit(ctx.dereferenceExpression());
+        }
+        if (!(type instanceof PointerType)) {
+            throw new Error(`Trying to dereference a non-pointer ${ctx.getText()}`);
+        }
+        return (type as PointerType).baseType;
+    }
+
+    visitBorrowExpression(ctx: BorrowExpressionContext): Type {
+        const mut: boolean = ctx.mutable() !== null;
+        const tmp = this.expectLvalue;
+        this.expectLvalue = true;
+        let type: Type = this.visit(ctx.accessIdentifier());
+        this.expectLvalue = tmp;
+
+        if (!(type instanceof PointerType)) {
+            type = new PointerType(type, true);
+        }
+
+        if (mut && !(type as PointerType).isMutable) {
+            throw new Error(`Mutable borrow from non mutable: ${ctx.getText()}`)
+        }
+
+        let result = (type as PointerType).copy();
+        result.isMutable = mut;
+
+        return result;
     }
 }
