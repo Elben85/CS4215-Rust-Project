@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
+import { Evaluate, EvaluateType } from "./setup";
 import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
 
 describe('If Else Tests', () => {
@@ -7,13 +7,13 @@ describe('If Else Tests', () => {
         const program = `
             if (true) { 1 } else { 2 }
         `
-        expect(Evaluate(program)).toBe(1);
+        expect(program).toEvaluateTo(1);
     });
     it('false expression', () => {
         const program = `
             if (false) { 1 } else { 2 }
         `
-        expect(Evaluate(program)).toBe(2);
+        expect(program).toEvaluateTo(2);
     });
     it('nested conditional', () => {
         const program = `
@@ -27,7 +27,7 @@ describe('If Else Tests', () => {
                 4
             }
         `
-        expect(Evaluate(program)).toBe(4);
+        expect(program).toEvaluateTo(4);
     });
 });
 
@@ -36,14 +36,14 @@ describe('If Else Type Tests', () => {
         const program = `
             if (true) { 1 } else { 2 }
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     });
 
     it('If Else Type 2', () => {
         const program = `
             if (false) { 1; }
         `
-        expect(EvaluateType(program)).toBe(VOID_TYPE);
+        expect(program).toBeEqualType(VOID_TYPE);
     });
 
     it('If Else Type 3', () => {
@@ -54,14 +54,14 @@ describe('If Else Type Tests', () => {
                 true 
             }
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     });
 
     it('If Else Type 4', () => {
         const program = `
             if (true) { 1 }
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it('If Else Type 5', () => {
@@ -74,6 +74,6 @@ describe('If Else Type Tests', () => {
                 1 >= 2
             }
         `
-        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE)
+        expect(program).toBeEqualType(BOOLEAN_TYPE);
     })
 });

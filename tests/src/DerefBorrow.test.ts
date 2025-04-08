@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
+import { Evaluate, EvaluateType } from "./setup";
 import { PointerType, NUMBER_TYPE, NumberType } from '../../src/typeChecker/Type';
 
 describe('Deref Borrow Expression test', () => {
@@ -11,7 +11,7 @@ describe('Deref Borrow Expression test', () => {
             let d = **c;
             d;
         `
-        expect(Evaluate(program)).toBe(1);
+        expect(program).toEvaluateTo(1);
     });
 
     it('deref borrow 2', () => {
@@ -24,7 +24,7 @@ describe('Deref Borrow Expression test', () => {
             let d = **c;
             d;
         `
-        expect(Evaluate(program)).toBe(69);
+        expect(program).toEvaluateTo(69);
     });
 });
 
@@ -37,7 +37,7 @@ describe('Deref Borrow Type test', () => {
             let d = **c;
             d;
         `
-        expect(EvaluateType(program).compare(NUMBER_TYPE)).toBe(true);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     });
 
     it('deref borrow 2', () => {
@@ -49,15 +49,15 @@ describe('Deref Borrow Type test', () => {
             **c = **c + 59;
             *c;
         `
-        expect(EvaluateType(program).compare(new PointerType(NUMBER_TYPE, true))).toBe(true);
+        expect(program).toBeEqualType(new PointerType({ value: NUMBER_TYPE }, true));
     });
 
     it('deref borrow 3', () => {
         const program = `
             let a = 1;
-            let mut  b = &mut a;
+            let mut b = &mut a;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it('deref borrow 4', () => {
@@ -67,7 +67,7 @@ describe('Deref Borrow Type test', () => {
             *b = 2;
             b;
         `
-        expect(EvaluateType(program).compare(new PointerType(NUMBER_TYPE, true))).toBe(true);
+        expect(program).toBeEqualType(new PointerType({ value: NUMBER_TYPE }, true));
     })
 
     it('deref borrow 5', () => {
@@ -78,10 +78,10 @@ describe('Deref Borrow Type test', () => {
             c; 
         `
         const expected = new PointerType(
-            new PointerType(NUMBER_TYPE, true),
+            { value: new PointerType({ value: NUMBER_TYPE }, true) },
             false
         )
-        expect(EvaluateType(program).compare(expected)).toBe(true);
+        expect(program).toBeEqualType(expected);
     })
 
     it('deref borrow 6', () => {
@@ -91,8 +91,8 @@ describe('Deref Borrow Type test', () => {
             let mut c = b;
             c;
         `
-        const expected = new PointerType(NUMBER_TYPE, true);
-        expect(EvaluateType(program).compare(expected)).toBe(true);
+        const expected = new PointerType({ value: NUMBER_TYPE }, true);
+        expect(program).toBeEqualType(expected);
     })
 
     // TODO

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Compile, Evaluate, EvaluateType } from "./util";
+import { Compile, Evaluate, EvaluateType } from "./setup";
 import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
 import { VOID } from '../../src/compiler/compiler';
 
@@ -12,7 +12,7 @@ describe('While Loop Tests', () => {
             }
             i;
         `
-        expect(Evaluate(program)).toBe(10);
+        expect(program).toEvaluateTo(10);
     });
 
     it('while produce void', () => {
@@ -22,7 +22,7 @@ describe('While Loop Tests', () => {
                 i = i + 1;
             }
         `
-        expect(Evaluate(program)).toBe(VOID);
+        expect(program).toEvaluateTo(VOID);
     });
 
     it('normal loop with break statement', () => {
@@ -34,7 +34,7 @@ describe('While Loop Tests', () => {
             }
             i;
         `
-        expect(Evaluate(program)).toBe(1);
+        expect(program).toEvaluateTo(1);
     });
 
     it('double while loop with break statement', () => {
@@ -59,7 +59,7 @@ describe('While Loop Tests', () => {
             }
             j;
         `
-        expect(Evaluate(program)).toBe(3);
+        expect(program).toEvaluateTo(3);
     });
 
     it('loop with deep break statement', () => {
@@ -81,7 +81,7 @@ describe('While Loop Tests', () => {
             }
             i;
         `
-        expect(Evaluate(program)).toBe(2);
+        expect(program).toEvaluateTo(2);
     });
 
     it('normal loop with continue statement', () => {
@@ -97,7 +97,7 @@ describe('While Loop Tests', () => {
             }
             j;
         `
-        expect(Evaluate(program)).toBe(9);
+        expect(program).toEvaluateTo(9);
     });
 
     it(`test break return correct value`, () => {
@@ -109,7 +109,7 @@ describe('While Loop Tests', () => {
             };
             j;
         `
-        expect(Evaluate(program)).toBe(VOID);
+        expect(program).toEvaluateTo(VOID);
     })
 
     it(`test continue return correct value`, () => {
@@ -121,7 +121,7 @@ describe('While Loop Tests', () => {
             j;
             
         `
-        expect(Evaluate(program)).toBe(VOID);
+        expect(program).toEvaluateTo(VOID);
     })
 
     it(`test break env restoration`, () => {
@@ -136,7 +136,7 @@ describe('While Loop Tests', () => {
             };
             i;
         `
-        expect(Evaluate(program)).toBe(0);
+        expect(program).toEvaluateTo(0);
     })
 
     it(`test continue env restoration`, () => {
@@ -155,7 +155,7 @@ describe('While Loop Tests', () => {
             };
             i;
         `
-        expect(Evaluate(program)).toBe(0);
+        expect(program).toEvaluateTo(0);
     })
 });
 
@@ -167,7 +167,7 @@ describe('While Loop Type Tests', () => {
                 i = i + 1;
             }
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     });
 
     it('While loop always evaluate to type void', () => {
@@ -177,7 +177,7 @@ describe('While Loop Type Tests', () => {
                 i = i + 1;
             }
         `
-        expect(EvaluateType(program)).toBe(VOID_TYPE);
+        expect(program).toBeEqualType(VOID_TYPE);
     });
 
     it('While loop body must be of type void', () => {
@@ -188,6 +188,6 @@ describe('While Loop Type Tests', () => {
             }
         `
 
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
+import { Evaluate, EvaluateType } from "./setup";
 import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
 
 describe('Let Statement Test', () => {
@@ -11,7 +11,7 @@ describe('Let Statement Test', () => {
             let d = 4;
             a * a + b * b + c * c + d * d;
         `
-        expect(Evaluate(program)).toBe(30);
+        expect(program).toEvaluateTo(30);
     });
 });
 
@@ -22,8 +22,7 @@ describe('Let Statement Type Test', () => {
                 let a = 2+3;
                 let c = b * a;
             `
-        expect(EvaluateType(program)).toBe(VOID_TYPE);
-
+        expect(program).toBeEqualType(VOID_TYPE);
     });
 
     it('Let Type 2 ', () => {
@@ -33,7 +32,7 @@ describe('Let Statement Type Test', () => {
             let c = b * a;
             c;
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
 
     });
 
@@ -45,8 +44,7 @@ describe('Let Statement Type Test', () => {
             let d = b * a;
             c;
         `
-        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
-
+        expect(program).toBeEqualType(BOOLEAN_TYPE);
     });
 
     it('Let Type 4', () => {
@@ -54,7 +52,7 @@ describe('Let Statement Type Test', () => {
             let a = false;
             true || false && a;
         `
-        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
+        expect(program).toBeEqualType(BOOLEAN_TYPE);
 
     });
 
@@ -63,7 +61,7 @@ describe('Let Statement Type Test', () => {
             let a = true;
             (1 > 2) && a;
         `
-        expect(EvaluateType(program)).toBe(BOOLEAN_TYPE);
+        expect(program).toBeEqualType(BOOLEAN_TYPE);
     });
 
     it('Access uninitialized', () => {
@@ -71,17 +69,17 @@ describe('Let Statement Type Test', () => {
             let a;
             a * 1;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it('Conflicting declared type', () => {
         const program = `
             let a: f64 = true;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it('Correct declared type', () => {
-        expect(EvaluateType(`let a: bool = true;`)).toBe(VOID_TYPE);
+        expect(`let a: bool = true;`).toBeEqualType(VOID_TYPE);
     })
 })
