@@ -35,14 +35,23 @@ export class BoxedType {
   public useBorrow(pointer: PointerType) {
     if (pointer.isMutable && this.mutableBorrowers.includes(pointer)) {
       return;
-    } else if (!pointer.isMutable && this.mutableBorrowers.includes(pointer)) {
+    } else if (!pointer.isMutable && this.sharedBorrowers.includes(pointer)) {
       return;
+    } else {
+      console.error(this);
+      console.error(pointer);
+      throw new Error("Invalid borrow");
     }
   }
 
-  public useAsOwner(asMutable: boolean) {
+  public useAsOwner(asMutable: boolean, asLvalue: boolean) {
     this.mutableBorrowers = [];
     if (asMutable) this.sharedBorrowers = [];
+    if (asLvalue) return;
+    if (!(this.value instanceof PointerType)) return;
+
+    const pointer: PointerType = <PointerType>this.value
+    pointer.baseType.useBorrow(pointer);
   }
 }
 
@@ -160,7 +169,6 @@ export class PointerType extends Type {
     public isMutable: boolean,
   ) {
     super();
-    baseType.addBorrow(this)
   }
 
   toString(): string {

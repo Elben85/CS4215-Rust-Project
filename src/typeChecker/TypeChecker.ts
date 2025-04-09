@@ -1,4 +1,4 @@
-import { AbstractParseTreeVisitor } from 'antlr4ng';
+import { AbstractParseTreeVisitor, ParseTree } from 'antlr4ng';
 import {
     BracketContext,
     PrimitiveContext,
@@ -37,13 +37,15 @@ export interface identifierInformation {
 export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
     private typeEnv: any[];
     private isFirstStatement: boolean;
-    private expectLvalue: boolean;
+    private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
+    private useForMutable: boolean; // indicate whether a variable will be used for read / write 
 
     public constructor() {
         super();
         this.typeEnv = [];
         this.isFirstStatement = true;
         this.expectLvalue = false;
+        this.useForMutable = false;
     }
 
     // TYPE ENV
@@ -115,12 +117,20 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     copyOrMove(type: Type): Type {
-        return type.copyable() ? type.copy() : type;
+        if (!type.copyable()) {
+            return type
+        }
+        type = type.copy();
+        if (type instanceof PointerType) {
+            type.baseType.addBorrow(type);
+        }
+        return type
     }
 
     // return the copied / moved type owned by the identifier
     updateOwner(type: Type, identifier: identifierInformation): Type {
         type = this.copyOrMove(type);
+
         if (type.owner) {
             type.owner.owns.value = null;
         }
@@ -149,6 +159,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         this.typeEnv = currentEnv;
         return result;
+    }
+
+    private visitWithFlags(ctx: ParseTree, expectLvalue?: boolean, useForMutable?: boolean): Type {
+        const oldLvalue = this.expectLvalue;
+        const oldUseForMutable = this.useForMutable
+        if (expectLvalue !== undefined) {
+            this.expectLvalue = expectLvalue;
+        }
+        if (useForMutable !== undefined) {
+            this.useForMutable = useForMutable
+        }
+        const result = this.visit(ctx);
+
+        this.expectLvalue = oldLvalue;
+        this.useForMutable = oldUseForMutable;
+        return result
     }
 
     checkType(ctx: ProgContext): Type {
@@ -272,6 +298,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const identifierInfo = this.lookupType(identifier, this.typeEnv);
 
         const type: BoxedType = identifierInfo.owns;
+
+        type.useAsOwner(this.useForMutable, this.expectLvalue);
+
         if (this.expectLvalue) {
             return new PointerType(type, identifierInfo.is_mutable);
         }
@@ -404,10 +433,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
         const expressionType: Type = this.visit(ctx.expression());
-        const tmp = this.expectLvalue;
-        this.expectLvalue = true;
-        const assigneeType = this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
-        this.expectLvalue = tmp;
+        const assigneeType = this.visitWithFlags(
+            ctx.accessIdentifier() || ctx.dereferenceExpression(),
+            true, true
+        )
 
         if (!(assigneeType instanceof PointerType)) {
             throw new Error(`Invalid assignee expression:\n${ctx.getText()}`);
@@ -430,6 +459,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitDereferenceExpression(ctx: DereferenceExpressionContext): Type {
+        console.log(ctx.getText());
         let type: Type;
         if (ctx.accessIdentifier()) {
             type = this.visit(ctx.accessIdentifier());
@@ -439,15 +469,32 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (!(type instanceof PointerType)) {
             throw new Error(`Trying to dereference a non-pointer ${ctx.getText()}`);
         }
-        return (type as PointerType).baseType.value;
+
+        const pointer = type as PointerType;
+
+        const dereferencedType = pointer.baseType.value;
+
+        if (
+            this.useForMutable
+            && (dereferencedType instanceof PointerType)
+            && !(dereferencedType as PointerType).isMutable
+        ) {
+            throw new Error("Trying to mutate value under immutable reference");
+        }
+
+
+        if (dereferencedType instanceof PointerType) {
+            dereferencedType.baseType.useBorrow(dereferencedType);
+        }
+
+        return dereferencedType;
     }
 
     visitBorrowExpression(ctx: BorrowExpressionContext): Type {
         const mut: boolean = ctx.mutable() !== null;
-        const tmp = this.expectLvalue;
-        this.expectLvalue = true;
-        let type: Type = this.visit(ctx.accessIdentifier());
-        this.expectLvalue = tmp;
+        let type = this.visitWithFlags(
+            ctx.accessIdentifier(), true, this.useForMutable
+        )
 
         if (!(type instanceof PointerType)) {
             type = new PointerType(new BoxedType(type), true);
@@ -459,6 +506,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let result = (type as PointerType).copy();
         result.isMutable = mut;
+        result.baseType.addBorrow(result);
         return result;
     }
 }
