@@ -25,13 +25,13 @@ import {
     BorrowExpressionContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, BooleanType, Boxed, NUMBER_TYPE, NumberType, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType } from './Type';
+import { BOOLEAN_TYPE, BooleanType, BoxedType, NUMBER_TYPE, NumberType, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType } from './Type';
 
 export interface identifierInformation {
     type: Type | string, // type of identifer
     is_mutable: boolean, // is the identifier mutable?
     assigned: true, // whether identifier has been initialized
-    owns: Boxed<Type | null> // the type object the identifier owns
+    owns: BoxedType // the type object the identifier owns
 }
 
 export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
@@ -110,7 +110,6 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             if (info.owns.value) {
                 info.owns.value.owner = null;
                 info.owns.value.drop();
-                info.owns.value = null;
             }
         }
     }
@@ -121,11 +120,12 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     // return the copied / moved type owned by the identifier
     updateOwner(type: Type, identifier: identifierInformation): Type {
-        let oldType: Type = null;
         type = this.copyOrMove(type);
         if (type.owner) {
-            type.owner.owns = { value: null };
+            type.owner.owns.value = null;
         }
+
+        let oldType: Type = null;
         if (identifier.owns.value) {
             oldType = identifier.owns.value
             oldType.owner = null;
@@ -198,11 +198,12 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             declaredType = expressionType;
         }
         const identifierInfo = <identifierInformation>{
-            type: declaredType,
+            type: declaredType.copy(),
             is_mutable: is_mutable,
             assigned: assigned,
-            owns: { value: null }
-        }
+            owns: new BoxedType(null)
+        };
+        (<Type>identifierInfo.type).owner = identifierInfo;
         this.addIdentifierType(identifier, identifierInfo);
         this.updateOwner(declaredType, identifierInfo);
 
@@ -270,17 +271,17 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         let identifier: string = ctx.IDENTIFIER().getText();
         const identifierInfo = this.lookupType(identifier, this.typeEnv);
 
-        const type = identifierInfo.owns;
+        const type: BoxedType = identifierInfo.owns;
         if (this.expectLvalue) {
             return new PointerType(type, identifierInfo.is_mutable);
         }
         if (!identifierInfo.assigned) {
             throw new Error(`Trying to access unassigned variable ${identifier}`)
         }
-        if (!identifierInfo.owns) {
+        if (!identifierInfo.owns.value) {
             throw new Error(`Value for variable ${identifier} has been moved`)
         }
-        if (!identifierInfo.type.isValid()) {
+        if (!identifierInfo.owns.value.isValid()) {
             throw new Error(`Variable ${identifier} refers to a value that does not live long enough`)
         }
         return type.value
@@ -449,7 +450,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         this.expectLvalue = tmp;
 
         if (!(type instanceof PointerType)) {
-            type = new PointerType({ value: type }, true);
+            type = new PointerType(new BoxedType(type), true);
         }
 
         if (mut && !(type as PointerType).isMutable) {
@@ -458,7 +459,6 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let result = (type as PointerType).copy();
         result.isMutable = mut;
-
         return result;
     }
 }

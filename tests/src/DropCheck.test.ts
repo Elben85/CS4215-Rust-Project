@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { NUMBER_TYPE, NumberType, Type } from '../../src/typeChecker/Type';
 
 describe('Drop Checker', () => {
     it('access dropped value', () => {

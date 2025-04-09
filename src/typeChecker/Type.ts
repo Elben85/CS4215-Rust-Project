@@ -1,7 +1,49 @@
 import type { identifierInformation } from "./TypeChecker";
 
-export type Boxed<T> = {
-  value: T
+// corresponds to a "region" a pointer is pointing to
+export class BoxedType {
+  public value: Type
+  public mutableBorrowers: PointerType[]
+  public sharedBorrowers: PointerType[]
+
+  public constructor(value: Type) {
+    this.value = value;
+    this.mutableBorrowers = []
+    this.sharedBorrowers = []
+  }
+
+  public addBorrow(pointer: PointerType) {
+    pointer.isMutable
+      ? this.addMutableBorrow(pointer)
+      : this.addSharedBorrow(pointer)
+  }
+
+  public addMutableBorrow(pointer: PointerType) {
+    if (this.sharedBorrowers.length > 0) {
+      this.sharedBorrowers = []
+    }
+    this.mutableBorrowers = [pointer];
+  }
+
+  public addSharedBorrow(pointer: PointerType) {
+    if (this.mutableBorrowers.length > 0) {
+      this.mutableBorrowers = []
+    }
+    this.sharedBorrowers.push(pointer);
+  }
+
+  public useBorrow(pointer: PointerType) {
+    if (pointer.isMutable && this.mutableBorrowers.includes(pointer)) {
+      return;
+    } else if (!pointer.isMutable && this.mutableBorrowers.includes(pointer)) {
+      return;
+    }
+  }
+
+  public useAsOwner(asMutable: boolean) {
+    this.mutableBorrowers = [];
+    if (asMutable) this.sharedBorrowers = [];
+  }
 }
 
 export abstract class Type {
@@ -114,10 +156,11 @@ export class VoidType extends Type {
 
 export class PointerType extends Type {
   constructor(
-    public baseType: Boxed<Type>,
+    public baseType: BoxedType,
     public isMutable: boolean,
   ) {
     super();
+    baseType.addBorrow(this)
   }
 
   toString(): string {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
-import { PointerType, NUMBER_TYPE, NumberType } from '../../src/typeChecker/Type';
+import { PointerType, NUMBER_TYPE, NumberType, BoxedType } from '../../src/typeChecker/Type';
 
 describe('Deref Borrow Expression test', () => {
     it('deref borrow 1', () => {
@@ -49,7 +49,7 @@ describe('Deref Borrow Type test', () => {
             **c = **c + 59;
             *c;
         `
-        expect(program).toBeEqualType(new PointerType({ value: NUMBER_TYPE }, true));
+        expect(program).toBeEqualType(new PointerType(new BoxedType(NUMBER_TYPE), true));
     });
 
     it('deref borrow 3', () => {
@@ -67,7 +67,7 @@ describe('Deref Borrow Type test', () => {
             *b = 2;
             b;
         `
-        expect(program).toBeEqualType(new PointerType({ value: NUMBER_TYPE }, true));
+        expect(program).toBeEqualType(new PointerType(new BoxedType(NUMBER_TYPE), true));
     })
 
     it('deref borrow 5', () => {
@@ -78,7 +78,7 @@ describe('Deref Borrow Type test', () => {
             c; 
         `
         const expected = new PointerType(
-            { value: new PointerType({ value: NUMBER_TYPE }, true) },
+            new BoxedType(new PointerType(new BoxedType(NUMBER_TYPE), true)),
             false
         )
         expect(program).toBeEqualType(expected);
@@ -91,7 +91,7 @@ describe('Deref Borrow Type test', () => {
             let mut c = b;
             c;
         `
-        const expected = new PointerType({ value: NUMBER_TYPE }, true);
+        const expected = new PointerType(new BoxedType(NUMBER_TYPE), true);
         expect(program).toBeEqualType(expected);
     })
 
