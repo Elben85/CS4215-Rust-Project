@@ -1,6 +1,8 @@
 List of instructions:
+
 - `LDC`
-Push literal into stack
+  Push literal into stack
+
 ```
 {
     tag: "LDC",
@@ -9,7 +11,8 @@ Push literal into stack
 ```
 
 - `BINOP`
-Apply `op` to `Arg1` and `Arg2`. Both args are expected to be on the stack
+  Apply `op` to `Arg1` and `Arg2`. Both args are expected to be on the stack
+
 ```
 {
     tag: "BINOP",
@@ -18,12 +21,13 @@ Apply `op` to `Arg1` and `Arg2`. Both args are expected to be on the stack
 ```
 
 - `POP`
-Pop the topmost value on the stack
-`{ tag: "POP" }`
+  Pop the topmost value on the stack
+  `{ tag: "POP" }`
 
 - `ASSIGN`
-Assign topmost stack value to specified address (which should be a pointer). Push the assigned value back to stack.
-The instructions expects both the pointer address and the value on the stack.
+  Assign topmost stack value to specified address (which should be a pointer).
+  The instructions expects both the pointer address and the value on the stack.
+
 ```
 {
     tag: "ASSIGN",
@@ -31,7 +35,8 @@ The instructions expects both the pointer address and the value on the stack.
 ```
 
 - `LDA`
-Load the address of the pointer at `frameIndex` and `valueIndex` to the stack
+  Load the address of the pointer at `frameIndex` and `valueIndex` to the stack
+
 ```
 {
     tag: "LDA",
@@ -40,7 +45,8 @@ Load the address of the pointer at `frameIndex` and `valueIndex` to the stack
 ```
 
 - `LD`
-Load the value at `frameIndex` and `valueIndex` to the stack
+  Load the value at `frameIndex` and `valueIndex` to the stack
+
 ```
 {
     tag: "LD",
@@ -49,7 +55,8 @@ Load the value at `frameIndex` and `valueIndex` to the stack
 ```
 
 - `ENTER_SCOPE`
-Extend the env with a frame of given length. Push the old env to the runtime stack
+  Extend the env with a frame of given length. Push the old env to the runtime stack
+
 ```
 {
     tag: "ENTER_SCOPE",
@@ -58,12 +65,12 @@ Extend the env with a frame of given length. Push the old env to the runtime sta
 ```
 
 - `EXIT_SCOPE`
-Restore the address of the env to one on top of the runtime stack.
-`{ tag: "EXIT_SCOPE" }`
-
+  Restore the address of the env to one on top of the runtime stack.
+  `{ tag: "EXIT_SCOPE" }`
 
 - `UNOP`
-Execute unary operator. Gets argument from stack
+  Execute unary operator. Gets argument from stack
+
 ```
 {
     tag: "UNOP",
@@ -72,7 +79,8 @@ Execute unary operator. Gets argument from stack
 ```
 
 - `JOF`
-jump to address if the top of the stack evaluates to false
+  jump to address if the top of the stack evaluates to false
+
 ```
 {
     tag: "JOF",
@@ -80,8 +88,9 @@ jump to address if the top of the stack evaluates to false
 }
 ```
 
--  `GOTO`
-jump to address
+- `GOTO`
+  jump to address
+
 ```
 {
     tag: "GOTO",
@@ -90,7 +99,8 @@ jump to address
 ```
 
 - `DEREF`
-dereference a pointer to the location it points to. expects a pointer on top of the stack
+  dereference a pointer to the location it points to. expects a pointer on top of the stack
+
 ```
 {
     tag: "DEREF"
@@ -98,16 +108,17 @@ dereference a pointer to the location it points to. expects a pointer on top of 
 ```
 
 - `BORROW`
-Produce a pointer to a heap address of the borrowed value. Expects the address of the borrowed value on top of the stack. 
+  Produce a pointer to a heap address of the borrowed value. Expects the address of the borrowed value on top of the stack.
+
 ```
 {
     tag: "BORROW"
 }
 ```
 
-
 - `LDF`
-Creates a closure on the heap and pushes its address onto the operand stack. Takes the function's arity and address, and captures the current environment.
+  Creates a closure on the heap and pushes its address onto the operand stack. Takes the function's arity and address, and captures the current environment.
+
 ```
 {
     tag: "LDF",
@@ -116,8 +127,9 @@ Creates a closure on the heap and pushes its address onto the operand stack. Tak
 }
 ```
 
-- `RESET`    
-Restores the previous execution context by popping the top frame from the return stack. If the frame is a call frame, it restores the program counter and environment from it.
+- `RESET`  
+  Restores the previous execution context by popping the top frame from the return stack. If the frame is a call frame, it restores the program counter and environment from it.
+
 ```
 {
     tag: "RESET"
@@ -125,7 +137,8 @@ Restores the previous execution context by popping the top frame from the return
 ```
 
 - `CALL`
-Executes a function call. Takes the arity of the function. Expects the function address and arguments on the operand stack. Creates a call frame to save the current execution context, extends the environment with arguments, and jumps to the function's address.
+  Executes a function call. Takes the arity of the function. Expects the function address and arguments on the operand stack. Creates a call frame to save the current execution context, extends the environment with arguments, and jumps to the function's address.
+
 ```
 {
     tag: "CALL",

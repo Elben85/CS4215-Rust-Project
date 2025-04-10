@@ -76,7 +76,6 @@ const microcode = {
         const pointerAddr = OS.pop();
         const valueAddr = OS.pop();
         Pointer.setPointer(HEAP, pointerAddr, valueAddr)
-        OS.push(valueAddr);
         PC++;
     },
     LD: (instr) => {

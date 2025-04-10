@@ -455,7 +455,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             );
         }
         const resultType = this.updateOwner(expressionType, owner);
-        return resultType;
+        return VOID_TYPE;
     }
 
     visitDereferenceExpression(ctx: DereferenceExpressionContext): Type {

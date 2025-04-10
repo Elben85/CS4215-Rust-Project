@@ -1,24 +1,36 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
-import { NUMBER_TYPE, NumberType, Type } from '../../src/typeChecker/Type';
+import { NUMBER_TYPE, NumberType, Type, VOID_TYPE } from '../../src/typeChecker/Type';
+import { VOID } from '../../src/compiler/compiler';
 
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
         const program = `
             let mut i = 0;
             i = 69;
+            i;
         `
         expect(program).toEvaluateTo(69);
     });
 
     it('nested assignments', () => {
         const program = `
-            let mut i = 0;
-            let mut j = 0;
+            let mut i;
+            let mut j;
             i = j = 10;
-            i * j;
+            i;
         `
-        expect(program).toEvaluateTo(100);
+        expect(program).toEvaluateTo(VOID);
+    });
+
+    it('nested assignments 2', () => {
+        const program = `
+            let mut i;
+            let mut j;
+            i = j = 10;
+            j;
+        `
+        expect(program).toEvaluateTo(10);
     });
 });
 
@@ -27,17 +39,18 @@ describe('Assignment Type Tests', () => {
         const program = `
             let mut i = 0;
             i = 69;
+            i;
         `
         expect(program).toBeEqualType(NUMBER_TYPE);
     });
 
     it('assignment type 2', () => {
         const program = `
-            let mut i = 0;
-            let mut j = 0;
+            let mut i;
+            let mut j;
             i = j = 10;
         `
-        expect(program).toBeEqualType(NUMBER_TYPE);
+        expect(program).toBeEqualType(VOID_TYPE);
     });
 
     it(`assignment type 3`, () => {
@@ -53,6 +66,7 @@ describe('Assignment Type Tests', () => {
         const program = `
         let i;
         i = 10;
+        i;
         `
         expect(program).toBeEqualType(NUMBER_TYPE);
     })

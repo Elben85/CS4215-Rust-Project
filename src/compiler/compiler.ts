@@ -314,6 +314,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
         this.expectLvalue = tmp;
         this.instructionArray.push(Instructions.createAssign());
+        this.instructionArray.push(Instructions.createLDC(VOID));
     }
 
     visitClosureExpression(ctx: ClosureExpressionContext): void {
