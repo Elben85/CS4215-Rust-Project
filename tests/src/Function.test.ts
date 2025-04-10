@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Compile, Evaluate, EvaluateType } from "./util";
+import { Compile, Evaluate, EvaluateType } from "./setup";
 import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
 import { VOID } from '../../src/compiler/compiler';
 
