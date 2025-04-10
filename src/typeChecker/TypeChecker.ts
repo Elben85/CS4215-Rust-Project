@@ -107,8 +107,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     };
 
     dropFrame(frame: { [key: string]: identifierInformation }) {
-
         for (let info of Object.values(frame)) {
+            if ((<Type>info.type).compare(UNKNOWN_TYPE)) {
+                throw new Error(`Type annotation needed`)
+            }
             if (info.owns.value) {
                 info.owns.value.owner = null;
                 info.owns.value.drop();
@@ -186,10 +188,11 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const statements: StatementContext[] = ctx.statement();
 
         let type: Type = new VoidType();
+        const frame = {};
         for (let s of statements) {
-            type = this.visitWithEnvironment(s, this.typeEnv);
+            type = this.visitWithEnvironment(s, [...this.typeEnv, frame]);
         }
-
+        this.dropFrame(frame)
         return type;
     }
 

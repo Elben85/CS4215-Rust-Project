@@ -86,4 +86,8 @@ describe('Assignment Type Tests', () => {
         `
         expect(program).toFailTypeCheck();
     })
+
+    it(`no type could be inferred`, () => {
+        expect('let i;').toFailTypeCheck();
+    })
 });
