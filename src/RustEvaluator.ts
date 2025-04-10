@@ -1,6 +1,6 @@
 import { BasicEvaluator } from "conductor/dist/conductor/runner";
 import { IRunnerPlugin } from "conductor/dist/conductor/runner/types";
-import { CharStream, CommonTokenStream } from 'antlr4ng';
+import { BailErrorStrategy, CharStream, CommonTokenStream } from 'antlr4ng';
 import { SimpleLangLexer } from './parser/src/SimpleLangLexer';
 import { SimpleLangParser } from './parser/src/SimpleLangParser';
 import { CompilerVisitor } from "./compiler/compiler";
@@ -25,6 +25,7 @@ export class SimpleLangEvaluator extends BasicEvaluator {
             const lexer = new SimpleLangLexer(inputStream);
             const tokenStream = new CommonTokenStream(lexer);
             const parser = new SimpleLangParser(tokenStream);
+            parser.errorHandler = new BailErrorStrategy();
 
             // Parse the input
             const tree = parser.prog();

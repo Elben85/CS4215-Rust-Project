@@ -1,4 +1,4 @@
-import { CharStream, CommonTokenStream } from "antlr4ng";
+import { BailErrorStrategy, CharStream, CommonTokenStream } from "antlr4ng";
 import { evaluate } from "../../src/evaluator/evaluate";
 import { CompilerVisitor } from "../../src/compiler/compiler";
 import { SimpleLangLexer } from "../../src/parser/src/SimpleLangLexer";
@@ -7,16 +7,20 @@ import { TypeChecker } from "../../src/typeChecker/TypeChecker";
 import { expect } from "vitest";
 import { Type } from "../../src/typeChecker/Type";
 
-export function Evaluate(program: string) {
-    // Create the lexer and parser
+function getParseTree(program:string) {
     const inputStream = CharStream.fromString(program);
     const lexer = new SimpleLangLexer(inputStream);
     const tokenStream = new CommonTokenStream(lexer);
     const parser = new SimpleLangParser(tokenStream);
+    parser.errorHandler = new BailErrorStrategy();
 
     // Parse the input
     const tree = parser.prog();
+    return tree
+}
 
+export function Evaluate(program: string) {
+    const tree = getParseTree(program)
     // Compile the parsed tree
     const visitor = new CompilerVisitor()
     visitor.visit(tree);
@@ -28,14 +32,7 @@ export function Evaluate(program: string) {
 }
 
 export function EvaluateType(program: string) {
-    // Create the lexer and parser
-    const inputStream = CharStream.fromString(program);
-    const lexer = new SimpleLangLexer(inputStream);
-    const tokenStream = new CommonTokenStream(lexer);
-    const parser = new SimpleLangParser(tokenStream);
-
-    // Parse the input
-    const tree = parser.prog();
+    const tree = getParseTree(program)
 
     // Compile the parsed tree
     const visitor = new TypeChecker()
@@ -46,14 +43,7 @@ export function EvaluateType(program: string) {
 }
 
 export function Compile(program: string) {
-    // Create the lexer and parser
-    const inputStream = CharStream.fromString(program);
-    const lexer = new SimpleLangLexer(inputStream);
-    const tokenStream = new CommonTokenStream(lexer);
-    const parser = new SimpleLangParser(tokenStream);
-
-    // Parse the input
-    const tree = parser.prog();
+    const tree = getParseTree(program)
 
     // Compile the parsed tree
     const visitor = new CompilerVisitor()
