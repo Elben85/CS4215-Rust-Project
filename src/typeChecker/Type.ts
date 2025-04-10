@@ -1,95 +1,172 @@
+import type { identifierInformation } from "./TypeChecker";
+
+// corresponds to a "region" a pointer is pointing to
+export class BoxedType {
+  public value: Type
+  public mutableBorrowers: PointerType[]
+  public sharedBorrowers: PointerType[]
+
+  public constructor(value: Type) {
+    this.value = value;
+    this.mutableBorrowers = []
+    this.sharedBorrowers = []
+  }
+
+  public addBorrow(pointer: PointerType) {
+    pointer.isMutable
+      ? this.addMutableBorrow(pointer)
+      : this.addSharedBorrow(pointer)
+  }
+
+  public addMutableBorrow(pointer: PointerType) {
+    if (this.sharedBorrowers.length > 0) {
+      this.sharedBorrowers = []
+    }
+    this.mutableBorrowers = [pointer];
+  }
+
+  public addSharedBorrow(pointer: PointerType) {
+    if (this.mutableBorrowers.length > 0) {
+      this.mutableBorrowers = []
+    }
+    this.sharedBorrowers.push(pointer);
+  }
+
+  public useBorrow(pointer: PointerType) {
+    if (pointer.isMutable && this.mutableBorrowers.includes(pointer)) {
+      return;
+    } else if (!pointer.isMutable && this.sharedBorrowers.includes(pointer)) {
+      return;
+    } else {
+      console.error(this);
+      console.error(pointer);
+      throw new Error("Invalid borrow");
+    }
+  }
+
+  public useAsOwner(asMutable: boolean, asLvalue: boolean) {
+    this.mutableBorrowers = [];
+    if (asMutable) this.sharedBorrowers = [];
+    if (asLvalue) return;
+    if (!(this.value instanceof PointerType)) return;
+
+    const pointer: PointerType = <PointerType>this.value
+    pointer.baseType.useBorrow(pointer);
+  }
+}
+
 export abstract class Type {
+  public isDropped: boolean = false;
+  public owner: identifierInformation = null; //  identifier information 
+
   abstract toString(): string;
   abstract compare(other: Type): boolean;
+  abstract copyable(): boolean;
+  abstract isValid(): boolean;
+  abstract drop(): void;
+  copy?(): Type;
 }
 
-export class StringType extends Type {
-  private static instance: StringType | null = null;
-  private constructor() { super(); }
-  static getInstance(): StringType {
-    return this.instance ?? (this.instance = new StringType());
-  }
+// export class StringType extends Type {
+//   private static instance: StringType | null = null;
+//   private constructor() { super(); }
+//   static getInstance(): StringType {
+//     return this.instance ?? (this.instance = new StringType());
+//   }
 
-  toString(): string {
-    return "string";
-  }
+//   toString(): string {
+//     return "string";
+//   }
 
-  compare(other: Type): boolean {
-    return other instanceof StringType;
-  }
-}
+//   compare(other: Type): boolean {
+//     return other instanceof StringType;
+//   }
+// }
 
 export class NumberType extends Type {
-  private static instance: NumberType | null = null;
-  private constructor() { super(); }
-  static getInstance(): NumberType {
-    return this.instance ?? (this.instance = new NumberType());
-  }
+  public constructor() { super(); }
   toString(): string { return "number"; }
   compare(other: Type): boolean { return other instanceof NumberType; }
+  copyable(): boolean { return true; }
+  copy(): NumberType { return new NumberType(); }
+  drop(): void { this.isDropped = true; }
+  isValid(): boolean { return !this.isDropped; }
 }
 
 export class BooleanType extends Type {
-  private static instance: BooleanType | null = null;
-  private constructor() { super(); }
-  static getInstance(): BooleanType {
-    return this.instance ?? (this.instance = new BooleanType());
-  }
+  public constructor() { super(); }
   toString(): string { return "boolean"; }
   compare(other: Type): boolean { return other instanceof BooleanType; }
+  copyable(): boolean { return true; }
+  copy(): BooleanType { return new BooleanType(); }
+  drop(): void { this.isDropped = true; }
+  isValid(): boolean { return !this.isDropped; }
 }
 
-export class ObjectType extends Type {
-  private static instance: ObjectType | null = null;
-  private constructor() { super(); }
-  static getInstance(): ObjectType {
-    return this.instance ?? (this.instance = new ObjectType());
+// export class ObjectType extends Type {
+//   private static instance: ObjectType | null = null;
+//   private constructor() { super(); }
+//   static getInstance(): ObjectType {
+//     return this.instance ?? (this.instance = new ObjectType());
+//   }
+//   toString(): string { return "object"; }
+//   compare(other: Type): boolean { return other instanceof ObjectType; }
+// }
+
+export class UnknownType extends Type {
+  public constructor() {
+    super();
+    this.isDropped = true;
   }
-  toString(): string { return "object"; }
-  compare(other: Type): boolean { return other instanceof ObjectType; }
+  toString(): string { return "?"; }
+  compare(other: Type): boolean { return other instanceof UnknownType; }
+  copyable(): boolean { return false; }
+  copy(): UnknownType { return new UnknownType(); }
+  drop(): void { }
+  isValid(): boolean { return false; }
 }
 
 export class VoidType extends Type {
-  private static instance: VoidType | null = null;
-  private constructor() { super(); }
-  static getInstance(): VoidType {
-    return this.instance == null ? (new VoidType()) : new VoidType();
-  }
+  public constructor() { super(); }
   toString(): string { return "()"; }
   compare(other: Type): boolean { return other instanceof VoidType; }
+  copyable(): boolean { return true; }
+  copy(): VoidType { return new VoidType(); }
+  drop(): void { this.isDropped = true; }
+  isValid(): boolean { return !this.isDropped; }
 }
 
-export class FunctionType extends Type {
-  private constructor(
-    public readonly args: Type[],
-    public readonly returnType: Type
-  ) {
-    super();
-  }
+// export class FunctionType extends Type {
+//   private constructor(
+//     public readonly args: Type[],
+//     public readonly returnType: Type
+//   ) {
+//     super();
+//   }
 
-  static withType(args: Type[], returnType: Type) {
-    return new FunctionType(args, returnType)
-  }
+//   static withType(args: Type[], returnType: Type) {
+//     return new FunctionType(args, returnType)
+//   }
 
-  toString(): string {
-    const argsStr = this.args.map(arg => arg.toString()).join(", ");
-    return `fn(${argsStr}) -> ${this.returnType.toString()}`;
-  }
+//   toString(): string {
+//     const argsStr = this.args.map(arg => arg.toString()).join(", ");
+//     return `fn(${argsStr}) -> ${this.returnType.toString()}`;
+//   }
 
-  compare(other: Type): boolean {
-    return (
-      other instanceof FunctionType &&
-      this.returnType.compare(other.returnType) &&
-      this.args.length === other.args.length &&
-      this.args.every((arg, i) => arg.compare(other.args[i]))
-    );
-  }
-}
+//   compare(other: Type): boolean {
+//     return (
+//       other instanceof FunctionType &&
+//       this.returnType.compare(other.returnType) &&
+//       this.args.length === other.args.length &&
+//       this.args.every((arg, i) => arg.compare(other.args[i]))
+//     );
+//   }
+// }
 
 export class PointerType extends Type {
   constructor(
-    public readonly baseType: Type,
-    public isMutable: boolean
+    public baseType: BoxedType,
+    public isMutable: boolean,
   ) {
     super();
   }
@@ -100,22 +177,31 @@ export class PointerType extends Type {
 
   compare(other: Type): boolean {
     return other instanceof PointerType
-      && this.baseType.compare(other.baseType)
+      && this.baseType.value.compare(other.baseType.value)
       && this.isMutable === other.isMutable
       ;
   }
 
+  copyable(): boolean { return !this.isMutable; }
+
   copy(): PointerType {
     return new PointerType(this.baseType, this.isMutable);
+  }
+
+  drop(): void { this.isDropped = true; }
+
+  isValid(): boolean {
+    return !this.isDropped && this.baseType.value.isValid();
   }
 }
 
 // Type Instances
-export const STRING_TYPE = StringType.getInstance();
-export const NUMBER_TYPE = NumberType.getInstance();
-export const BOOLEAN_TYPE = BooleanType.getInstance();
-export const OBJECT_TYPE = ObjectType.getInstance();
-export const VOID_TYPE = VoidType.getInstance();
+// export const STRING_TYPE = StringType.getInstance();
+export const NUMBER_TYPE = new NumberType();
+export const BOOLEAN_TYPE = new BooleanType();
+// export const OBJECT_TYPE = ObjectType.getInstance();
+export const VOID_TYPE = new VoidType();
+export const UNKNOWN_TYPE = new UnknownType();
 
 export function stringToType(str: string): Type {
   switch (str) {

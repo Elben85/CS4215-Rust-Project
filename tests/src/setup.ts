@@ -4,7 +4,8 @@ import { CompilerVisitor } from "../../src/compiler/compiler";
 import { SimpleLangLexer } from "../../src/parser/src/SimpleLangLexer";
 import { SimpleLangParser } from "../../src/parser/src/SimpleLangParser";
 import { TypeChecker } from "../../src/typeChecker/TypeChecker";
-import { execPath } from "process";
+import { expect } from "vitest";
+import { Type } from "../../src/typeChecker/Type";
 
 export function Evaluate(program: string) {
     // Create the lexer and parser
@@ -20,7 +21,7 @@ export function Evaluate(program: string) {
     const visitor = new CompilerVisitor()
     visitor.visit(tree);
     const instructions = visitor.instructionArray;
-    console.log(instructions);
+    // console.log(instructions);
     const result = evaluate(instructions);
 
     return result;
@@ -39,7 +40,7 @@ export function EvaluateType(program: string) {
     // Compile the parsed tree
     const visitor = new TypeChecker()
     const type = visitor.checkType(tree);
-    console.log(type);
+    // console.log(type);
 
     return type;
 }
@@ -71,3 +72,43 @@ export function ExpectError(lambda: () => any) {
     }
     throw new Error(`Error expected, but execution completed successfully. Result: ${result}`)
 }
+
+expect.extend({
+    toBeEqualType(program: string, type: Type) {
+        const typeResult = EvaluateType(program);
+        const result = typeResult.compare(type);
+        return {
+            pass: result,
+            message: () => `expected ${type.toString()}, received ${typeResult.toString()}`
+        }
+    },
+    toFailTypeCheck(program: string) {
+        try {
+            const typeResult = EvaluateType(program);
+            return {
+                pass: false,
+                message: () => `expected program to throw error, but program evaluates to type ${typeResult.toString()}`
+            }
+        } catch (e) {
+            console.log(e.message);
+            return {
+                pass: true,
+                message: () => ``
+            }
+        }
+    },
+    toPassTypeCheck(program: string) {
+        const typeResult = EvaluateType(program);
+        return {
+            pass: true,
+            message: () => ``
+        }
+    },
+    toEvaluateTo(program: string, expected: any) {
+        const result = Evaluate(program)
+        return {
+            pass: result === expected,
+            message: () => `expected ${expected}, got ${result}`
+        }
+    }
+})

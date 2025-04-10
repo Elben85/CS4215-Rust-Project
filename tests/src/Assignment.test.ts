@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
-import { NUMBER_TYPE, Type } from '../../src/typeChecker/Type';
+import { Evaluate, EvaluateType } from "./setup";
+import { NUMBER_TYPE, NumberType, Type } from '../../src/typeChecker/Type';
 
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
@@ -8,7 +8,7 @@ describe('Assignment Tests', () => {
             let mut i = 0;
             i = 69;
         `
-        expect(Evaluate(program)).toBe(69);
+        expect(program).toEvaluateTo(69);
     });
 
     it('nested assignments', () => {
@@ -18,7 +18,7 @@ describe('Assignment Tests', () => {
             i = j = 10;
             i * j;
         `
-        expect(Evaluate(program)).toBe(100);
+        expect(program).toEvaluateTo(100);
     });
 });
 
@@ -28,7 +28,7 @@ describe('Assignment Type Tests', () => {
             let mut i = 0;
             i = 69;
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     });
 
     it('assignment type 2', () => {
@@ -37,7 +37,7 @@ describe('Assignment Type Tests', () => {
             let mut j = 0;
             i = j = 10;
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     });
 
     it(`assignment type 3`, () => {
@@ -46,7 +46,7 @@ describe('Assignment Type Tests', () => {
         let mut j = 0;
         i = j = 10;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it(`test deferred assignment`, () => {
@@ -54,7 +54,7 @@ describe('Assignment Type Tests', () => {
         let i;
         i = 10;
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     })
 
     it(`test reassignment`, () => {
@@ -62,14 +62,14 @@ describe('Assignment Type Tests', () => {
         let i = 10;
         i = 20;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 
     it(`access unitialized var`, () => {
         const program = `
-        let i: i32;
+        let i: f64;
         i;
         `
-        expect(() => EvaluateType(program)).toThrowError();
+        expect(program).toFailTypeCheck();
     })
 });

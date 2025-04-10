@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./util";
+import { Evaluate, EvaluateType } from "./setup";
 import { NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
 
 describe('Block statement test', () => {
@@ -15,7 +15,7 @@ describe('Block statement test', () => {
             }
             a * b;
         `
-        expect(Evaluate(program)).toBe(6);
+        expect(program).toEvaluateTo(6);
     });
 });
 
@@ -29,7 +29,7 @@ describe('Block statement type test', () => {
             }
             b;
         `
-        expect(() => EvaluateType(program)).toThrowError("Lookup Fail, frame is Null");
+        expect(program).toFailTypeCheck();
     });
 
     it('Block type 2', () => {
@@ -39,7 +39,7 @@ describe('Block statement type test', () => {
             b;
         }
         `
-        expect(EvaluateType(program)).toBe(VOID_TYPE);
+        expect(program).toBeEqualType(VOID_TYPE);
     })
 
     it(`Block type 3`, () => {
@@ -49,6 +49,6 @@ describe('Block statement type test', () => {
             b + 11
         }
         `
-        expect(EvaluateType(program)).toBe(NUMBER_TYPE);
+        expect(program).toBeEqualType(NUMBER_TYPE);
     })
 })
