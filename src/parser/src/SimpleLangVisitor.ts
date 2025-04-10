@@ -7,11 +7,14 @@ import { ProgContext } from "./SimpleLangParser.js";
 import { MutableContext } from "./SimpleLangParser.js";
 import { StatementContext } from "./SimpleLangParser.js";
 import { EmptyStatementContext } from "./SimpleLangParser.js";
+import { ItemContext } from "./SimpleLangParser.js";
 import { LetStatementContext } from "./SimpleLangParser.js";
 import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
+import { CallExpressionContext } from "./SimpleLangParser.js";
+import { CallExpressionTerminalContext } from "./SimpleLangParser.js";
 import { UnopContext } from "./SimpleLangParser.js";
 import { NegationExpressionContext } from "./SimpleLangParser.js";
 import { DereferenceExpressionContext } from "./SimpleLangParser.js";
@@ -43,7 +46,6 @@ import { FunctionParamContext } from "./SimpleLangParser.js";
 import { FunctionParamPatternContext } from "./SimpleLangParser.js";
 import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
 import { ReturnExpressionContext } from "./SimpleLangParser.js";
-import { CallExpressionContext } from "./SimpleLangParser.js";
 import { CallParamsContext } from "./SimpleLangParser.js";
 
 
@@ -80,6 +82,12 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      */
     visitEmptyStatement?: (ctx: EmptyStatementContext) => Result;
     /**
+     * Visit a parse tree produced by `SimpleLangParser.item`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitItem?: (ctx: ItemContext) => Result;
+    /**
      * Visit a parse tree produced by `SimpleLangParser.letStatement`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -109,6 +117,18 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitPrimary?: (ctx: PrimaryContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCallExpression?: (ctx: CallExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.callExpressionTerminal`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCallExpressionTerminal?: (ctx: CallExpressionTerminalContext) => Result;
     /**
      * Visit a parse tree produced by `SimpleLangParser.unop`.
      * @param ctx the parse tree
@@ -295,12 +315,6 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitReturnExpression?: (ctx: ReturnExpressionContext) => Result;
-    /**
-     * Visit a parse tree produced by `SimpleLangParser.callExpression`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitCallExpression?: (ctx: CallExpressionContext) => Result;
     /**
      * Visit a parse tree produced by `SimpleLangParser.callParams`.
      * @param ctx the parse tree

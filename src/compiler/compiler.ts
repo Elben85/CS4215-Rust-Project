@@ -396,7 +396,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitCallExpression(ctx: CallExpressionContext): void { // Call Expression
         const tmp = this.expectLvalue;
         this.expectLvalue = true;
-        this.visit(ctx.primary());
+        this.visit(ctx.callExpression() || ctx.callExpressionTerminal());
         this.expectLvalue = tmp;
 
 

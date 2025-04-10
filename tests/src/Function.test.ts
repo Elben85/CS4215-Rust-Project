@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Compile, Evaluate, EvaluateType } from "./setup";
-import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
-import { VOID } from '../../src/compiler/compiler';
+import { Compile } from "./setup";
 
 describe('Function Tests', () => {
     it('simple', () => {
@@ -13,7 +11,7 @@ describe('Function Tests', () => {
             same();
             
         `
-        expect(Evaluate(program)).toBe(9);
+        expect(program).toEvaluateTo(9);
     });
 
     it('simple 2', () => {
@@ -25,26 +23,25 @@ describe('Function Tests', () => {
             same(2, 1);
             
         `
-        expect(Evaluate(program)).toBe(5);
+        expect(program).toEvaluateTo(5);
     });
 
 
-    // TODO: doesn't work because closure type not handled
-    // it('simple 3', () => {
-    //     const program = `
-    //         fn first(x: f64, y: f64) -> f64 {
-    //             return (3 + x) * y;
-    //         }
+    it('simple 3', () => {
+        const program = `
+            fn first(x: f64, y: f64) -> f64 {
+                return (3 + x) * y;
+            }
 
-    //         fn second(b: boolean) -> f64 {
-    //             let result1 = first(2, 1)
-    //             return b && result1 > 1;
-    //         }
+            fn second(b: bool) -> bool {
+                let result1 = first(2, 1);
+                return b && (result1 > 1);
+            }
              
-    //         second(true);
-    //     `
-    //     expect(Evaluate(program)).toBe(true);
-    // });
+            second(true);
+        `
+        expect(program).toEvaluateTo(true);
+    });
 
     it('simple 4', () => {
         const program = `
@@ -57,7 +54,7 @@ describe('Function Tests', () => {
             
             x;
         `
-        expect(Evaluate(program)).toBe(10);
+        expect(program).toEvaluateTo(10);
     });
 
     it('simple closure 1', () => {
@@ -66,7 +63,7 @@ describe('Function Tests', () => {
             let f = || 3;
             f();
         `
-        expect(Evaluate(program)).toBe(3);
+        expect(program).toEvaluateTo(3);
     });
 
     it('simple closure 2', () => {
@@ -75,7 +72,7 @@ describe('Function Tests', () => {
             let f = |x: f64, y: f64| x * y;
             f(2, 3);
         `
-        expect(Evaluate(program)).toBe(6);
+        expect(program).toEvaluateTo(6);
     });
 
     it('simple closure 3', () => {
@@ -87,16 +84,31 @@ describe('Function Tests', () => {
             
             f(2);
         `
-        expect(Evaluate(program)).toBe(20);
+        expect(program).toEvaluateTo(20);
     });
 
-    // TODO:
+    it('Test parsing precedence', () => {
+        const program = `
+        let mut f = |x: f64| -> f64 {return x;};
+        let a = 2 + f(4);
+        let b = -f(1);
+        let c = &mut f;
+        let d = {
+            let tmp = || -> f64  {return 2;};
+            tmp
+        };
+        a + b + d();
+        `
+        expect(program).toEvaluateTo(7);
+    })
+
+    // TODO: Case not yet handled
     // it('simple closure immediate', () => {
     //     const program = `
-            
-    //         (|x: f64, y: f64| 10 + x + y;)(5, 6);
+    //         (|x: f64, y: f64| 10 + x + y)(5, 6);
     //     `
-    //     expect(Evaluate(program)).toBe(21);
+
+    //     expect(program).toEvaluateTo(21);
     // });
 
 });

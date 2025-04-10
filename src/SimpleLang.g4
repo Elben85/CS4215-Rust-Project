@@ -8,12 +8,14 @@ mutable
 
 statement
     : emptyStatement
+    | item
     | letStatement
     | expressionStatement
-    | function
     ;
 
 emptyStatement: ';';
+
+item: function;
 
 // LET STATEMENT
 // NOTE: the let statement is a simplificition without ref, pattern matching, and outer attributes
@@ -42,12 +44,31 @@ expressionWithoutBlock
     | breakExpression
     | continueExpression
     | returnExpression
-    | callExpression
-    | closureExpression
     ;
 
-primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
+primary
+    : primitive 
+    | bracket 
+    | accessIdentifier 
+    | unop 
+    | assignmentExpressions
+    | closureExpression
+    | callExpression
+    ;
 
+// CALL EXPRESSION
+callExpression
+    : callExpression '(' callParams? ')'
+    | callExpressionTerminal '(' callParams? ')'
+    ;
+
+callExpressionTerminal
+    : bracket
+    | accessIdentifier
+    | expressionWithBlock
+    ;
+
+// UNARY OPERATOR
 unop
     : negationExpression
     | dereferenceExpression
@@ -93,6 +114,7 @@ bracket
     : '(' expression ')'
     ;
 
+// ASSIGNMENTS
 assignmentExpressions
     : accessIdentifier '=' expression
     | dereferenceExpression '=' expression
@@ -104,7 +126,7 @@ expressionWithBlock
     | loopExpression
     ;
 
-// Block expression
+// BLOCK EXPRESSION
 blockExpression
     : 
     '{' blockBody '}'
@@ -114,6 +136,7 @@ blockBody
     : statement* expressionWithoutBlock?
     ;
 
+// IF ELSE
 ifExpression
     : 'if' expression blockExpression ('else' ifExpressionAlternative)?
     ;
@@ -122,6 +145,7 @@ ifExpressionAlternative
     : blockExpression | ifExpression
     ;
 
+// WHILE LOOPS
 // In case we want to add other type of loops
 loopExpression: predicateLoopExpression;
 
@@ -137,6 +161,8 @@ continueExpression
     : 'continue'
     ;
 
+
+// FUNCTIONS
 closureExpression 
     : ('||' | '|' functionParameters?'|') (expression | '->' TYPE blockExpression)
     ;
@@ -167,14 +193,11 @@ returnExpression
     : 'return' expression?
     ;
 
-callExpression
-    : primary '(' callParams? ')'
-    ;
-
 callParams
     : expression ( ',' expression )* ','?
     ;
 
+// PRIMITIVES / LEAF NODES
 INT: [0-9]+;
 BOOL: 'true' | 'false';
 TYPE: 'bool' | 'f64';

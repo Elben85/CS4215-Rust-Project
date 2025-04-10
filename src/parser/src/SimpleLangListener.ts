@@ -7,11 +7,14 @@ import { ProgContext } from "./SimpleLangParser.js";
 import { MutableContext } from "./SimpleLangParser.js";
 import { StatementContext } from "./SimpleLangParser.js";
 import { EmptyStatementContext } from "./SimpleLangParser.js";
+import { ItemContext } from "./SimpleLangParser.js";
 import { LetStatementContext } from "./SimpleLangParser.js";
 import { ExpressionStatementContext } from "./SimpleLangParser.js";
 import { ExpressionContext } from "./SimpleLangParser.js";
 import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
 import { PrimaryContext } from "./SimpleLangParser.js";
+import { CallExpressionContext } from "./SimpleLangParser.js";
+import { CallExpressionTerminalContext } from "./SimpleLangParser.js";
 import { UnopContext } from "./SimpleLangParser.js";
 import { NegationExpressionContext } from "./SimpleLangParser.js";
 import { DereferenceExpressionContext } from "./SimpleLangParser.js";
@@ -43,7 +46,6 @@ import { FunctionParamContext } from "./SimpleLangParser.js";
 import { FunctionParamPatternContext } from "./SimpleLangParser.js";
 import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
 import { ReturnExpressionContext } from "./SimpleLangParser.js";
-import { CallExpressionContext } from "./SimpleLangParser.js";
 import { CallParamsContext } from "./SimpleLangParser.js";
 
 
@@ -92,6 +94,16 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitEmptyStatement?: (ctx: EmptyStatementContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.item`.
+     * @param ctx the parse tree
+     */
+    enterItem?: (ctx: ItemContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.item`.
+     * @param ctx the parse tree
+     */
+    exitItem?: (ctx: ItemContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.letStatement`.
      * @param ctx the parse tree
@@ -142,6 +154,26 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitPrimary?: (ctx: PrimaryContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     */
+    enterCallExpression?: (ctx: CallExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     */
+    exitCallExpression?: (ctx: CallExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.callExpressionTerminal`.
+     * @param ctx the parse tree
+     */
+    enterCallExpressionTerminal?: (ctx: CallExpressionTerminalContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.callExpressionTerminal`.
+     * @param ctx the parse tree
+     */
+    exitCallExpressionTerminal?: (ctx: CallExpressionTerminalContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.unop`.
      * @param ctx the parse tree
@@ -452,16 +484,6 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitReturnExpression?: (ctx: ReturnExpressionContext) => void;
-    /**
-     * Enter a parse tree produced by `SimpleLangParser.callExpression`.
-     * @param ctx the parse tree
-     */
-    enterCallExpression?: (ctx: CallExpressionContext) => void;
-    /**
-     * Exit a parse tree produced by `SimpleLangParser.callExpression`.
-     * @param ctx the parse tree
-     */
-    exitCallExpression?: (ctx: CallExpressionContext) => void;
     /**
      * Enter a parse tree produced by `SimpleLangParser.callParams`.
      * @param ctx the parse tree
