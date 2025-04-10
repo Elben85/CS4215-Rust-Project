@@ -89,3 +89,24 @@ export const createBorrow = () => {
         tag: "BORROW"
     }
 }
+
+export const createLDF = (arity: number, address: number) => {
+    return {
+        tag: "LDF",
+        arity: arity,
+        address: address
+    }
+}
+
+export const createReset = () => {
+    return {
+        tag: "RESET"
+    }
+}
+
+export const createCall = (arity: number) => {
+    return {
+        tag: "CALL",
+        arity: arity
+    }
+}

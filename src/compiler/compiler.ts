@@ -23,6 +23,11 @@ import {
     NegationExpressionContext,
     DereferenceExpressionContext,
     BorrowExpressionContext,
+    FunctionContext,
+    FunctionParamContext,
+    ReturnExpressionContext,
+    ClosureExpressionContext,
+    CallExpressionContext,
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
@@ -309,5 +314,108 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
         this.expectLvalue = tmp;
         this.instructionArray.push(Instructions.createAssign());
+    }
+
+    visitClosureExpression(ctx: ClosureExpressionContext): void {
+        let arity = 0;
+        const parameters = ctx.functionParameters()
+        if (parameters) {
+            arity = parameters.functionParam().length;
+        }
+        // add 1 + 1 to address because 'this.instructionArray.length' is LDF
+        this.instructionArray.push(Instructions.createLDF(arity, this.instructionArray.length + 1 + 1));
+
+        // Push goto to skip the function body
+        const gotoInstr = Instructions.createGoto(null);
+        this.instructionArray.push(gotoInstr)
+
+        // TODO: Compiling type annotation not yet implemented
+        this.env.push([]);
+        if (parameters) {
+            parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
+        }
+
+        if (ctx.expression()) {
+            this.visit(ctx.expression());
+            this.instructionArray.push(Instructions.createReset()); // return the expression
+        } else {
+            // TODO: Handle return type
+            this.visit(ctx.blockExpression());
+        }
+        this.env.pop();
+
+        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createReset());
+        gotoInstr.address = this.instructionArray.length;
+
+    }
+
+    visitFunction(ctx: FunctionContext): void {
+        let arity = 0;
+        const parameters = ctx.functionParameters()
+        if (parameters) {
+            arity = parameters.functionParam().length;
+        }
+        // add 1 + 1 to address because 'this.instructionArray.length' is LDF
+        this.instructionArray.push(Instructions.createLDF(arity, this.instructionArray.length + 1 + 1));
+
+        // Push goto to skip the function body
+        const gotoInstr = Instructions.createGoto(null);
+        this.instructionArray.push(gotoInstr)
+
+        // TODO: Compiling type annotation not yet implemented
+        this.env.push([]);
+        if (parameters) {
+            parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
+        }
+        this.visit(ctx.blockExpression());
+        this.env.pop();
+
+        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createReset());
+        gotoInstr.address = this.instructionArray.length;
+
+        // Save name of function
+        let identifier = ctx.IDENTIFIER().getText();
+        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
+        this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
+        this.instructionArray.push(Instructions.createAssign());
+        this.instructionArray.push(Instructions.createPop());
+    }
+
+    visitFunctionParam(ctx: FunctionParamContext): void {
+        // Assign the function parameter to the environment
+        // if (ctx.TYPE()) {
+        //     throw new Error("Compiling type annotation not yet implemented");
+        // }
+        let identifier = ctx.functionParamPattern().IDENTIFIER().getText();
+        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
+
+    }
+
+    visitCallExpression(ctx: CallExpressionContext): void { // Call Expression
+        const tmp = this.expectLvalue;
+        this.expectLvalue = true;
+        this.visit(ctx.primary());
+        this.expectLvalue = tmp;
+
+
+        if (ctx.callParams() == null) {
+            this.instructionArray.push(Instructions.createCall(0));
+        } else {
+            const args = ctx.callParams().expression();
+            for (const arg of args) {
+                this.visit(arg);
+            }
+
+            this.instructionArray.push(Instructions.createCall(args.length));
+        }
+
+    }
+
+    visitReturnExpression(ctx: ReturnExpressionContext): void {
+        // TODO: Check if return expression outside function
+        this.visit(ctx.expression());
+        this.instructionArray.push(Instructions.createReset());
     }
 }

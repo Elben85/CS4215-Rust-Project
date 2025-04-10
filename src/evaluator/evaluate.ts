@@ -1,6 +1,6 @@
 import { Heap } from "../memory/heap";
-import { addressToValue, valueToAddress, Pointer } from "../memory/types";
-import { Environment } from "../memory/environment";
+import { addressToValue, valueToAddress, Pointer, Closure } from "../memory/types";
+import { Environment, Callframe } from "../memory/environment";
 
 let HEAP: Heap;
 let OS: number[]; // Stack, list of addresses
@@ -127,6 +127,39 @@ const microcode = {
         // const pointerAddr = Pointer.allocate(HEAP, itemAddr);
         OS.push(pointerAddr);
         PC++;
+    },
+    LDF: (instr) => {
+        const closure_address = Closure.allocate(HEAP, [instr.arity, instr.address, E]);
+        OS.push(closure_address);
+        PC++;
+    },
+    RESET: (instr) => {
+        const topFrame = RTS.pop();
+        if (HEAP.getTag(topFrame) == Callframe.getTag()) {
+            PC = Callframe.getPC(HEAP, topFrame);
+            E = Callframe.getEnvironment(HEAP, topFrame);
+        }
+        
+    },
+    CALL: (instr) => {
+        const arity = instr.arity;
+		const addressFunP = OS.slice(-1 - arity,)[0];
+        const addressFun = Pointer.addressToValue(HEAP, addressFunP);
+
+        const callframe = Callframe.allocate(HEAP, [E, PC+1]);
+        RTS.push(callframe);
+
+        const closureEnv = Closure.getClosureEnvironment(HEAP, addressFun);
+        // TODO: this arity does not check with function definition's arity
+        E = Environment.extend(HEAP, closureEnv, arity); 
+
+        for (let i = arity - 1; i >= 0; --i) {
+            const pAddress = Environment.getPointerAddress(HEAP, E, HEAP.getSize(closureEnv), i);
+            Pointer.setPointer(HEAP, pAddress, OS.pop());
+        }
+        OS.pop(); // pop the funAddress value
+
+        PC = Closure.getClosurePC(HEAP, addressFun);
     }
 }
 

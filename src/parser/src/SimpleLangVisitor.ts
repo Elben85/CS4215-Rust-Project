@@ -36,6 +36,15 @@ import { LoopExpressionContext } from "./SimpleLangParser.js";
 import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
 import { BreakExpressionContext } from "./SimpleLangParser.js";
 import { ContinueExpressionContext } from "./SimpleLangParser.js";
+import { ClosureExpressionContext } from "./SimpleLangParser.js";
+import { FunctionContext } from "./SimpleLangParser.js";
+import { FunctionParametersContext } from "./SimpleLangParser.js";
+import { FunctionParamContext } from "./SimpleLangParser.js";
+import { FunctionParamPatternContext } from "./SimpleLangParser.js";
+import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
+import { ReturnExpressionContext } from "./SimpleLangParser.js";
+import { CallExpressionContext } from "./SimpleLangParser.js";
+import { CallParamsContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -244,5 +253,59 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitContinueExpression?: (ctx: ContinueExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.closureExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitClosureExpression?: (ctx: ClosureExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.function`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunction?: (ctx: FunctionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.functionParameters`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionParameters?: (ctx: FunctionParametersContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.functionParam`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionParam?: (ctx: FunctionParamContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.functionParamPattern`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionParamPattern?: (ctx: FunctionParamPatternContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.functionReturnType`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitFunctionReturnType?: (ctx: FunctionReturnTypeContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.returnExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitReturnExpression?: (ctx: ReturnExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCallExpression?: (ctx: CallExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.callParams`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCallParams?: (ctx: CallParamsContext) => Result;
 }
 

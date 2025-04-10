@@ -10,6 +10,7 @@ statement
     : emptyStatement
     | letStatement
     | expressionStatement
+    | function
     ;
 
 emptyStatement: ';';
@@ -40,6 +41,9 @@ expressionWithoutBlock
     : binop 
     | breakExpression
     | continueExpression
+    | returnExpression
+    | callExpression
+    | closureExpression
     ;
 
 primary: primitive | bracket | accessIdentifier | unop | assignmentExpressions;
@@ -131,6 +135,44 @@ breakExpression
 
 continueExpression 
     : 'continue'
+    ;
+
+closureExpression 
+    : ('||' | '|' functionParameters?'|') (expression | '->' TYPE blockExpression)
+    ;
+
+function
+    : 'fn' IDENTIFIER '(' functionParameters? ')' functionReturnType? ( blockExpression | ';' )
+    ;
+
+// Self parameter not implemented
+functionParameters
+    : functionParam (',' functionParam)* ','?
+    ;
+
+// Simple case
+functionParam
+    : functionParamPattern ':' TYPE 
+    ;
+
+functionParamPattern
+    : IDENTIFIER
+    ;
+
+functionReturnType
+    : '->' TYPE
+    ;
+
+returnExpression
+    : 'return' expression?
+    ;
+
+callExpression
+    : primary '(' callParams? ')'
+    ;
+
+callParams
+    : expression ( ',' expression )* ','?
     ;
 
 INT: [0-9]+;

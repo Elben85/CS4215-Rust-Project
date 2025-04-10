@@ -79,6 +79,29 @@ export class Heap {
         )
     }
 
+    // set byte at offset
+    public setByteAtOffset(address: number, offset: number, value: number) {
+        this.heap.setUint8(
+            Heap.addressToBytes(address) + offset, value
+        )
+    }
+
+    public getByteAtOffset(address: number, offset: number) {
+        return this.heap.getUint8(Heap.addressToBytes(address) + offset);
+    }
+
+    // set 2 bytes at offset
+    public setTwoByteAtOffset(address: number, offset: number, value: number) {
+        this.heap.setUint16(
+            Heap.addressToBytes(address) + offset, value
+        )
+    }
+
+    public getTwoByteAtOffset(address: number, offset: number) {
+        return this.heap.getUint16(Heap.addressToBytes(address) + offset);
+    }
+
+
     // public utility functions
     public get(address: number): number {
         return this.heap.getFloat64(

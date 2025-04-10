@@ -36,6 +36,15 @@ import { LoopExpressionContext } from "./SimpleLangParser.js";
 import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
 import { BreakExpressionContext } from "./SimpleLangParser.js";
 import { ContinueExpressionContext } from "./SimpleLangParser.js";
+import { ClosureExpressionContext } from "./SimpleLangParser.js";
+import { FunctionContext } from "./SimpleLangParser.js";
+import { FunctionParametersContext } from "./SimpleLangParser.js";
+import { FunctionParamContext } from "./SimpleLangParser.js";
+import { FunctionParamPatternContext } from "./SimpleLangParser.js";
+import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
+import { ReturnExpressionContext } from "./SimpleLangParser.js";
+import { CallExpressionContext } from "./SimpleLangParser.js";
+import { CallParamsContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -373,6 +382,96 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitContinueExpression?: (ctx: ContinueExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.closureExpression`.
+     * @param ctx the parse tree
+     */
+    enterClosureExpression?: (ctx: ClosureExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.closureExpression`.
+     * @param ctx the parse tree
+     */
+    exitClosureExpression?: (ctx: ClosureExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.function`.
+     * @param ctx the parse tree
+     */
+    enterFunction?: (ctx: FunctionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.function`.
+     * @param ctx the parse tree
+     */
+    exitFunction?: (ctx: FunctionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionParameters`.
+     * @param ctx the parse tree
+     */
+    enterFunctionParameters?: (ctx: FunctionParametersContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionParameters`.
+     * @param ctx the parse tree
+     */
+    exitFunctionParameters?: (ctx: FunctionParametersContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionParam`.
+     * @param ctx the parse tree
+     */
+    enterFunctionParam?: (ctx: FunctionParamContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionParam`.
+     * @param ctx the parse tree
+     */
+    exitFunctionParam?: (ctx: FunctionParamContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionParamPattern`.
+     * @param ctx the parse tree
+     */
+    enterFunctionParamPattern?: (ctx: FunctionParamPatternContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionParamPattern`.
+     * @param ctx the parse tree
+     */
+    exitFunctionParamPattern?: (ctx: FunctionParamPatternContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionReturnType`.
+     * @param ctx the parse tree
+     */
+    enterFunctionReturnType?: (ctx: FunctionReturnTypeContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionReturnType`.
+     * @param ctx the parse tree
+     */
+    exitFunctionReturnType?: (ctx: FunctionReturnTypeContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.returnExpression`.
+     * @param ctx the parse tree
+     */
+    enterReturnExpression?: (ctx: ReturnExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.returnExpression`.
+     * @param ctx the parse tree
+     */
+    exitReturnExpression?: (ctx: ReturnExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     */
+    enterCallExpression?: (ctx: CallExpressionContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.callExpression`.
+     * @param ctx the parse tree
+     */
+    exitCallExpression?: (ctx: CallExpressionContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.callParams`.
+     * @param ctx the parse tree
+     */
+    enterCallParams?: (ctx: CallParamsContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.callParams`.
+     * @param ctx the parse tree
+     */
+    exitCallParams?: (ctx: CallParamsContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

@@ -107,5 +107,40 @@ export class Pointer implements Types {
     }
 }
 
+export class Closure implements Types {
+    public static getTag(): number { return 6; }
+
+    public static allocate(heap: Heap, addresses: [number, number, number]): number {
+        // addresses = [arity, pc, env_address]
+
+        const arity = addresses[0];
+        const pc = addresses[1];
+        const envAddress = addresses[2];
+
+        const closureAddress = heap.reserve(1, this.getTag());
+        heap.setByteAtOffset(closureAddress, 3, arity); // 4th byte is free
+        heap.setTwoByteAtOffset(closureAddress, 4, pc); // 5th & 6th byte is free
+        heap.set(closureAddress + Heap.METADATA_SIZE, envAddress);
+
+        return closureAddress
+    }
+
+    public static addressToValue(heap: Heap, address: number) {
+        return heap.get(address + Heap.METADATA_SIZE)
+    }
+
+    public static getClosureEnvironment(heap: Heap, address: number) {
+        return heap.get(address + Heap.METADATA_SIZE);
+    }
+
+    public static getClosureArity(heap: Heap, address: number) {
+        return heap.getByteAtOffset(address, 3);
+    }
+
+    public static getClosurePC(heap: Heap, address: number) {
+        return heap.getTwoByteAtOffset(address, 4);
+    }
+}
+
 // TODO
 class Int64 { }

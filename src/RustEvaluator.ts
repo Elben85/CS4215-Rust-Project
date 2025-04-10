@@ -31,8 +31,8 @@ export class SimpleLangEvaluator extends BasicEvaluator {
             console.log(tree.toStringTree());
 
             // Check the type
-            // this.typeChecker = new TypeChecker();
-            // const type = this.typeChecker.checkType(tree);
+            this.typeChecker = new TypeChecker();
+            const type = this.typeChecker.checkType(tree);
 
             // Compile the parsed tree
             this.visitor = new CompilerVisitor()

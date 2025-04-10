@@ -98,3 +98,32 @@ class Frame implements Types {
         }
     }
 }
+
+export class Callframe implements Types {
+    public static getTag(): number { return 2; }
+
+    public static allocate(heap: Heap, args: [number, number]): number {
+        const [env, pc] = args;
+        const address = heap.reserve(2, this.getTag());
+        heap.set(address + 1, env); // Store the environment
+        heap.setTwoByteAtOffset(address, 3, pc); // Store the PC in the 4th and 5th byte
+        return address;
+    }
+
+    public static addressToValue(heap: Heap, address: number): [number, number] {
+        const env = heap.get(address + 1);
+        const pc = heap.getTwoByteAtOffset(address, 2);
+        return [env, pc];
+    }
+
+    public static getPC(heap: Heap, address: number): number {
+        return heap.getTwoByteAtOffset(address, 3);
+    }
+
+    public static getEnvironment(heap: Heap, address: number): number {
+        return heap.get(address + 1);
+    }
+
+}
+
+

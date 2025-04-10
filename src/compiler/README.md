@@ -104,3 +104,31 @@ Produce a pointer to a heap address of the borrowed value. Expects the address o
     tag: "BORROW"
 }
 ```
+
+
+- `LDF`
+Creates a closure on the heap and pushes its address onto the operand stack. Takes the function's arity and address, and captures the current environment.
+```
+{
+    tag: "LDF",
+    arity: number,
+    address: number
+}
+```
+
+- `RESET`    
+Restores the previous execution context by popping the top frame from the return stack. If the frame is a call frame, it restores the program counter and environment from it.
+```
+{
+    tag: "RESET"
+}
+```
+
+- `CALL`
+Executes a function call. Takes the arity of the function. Expects the function address and arguments on the operand stack. Creates a call frame to save the current execution context, extends the environment with arguments, and jumps to the function's address.
+```
+{
+    tag: "CALL",
+    arity: number
+}
+```
