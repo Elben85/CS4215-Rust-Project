@@ -43,6 +43,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     private breakStack: any[];
     private continueStack: any[];
     private expectLvalue: boolean;
+    private shouldBeTemporary: boolean;
     private typeCache: Map<ParseTree, Type>;
 
     public constructor(typeCache: Map<ParseTree, Type>) {
@@ -53,7 +54,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.breakStack = [];
         this.continueStack = [];
         this.expectLvalue = false;
-        this.typeCache = typeCache
+        this.typeCache = typeCache;
+        this.shouldBeTemporary = true;
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
@@ -89,6 +91,20 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         return null;
     }
 
+    private visitWithFlags(ctx: ParseTree, expectLvalue: boolean, shouldBeTemporary: boolean) {
+        const oldLvalue = this.expectLvalue;
+        const oldTemp = this.shouldBeTemporary;
+        this.expectLvalue = expectLvalue;
+        this.shouldBeTemporary = shouldBeTemporary;
+        
+        const result = this.visit(ctx);
+
+        this.expectLvalue = oldLvalue;
+        this.shouldBeTemporary = oldTemp;
+        
+        return result;
+    }
+
     visitProg(ctx: ProgContext): void {
         const enterScopeInstr = Instructions.createEnterScope(null)
         this.instructionArray.push(enterScopeInstr)
@@ -96,60 +112,61 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const statements: StatementContext[] = ctx.statement();
 
         for (let s of statements) {
-            this.visit(s);
+            const shouldBeTemporary = s !== statements[statements.length - 1];
+            this.visitWithFlags(
+                s, false, shouldBeTemporary
+            );
         }
         enterScopeInstr.frameSize = this.env[0].length;
         this.instructionArray.push(Instructions.createDone())
     }
 
-    visitEmptyStatement(_: EmptyStatementContext): void { };
-
-    visitLetStatement(ctx: LetStatementContext): void {
-        if (ctx.TYPE()) {
-            throw new Error("Compiling type annotation not yet implemented");
-        }
-        let identifier = ctx.IDENTIFIER().getText();
-        let expression = ctx.expression();
-
-        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
-        if (expression === null) {
-            return;
-        }
-        this.visit(expression);
-        this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
-        this.instructionArray.push(Instructions.createAssign());
-        this.instructionArray.push(Instructions.createPop());
-    }
-
-    visitExpressionStatement(ctx: ExpressionStatementContext): void {
+    visitStatement(ctx: StatementContext): void {
         if (this.isFirstStatement) {
             this.isFirstStatement = false;
         } else {
             this.instructionArray.push(Instructions.createPop());
         }
+        this.visit(ctx.getChild(0));
+        this.instructionArray.push(Instructions.createDrop());
+    }
+
+    visitEmptyStatement(_: EmptyStatementContext): void { 
+        this.instructionArray.push(Instructions.createLDC(VOID, true));
+    };
+
+    visitLetStatement(ctx: LetStatementContext): void {
+        let identifier = ctx.IDENTIFIER().getText();
+        let expression = ctx.expression();
+
+        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
+        if (expression) {
+            this.visitWithFlags(expression, false, false);
+            this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
+            this.instructionArray.push(Instructions.createAssign());
+        }
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
+    }
+
+    visitExpressionStatement(ctx: ExpressionStatementContext): void {
         this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
     }
 
     visitNegationExpression(ctx: NegationExpressionContext): void {
-        this.visit(ctx.binopTerminals());
+        this.visitWithFlags(
+            ctx.binopTerminals(), this.expectLvalue, true
+        );
         const op = ctx.getChild(0).getText();
-        this.instructionArray.push(Instructions.createUnop(op))
+        this.instructionArray.push(Instructions.createUnop(op, this.shouldBeTemporary))
     }
 
     visitDereferenceExpression(ctx: DereferenceExpressionContext): void {
-        if (ctx.accessIdentifier()) {
-            this.visit(ctx.accessIdentifier());
-        } else {
-            this.visit(ctx.dereferenceExpression());
-        }
+        this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
         this.instructionArray.push(Instructions.createDeref());
     }
 
     visitBorrowExpression(ctx: BorrowExpressionContext): void {
-        const tmp = this.expectLvalue;
-        this.expectLvalue = true;
-        this.visit(ctx.accessIdentifier());
-        this.expectLvalue = tmp;
+        this.visitWithFlags(ctx.accessIdentifier(), true, this.shouldBeTemporary);
         this.instructionArray.push(Instructions.createBorrow());
     }
 
@@ -157,12 +174,27 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     // operator associativity: https://doc.rust-lang.org/reference/expressions.html
     compileLeftToRightAssociativeBinop(ctx): void {
         const childCount = ctx.getChildCount();
-        this.visit(ctx.getChild(0));
+        console.log(ctx.getText());
+        console.log(this.shouldBeTemporary);
+        
+        if (childCount === 1) {
+            this.visitWithFlags(
+                ctx.getChild(0),
+                this.expectLvalue,
+                this.shouldBeTemporary
+            )
+            return;
+        }
+
+
+        this.visitWithFlags(ctx.getChild(0), this.expectLvalue, true);
+
 
         for (let i = 1; i < childCount; i += 2) {
             const operator = ctx.getChild(i).getText();
-            this.visit(ctx.getChild(i + 1));
-            this.instructionArray.push(Instructions.createBinop(operator))
+            this.visitWithFlags(ctx.getChild(i + 1), this.expectLvalue, true);
+            const shouldBeTemporary = i + 2 === childCount ? this.shouldBeTemporary : true
+            this.instructionArray.push(Instructions.createBinop(operator, shouldBeTemporary))
         }
     }
 
@@ -186,7 +218,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             throw new Error(`unrecognized primitive: ${ctx.getText()}`);
         }
 
-        this.instructionArray.push(Instructions.createLDC(value));
+        this.instructionArray.push(Instructions.createLDC(value, this.shouldBeTemporary));
     }
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): void {
@@ -215,7 +247,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
         for (let s of ctx.statement()) {
-            this.visit(s);
+            this.visitWithFlags(s, this.expectLvalue, true);
         }
         if (!this.isFirstStatement) {
             // At least have 1 non-empty statement
@@ -224,7 +256,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
-            this.instructionArray.push(Instructions.createLDC(VOID))
+            this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary))
         }
         this.isFirstStatement = tmp;
     }
@@ -234,7 +266,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitIfExpression(ctx: IfExpressionContext): void {
-        this.visit(ctx.expression())
+        // predicate
+        this.visitWithFlags(ctx.expression(), this.expectLvalue, true);
 
         const jofInstr = Instructions.createJOF(null);
         this.instructionArray.push(jofInstr);
@@ -248,7 +281,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (ctx.ifExpressionAlternative()) {
             this.visit(ctx.ifExpressionAlternative());
         } else {
-            this.instructionArray.push(Instructions.createLDC(VOID));
+            this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
         }
 
         gotoInstr.address = this.instructionArray.length;
@@ -258,7 +291,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const whileLoopAddress = this.instructionArray.length;
         const predicate = ctx.expression();
         const body = ctx.blockExpression();
-        this.visit(predicate);
+        this.visitWithFlags(predicate, this.expectLvalue, true);
         const jofInstr = Instructions.createJOF(null);
         this.instructionArray.push(jofInstr);
 
@@ -275,7 +308,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.breakStack.pop();
         this.continueStack.pop();
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
     }
 
     visitBreakExpression(ctx: BreakExpressionContext): void {
@@ -289,7 +322,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.instructionArray.push(Instructions.createExitScope());
         }
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
         this.instructionArray.push(this.breakStack[this.breakStack.length - 1][0]);
     }
 
@@ -309,16 +342,17 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
-        this.visit(ctx.expression());
-        const tmp = this.expectLvalue;
+        this.visitWithFlags(ctx.expression(), false, false);
         if (this.typeCache.get(ctx.expression()).copyable()) {
             this.instructionArray.push(Instructions.createCopy());
         }
-        this.expectLvalue = true;
-        this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
-        this.expectLvalue = tmp;
+        this.visitWithFlags(
+            ctx.accessIdentifier() || ctx.dereferenceExpression(),
+            true,
+            false
+        )
         this.instructionArray.push(Instructions.createAssign());
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
     }
 
     visitClosureExpression(ctx: ClosureExpressionContext): void {
@@ -349,7 +383,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
         this.env.pop();
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
         this.instructionArray.push(Instructions.createReset());
         gotoInstr.address = this.instructionArray.length;
 
@@ -376,7 +410,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.visit(ctx.blockExpression());
         this.env.pop();
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
         this.instructionArray.push(Instructions.createReset());
         gotoInstr.address = this.instructionArray.length;
 
@@ -399,21 +433,22 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitCallExpression(ctx: CallExpressionContext): void { // Call Expression
-        const tmp = this.expectLvalue;
-        this.expectLvalue = true;
-        this.visit(ctx.callExpression() || ctx.callExpressionTerminal());
-        this.expectLvalue = tmp;
+        this.visitWithFlags(
+            ctx.callExpression() || ctx.callExpressionTerminal(),
+            true,
+            this.shouldBeTemporary
+        );
 
 
         if (ctx.callParams() == null) {
-            this.instructionArray.push(Instructions.createCall(0));
+            this.instructionArray.push(Instructions.createCall(0, this.shouldBeTemporary));
         } else {
             const args = ctx.callParams().expression();
             for (const arg of args) {
                 this.visit(arg);
             }
 
-            this.instructionArray.push(Instructions.createCall(args.length));
+            this.instructionArray.push(Instructions.createCall(args.length, this.shouldBeTemporary));
         }
 
     }

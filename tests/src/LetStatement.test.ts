@@ -1,3 +1,4 @@
+import { VOID } from './../../src/compiler/compiler';
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
 import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
@@ -13,6 +14,13 @@ describe('Let Statement Test', () => {
         `
         expect(program).toEvaluateTo(30);
     });
+
+    it('Let Statement produce void', () => {
+        const program = `
+            let a: bool;
+        `
+        expect(program).toEvaluateTo(VOID);
+    })
 });
 
 describe('Let Statement Type Test', () => {

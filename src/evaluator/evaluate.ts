@@ -7,6 +7,7 @@ let OS: number[]; // Stack, list of addresses
 let RTS: number[]; // Runtime stack, list of environment addresses
 let PC: number; // Program counter
 let E: number; // Environment address
+let TEMPORARIES: number[]; // Address of all temporary values to be dropped at the end of a statement
 
 
 // ENTRY POINT
@@ -16,6 +17,9 @@ export const evaluate = (instructionArray: any[]) => {
     RTS = [];
     PC = 0;
     E = Environment.allocate(HEAP, 0);
+    TEMPORARIES = [];
+
+    console.log(instructionArray);
 
     while (instructionArray[PC].tag !== 'DONE') {
         // console.log(PC);
@@ -49,12 +53,14 @@ function stackPop(): any {
 const microcode = {
     LDC: (instr) => {
         stackPush(instr.value);
+        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     UNOP: (instr) => {
         const arg = stackPop();
         let result = evaluate_unop(instr.op, arg);
         stackPush(result);
+        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     BINOP: (instr) => {
@@ -66,6 +72,7 @@ const microcode = {
         );
 
         stackPush(result);
+        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     POP: (instr) => {
@@ -165,6 +172,16 @@ const microcode = {
         const copyAddress = tagToType(HEAP.getTag(address)).copy(HEAP, address);
         OS.push(copyAddress);
         PC++;
+    },
+    DROP: (instr) => {
+        // DROP IN REVERSE ORDER
+        if (TEMPORARIES.length === 0) {
+            PC++;
+            return;
+        } else {
+            const address = TEMPORARIES.pop();
+            HEAP.deallocate(address);
+        }
     }
 }
 
