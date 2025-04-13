@@ -17,14 +17,20 @@ export class Heap {
     private size_offset = 1;
 
     // memory management
-    private free: number;
     private buffer: ArrayBuffer;
     private heap: DataView;
+    private freeLists: Map<number, number[]> = new Map();
+
 
     public constructor() {
         this.buffer = new ArrayBuffer(Heap.HEAP_SIZE);
         this.heap = new DataView(this.buffer);
-        this.free = 0;
+
+        for (let i = 0; i <= Math.log2(Heap.HEAP_SIZE / Heap.WORD_SIZE); i++) {
+            this.freeLists.set(i, []);
+        }
+        this.freeLists.get(Math.log2(Heap.HEAP_SIZE / Heap.WORD_SIZE)).push(0);
+        
     }
 
     public reserve(size: number, tag: number): number {
@@ -32,15 +38,11 @@ export class Heap {
          * allocate and reserve space in the heap of the specified size (in words, EXCLUDING metadata)
          * Returns the address
          */
-        if (Heap.HEAP_SIZE < (this.free + size + Heap.METADATA_SIZE) * Heap.WORD_SIZE) {
-            throw new Error("Heap out of memory")
-        }
 
         // TODO: add some metadata
-        const address = this.free;
+        const address = this.buddyAllocate(size);
         this.setTag(address, tag);
         this.setSize(address, size);
-        this.free += size + Heap.METADATA_SIZE;
 
         return address;
     }
@@ -115,6 +117,50 @@ export class Heap {
         );
     }
 
-    // TODO: deallocation
-    public deallocate(address: number) { }
+    public deallocate(address: number) {
+        this.buddyDeallocate(address);
+     }
+
+
+    private buddyAllocate(requestSizeWords: number): number {
+        const totalSize = requestSizeWords + Heap.METADATA_SIZE;
+        const level = Math.ceil(Math.log2(totalSize))
+    
+        for (let i = level; i <= Math.log2(Heap.HEAP_SIZE / Heap.WORD_SIZE); i++) {
+            const list = this.freeLists.get(i)!;
+            if (list.length > 0) {
+                let addr = list.pop()!;
+                while (i > level) {
+                    i--;
+                    const buddy = addr + Math.pow(2, i);
+                    this.freeLists.get(i)!.push(buddy);
+                }
+                return addr;
+            }
+        }
+        throw new Error("Heap out of memory: No space available for allocation.");
+    }
+
+    private buddyDeallocate(address: number): void {
+        const totalSize = this.getSize(address) + Heap.METADATA_SIZE;
+        let level = Math.ceil(Math.log2(totalSize))
+    
+        let addr = address;
+        while (true) {
+            const buddy = addr ^ totalSize;
+            const buddyList = this.freeLists.get(level)!;
+
+            const index = buddyList.indexOf(buddy);
+            if (index !== -1) {
+                buddyList.splice(index, 1);
+                addr = Math.min(addr, buddy);
+                level++;
+            } else {
+                break;
+            }
+        }
+        this.freeLists.get(level)!.push(addr);
+    }
+    
+    
 }
