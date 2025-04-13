@@ -100,7 +100,7 @@ class Frame implements Types {
 }
 
 export class Callframe implements Types {
-    public static getTag(): number { return 2; }
+    public static getTag(): number { return 7; }
 
     public static allocate(heap: Heap, args: [number, number]): number {
         const [env, pc] = args;
