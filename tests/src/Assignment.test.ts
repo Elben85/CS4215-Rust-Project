@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Evaluate, EvaluateType } from "./setup";
-import { NUMBER_TYPE, NumberType, Type, VOID_TYPE } from '../../src/typeChecker/Type';
+import { NUMBER_TYPE, VOID_TYPE } from '../../src/typeChecker/Type';
 import { VOID } from '../../src/compiler/compiler';
 
 describe('Assignment Tests', () => {

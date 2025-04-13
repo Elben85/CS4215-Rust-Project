@@ -25,13 +25,12 @@ import {
     BorrowExpressionContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, BooleanType, BoxedType, NUMBER_TYPE, NumberType, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType } from './Type';
 
 export interface identifierInformation {
     type: Type | string, // type of identifer
     is_mutable: boolean, // is the identifier mutable?
     assigned: true, // whether identifier has been initialized
-    owns: BoxedType // the type object the identifier owns
 }
 
 export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
@@ -39,6 +38,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     private isFirstStatement: boolean;
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
     private useForMutable: boolean; // indicate whether a variable will be used for read / write 
+    public typeCache: Map<ParseTree, Type>;
 
     public constructor() {
         super();
@@ -46,6 +46,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         this.isFirstStatement = true;
         this.expectLvalue = false;
         this.useForMutable = false;
+        this.typeCache = new Map<ParseTree, Type>();
     }
 
     // TYPE ENV
@@ -111,53 +112,20 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             if ((<Type>info.type).compare(UNKNOWN_TYPE)) {
                 throw new Error(`Type annotation needed`)
             }
-            if (info.owns.value) {
-                info.owns.value.owner = null;
-                info.owns.value.drop();
-            }
         }
     }
 
-    copyOrMove(type: Type): Type {
-        if (!type.copyable()) {
-            return type
-        }
-        type = type.copy();
-        if (type instanceof PointerType) {
-            type.baseType.addBorrow(type);
-        }
-        return type
-    }
-
-    // return the copied / moved type owned by the identifier
-    updateOwner(type: Type, identifier: identifierInformation): Type {
-        type = this.copyOrMove(type);
-
-        if (type.owner) {
-            type.owner.owns.value = null;
-        }
-
-        let oldType: Type = null;
-        if (identifier.owns.value) {
-            oldType = identifier.owns.value
-            oldType.owner = null;
-        }
-        identifier.owns.value = type;
-        type.owner = identifier;
-
-        // Case where the type has been dropped, handle edge case like "x = x"
-        if (oldType && oldType.owner === null) {
-            oldType.drop();
-        }
-
-        return type;
+    private visitAndCache(ctx: ParseTree) {
+        const result = this.visit(ctx);
+        this.typeCache.set(ctx, result);
+        return result
     }
 
     private visitWithEnvironment(ctx: any, env: any[]): Type {
         const currentEnv = this.typeEnv;
 
         this.typeEnv = env;
-        const result = this.visit(ctx);
+        const result = this.visitAndCache(ctx);
 
         this.typeEnv = currentEnv;
         return result;
@@ -172,7 +140,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (useForMutable !== undefined) {
             this.useForMutable = useForMutable
         }
-        const result = this.visit(ctx);
+        const result = this.visitAndCache(ctx);
 
         this.expectLvalue = oldLvalue;
         this.useForMutable = oldUseForMutable;
@@ -187,7 +155,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     visitProg(ctx: ProgContext): Type {
         const statements: StatementContext[] = ctx.statement();
 
-        let type: Type = new VoidType();
+        let type: Type = VOID_TYPE;
         const frame = {};
         for (let s of statements) {
             type = this.visitWithEnvironment(s, [...this.typeEnv, frame]);
@@ -197,7 +165,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitEmptyStatement(_: EmptyStatementContext): Type {
-        return new VoidType();
+        return VOID_TYPE;
     };
 
     visitLetStatement(ctx: LetStatementContext): Type {
@@ -212,11 +180,11 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
 
-        let expressionType: Type = new VoidType();
+        let expressionType: Type = VOID_TYPE;
         let assigned = false;
 
         if (expression) {
-            expressionType = this.visit(expression);
+            expressionType = this.visitAndCache(expression);
             assigned = true;
 
             if (ctx.TYPE() && (!declaredType.compare(expressionType))) {
@@ -227,16 +195,13 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             declaredType = expressionType;
         }
         const identifierInfo = <identifierInformation>{
-            type: declaredType.copy(),
+            type: declaredType,
             is_mutable: is_mutable,
             assigned: assigned,
-            owns: new BoxedType(null)
         };
-        (<Type>identifierInfo.type).owner = identifierInfo;
         this.addIdentifierType(identifier, identifierInfo);
-        this.updateOwner(declaredType, identifierInfo);
 
-        return new VoidType();
+        return VOID_TYPE;
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): Type {
@@ -251,7 +216,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitNegationExpression(ctx: NegationExpressionContext): Type {
-        const type = this.visit(ctx.binopTerminals());
+        const type = this.visitAndCache(ctx.binopTerminals());
         const op = ctx.getChild(0).getText();
 
         switch (op) {
@@ -259,12 +224,12 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                 if (!type.compare(NUMBER_TYPE)) {
                     throw new Error(`Operand type not correct`)
                 }
-                return new NumberType();
+                return NUMBER_TYPE;
             case '!':
                 if (!type.compare(BOOLEAN_TYPE)) {
                     throw new Error(`not Boolean type for Bool`)
                 }
-                return new BooleanType();
+                return BOOLEAN_TYPE;
             default:
                 throw new Error(`Unknown negation expression op: ${op}`)
         }
@@ -288,9 +253,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitPrimitive(ctx: PrimitiveContext): Type {
         if (ctx.INT()) {
-            return new NumberType();
+            return NUMBER_TYPE;
         } else if (ctx.BOOL()) {
-            return new BooleanType();
+            return BOOLEAN_TYPE;
         } else {
             throw new Error(`unrecognized primitive type: ${ctx.getText()}`);
         }
@@ -300,9 +265,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         let identifier: string = ctx.IDENTIFIER().getText();
         const identifierInfo = this.lookupType(identifier, this.typeEnv);
 
-        const type: BoxedType = identifierInfo.owns;
-
-        type.useAsOwner(this.useForMutable, this.expectLvalue);
+        const type: Type = identifierInfo.type;
 
         if (this.expectLvalue) {
             return new PointerType(type, identifierInfo.is_mutable);
@@ -310,17 +273,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (!identifierInfo.assigned) {
             throw new Error(`Trying to access unassigned variable ${identifier}`)
         }
-        if (!identifierInfo.owns.value) {
-            throw new Error(`Value for variable ${identifier} has been moved`)
-        }
-        if (!identifierInfo.owns.value.isValid()) {
-            throw new Error(`Variable ${identifier} refers to a value that does not live long enough`)
-        }
-        return type.value
+        return type
     }
 
     visitBlockExpression(ctx: BlockExpressionContext): Type {
-        // Block return the type of the last body statement
         let body = ctx.blockBody();
         const extendedTypeEnv = this.extendTypeEnvironment([], [], [...this.typeEnv]);
         const newFrame = extendedTypeEnv[extendedTypeEnv.length - 1];
@@ -331,20 +287,19 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitBlockBody(ctx: BlockBodyContext): Type {
-        // TODO: Implementation not finished
-        let type: Type = new VoidType();
+        let type: Type = VOID_TYPE;
         for (let s of ctx.statement()) {
-            this.visit(s);
+            this.visitAndCache(s);
         }
 
         if (ctx.expressionWithoutBlock()) {
-            type = this.visit(ctx.expressionWithoutBlock());
+            type = this.visitAndCache(ctx.expressionWithoutBlock());
         }
         return type;
     }
 
     visitBracket(ctx: BracketContext): Type {
-        const type = this.visit(ctx.expression())
+        const type = this.visitAndCache(ctx.expression())
 
         return type;
     }
@@ -352,12 +307,12 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     checkLeftToRightAssociativeBinop(ctx): Type {
         const childCount = ctx.getChildCount();
 
-        let type1 = this.visit(ctx.getChild(0));
+        let type1 = this.visitAndCache(ctx.getChild(0));
 
         let type2: Type;
         for (let i = 1; i < childCount; i += 2) {
             const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv).type;
-            type2 = this.visit(ctx.getChild(i + 1));
+            type2 = this.visitAndCache(ctx.getChild(i + 1));
 
             // TODO: Cleaner Implementation
             switch (operator) {
@@ -365,19 +320,19 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                     if (!type1.compare(NUMBER_TYPE) || !type2.compare(NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
-                    type1 = new NumberType();
+                    type1 = NUMBER_TYPE;
                     break;
                 case "number_comparison_type":
                     if (!type1.compare(NUMBER_TYPE) || !type2.compare(NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
-                    type1 = new BooleanType();
+                    type1 = BOOLEAN_TYPE;
                     break;
                 case "binary_bool_type":
                     if (!type1.compare(BOOLEAN_TYPE) || !type2.compare(BOOLEAN_TYPE)) {
                         throw new Error(`not Boolean type for Bool op: ${operator}`)
                     }
-                    type1 = new BooleanType();
+                    type1 = BOOLEAN_TYPE;
                     break;
                 default:
                     throw new Error(`unrecognized operator type: ${operator}`)
@@ -388,7 +343,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitIfExpression(ctx: IfExpressionContext): Type {
-        const predicateType = this.visit(ctx.expression());
+        const predicateType = this.visitAndCache(ctx.expression());
 
         if (!predicateType.compare(BOOLEAN_TYPE)) {
             throw new Error(
@@ -397,10 +352,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             );
         }
 
-        const blockType1: Type = this.visit(ctx.blockExpression());
+        const blockType1: Type = this.visitAndCache(ctx.blockExpression());
         const blockType2: Type = ctx.ifExpressionAlternative()
-            ? this.visit(ctx.ifExpressionAlternative())
-            : new VoidType();
+            ? this.visitAndCache(ctx.ifExpressionAlternative())
+            : VOID_TYPE;
 
         if (!blockType1.compare(blockType2)) {
             throw new Error(`An if expression must have the same type in all situations: \n ${ctx.getText()}`);
@@ -410,7 +365,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): Type {
-        const predicateType = this.visit(ctx.expression());
+        const predicateType = this.visitAndCache(ctx.expression());
 
         if (!predicateType.compare(BOOLEAN_TYPE)) {
             throw new Error(
@@ -419,7 +374,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             );
         }
 
-        const bodyType = this.visit(ctx.blockExpression());
+        const bodyType = this.visitAndCache(ctx.blockExpression());
 
         if (!bodyType.compare(VOID_TYPE)) {
             throw new Error(
@@ -431,11 +386,22 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         return bodyType;
     }
 
-    visitContinueExpression(ctx: ContinueExpressionContext): Type { return new VoidType(); }
-    visitBreakExpression(ctx: BreakExpressionContext): Type { return new VoidType(); };
+    visitContinueExpression(ctx: ContinueExpressionContext): Type { return VOID_TYPE; }
+    visitBreakExpression(ctx: BreakExpressionContext): Type { return VOID_TYPE; };
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
-        const expressionType: Type = this.visit(ctx.expression());
+        const expressionType: Type = this.visitAndCache(ctx.expression());
+
+        if (ctx.accessIdentifier()) {
+            const identifier: string = ctx.accessIdentifier().getText();
+            const identifierInfo: identifierInformation = this.lookupType(identifier, this.typeEnv)
+            if ((<Type>identifierInfo.type).compare(UNKNOWN_TYPE)) {
+                identifierInfo.type = expressionType;
+                identifierInfo.assigned = true;
+                return VOID_TYPE;
+            }
+        }
+
         const assigneeType = this.visitWithFlags(
             ctx.accessIdentifier() || ctx.dereferenceExpression(),
             true, true
@@ -444,12 +410,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (!(assigneeType instanceof PointerType)) {
             throw new Error(`Invalid assignee expression:\n${ctx.getText()}`);
         }
-        let expectedType: Type = assigneeType.baseType.value;
-        const owner: identifierInformation = expectedType.owner;
-        if (expectedType.compare(UNKNOWN_TYPE)) {
-            owner.type = expressionType;
-            owner.assigned = true;
-        } else if (!(<PointerType>assigneeType).isMutable) {
+        
+        let expectedType: Type = assigneeType.baseType;
+        if (!(<PointerType>assigneeType).isMutable) {
             throw new Error(`Trying to assign to an immutable reference:\n${ctx.getText()}`);
         } else if (!expectedType.compare(expressionType)) {
             throw new Error(
@@ -457,17 +420,15 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                 + ` ${expressionType.toString()}, Expected: ${expectedType.toString()}`
             );
         }
-        const resultType = this.updateOwner(expressionType, owner);
         return VOID_TYPE;
     }
 
     visitDereferenceExpression(ctx: DereferenceExpressionContext): Type {
-        console.log(ctx.getText());
         let type: Type;
         if (ctx.accessIdentifier()) {
-            type = this.visit(ctx.accessIdentifier());
+            type = this.visitAndCache(ctx.accessIdentifier());
         } else {
-            type = this.visit(ctx.dereferenceExpression());
+            type = this.visitAndCache(ctx.dereferenceExpression());
         }
         if (!(type instanceof PointerType)) {
             throw new Error(`Trying to dereference a non-pointer ${ctx.getText()}`);
@@ -475,7 +436,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         const pointer = type as PointerType;
 
-        const dereferencedType = pointer.baseType.value;
+        const dereferencedType = pointer.baseType;
 
         if (
             this.useForMutable
@@ -483,11 +444,6 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             && !(dereferencedType as PointerType).isMutable
         ) {
             throw new Error("Trying to mutate value under immutable reference");
-        }
-
-
-        if (dereferencedType instanceof PointerType) {
-            dereferencedType.baseType.useBorrow(dereferencedType);
         }
 
         return dereferencedType;
@@ -500,16 +456,15 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         )
 
         if (!(type instanceof PointerType)) {
-            type = new PointerType(new BoxedType(type), true);
+            type = new PointerType(type, true);
         }
 
         if (mut && !(type as PointerType).isMutable) {
             throw new Error(`Mutable borrow from non mutable: ${ctx.getText()}`)
         }
 
-        let result = (type as PointerType).copy();
+        let result = (type as PointerType)
         result.isMutable = mut;
-        result.baseType.addBorrow(result);
         return result;
     }
 }
