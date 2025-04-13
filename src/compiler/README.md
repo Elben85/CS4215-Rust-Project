@@ -145,3 +145,12 @@ List of instructions:
     arity: number
 }
 ```
+
+- `COPY`
+  Pop the topmost value from the heap and copy the value. Push the copied value onto the heap.
+
+```
+{
+    tag: "COPY"
+}
+```

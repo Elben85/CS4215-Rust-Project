@@ -9,7 +9,7 @@ export const addressToValue = (heap: Heap, address: number): any => {
     return tagToType(tag).addressToValue(heap, address);
 }
 
-const valueToType = (value: any): typeof Types => {
+export const valueToType = (value: any): typeof Types => {
     // NOTE: pointer, environment, and frame should not be passed here
     if (value === null) {
         return Void
@@ -22,7 +22,7 @@ const valueToType = (value: any): typeof Types => {
     }
 }
 
-const tagToType = (tag: number): typeof Types => {
+export const tagToType = (tag: number): typeof Types => {
     switch (tag) {
         case Float64.getTag():
             return Float64
@@ -30,6 +30,10 @@ const tagToType = (tag: number): typeof Types => {
             return Boolean
         case Void.getTag():
             return Void
+        case Closure.getTag():
+            return Closure
+        case Pointer.getTag():
+            return Pointer
         default:
             throw new Error(`Unrecognized type tag: ${tag}`);
     }
@@ -47,6 +51,10 @@ export abstract class Types {
     public static addressToValue(heap: Heap, address: number): any {
         throw new Error("Address to value not implemented");
     }
+
+    public static copy(heap: Heap, address: number): any {
+        throw new Error("Copy not implemented")
+    }
 }
 
 class Float64 implements Types {
@@ -60,6 +68,12 @@ class Float64 implements Types {
 
     public static addressToValue(heap: Heap, address: number): number {
         return heap.get(address + Heap.METADATA_SIZE)
+    }
+
+    public static copy(heap: Heap, address: number): number {
+        return this.allocate(
+            heap, this.addressToValue(heap, address)
+        )
     }
 }
 
@@ -75,6 +89,12 @@ class Boolean implements Types {
     public static addressToValue(heap: Heap, address: number): boolean {
         return heap.get(address + Heap.METADATA_SIZE) === 1 ? true : false;
     }
+
+    public static copy(heap: Heap, address: number): number {
+        return this.allocate(
+            heap, this.addressToValue(heap, address)
+        )
+    }
 }
 
 class Void implements Types {
@@ -86,6 +106,12 @@ class Void implements Types {
 
     public static addressToValue(heap: Heap, address: number) {
         return null
+    }
+
+    public static copy(heap: Heap, address: number): number {
+        return this.allocate(
+            heap, this.addressToValue(heap, address)
+        )
     }
 }
 
@@ -105,6 +131,12 @@ export class Pointer implements Types {
     public static setPointer(heap: Heap, address: number, value: number) {
         heap.set(address + Heap.METADATA_SIZE, value)
     }
+
+    public static copy(heap: Heap, address: number): number {
+        return this.allocate(
+            heap, this.addressToValue(heap, address)
+        )
+    }
 }
 
 export class Closure implements Types {
@@ -117,9 +149,9 @@ export class Closure implements Types {
         const pc = addresses[1];
         const envAddress = addresses[2];
 
-        const closureAddress = heap.reserve(1, this.getTag());
-        heap.setByteAtOffset(closureAddress, 3, arity); // 4th byte is free
-        heap.setTwoByteAtOffset(closureAddress, 4, pc); // 5th & 6th byte is free
+        const closureAddress = heap.reserve(2, this.getTag());
+        heap.setByteAtOffset(closureAddress + Heap.METADATA_SIZE + 1, 3, arity);
+        heap.setTwoByteAtOffset(closureAddress + Heap.METADATA_SIZE + 1, 4, pc);
         heap.set(closureAddress + Heap.METADATA_SIZE, envAddress);
 
         return closureAddress
@@ -134,11 +166,22 @@ export class Closure implements Types {
     }
 
     public static getClosureArity(heap: Heap, address: number) {
-        return heap.getByteAtOffset(address, 3);
+        return heap.getByteAtOffset(address + Heap.METADATA_SIZE + 1, 3);
     }
 
     public static getClosurePC(heap: Heap, address: number) {
-        return heap.getTwoByteAtOffset(address, 4);
+        return heap.getTwoByteAtOffset(address + Heap.METADATA_SIZE + 1, 4);
+    }
+
+    public static copy(heap: Heap, address: number) {
+        return this.allocate(
+            heap,
+            [
+                this.getClosureArity(heap, address),
+                this.getClosurePC(heap, address),
+                this.getClosureEnvironment(heap, address)
+            ]
+        )
     }
 }
 

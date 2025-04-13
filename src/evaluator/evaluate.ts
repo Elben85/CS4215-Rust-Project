@@ -1,5 +1,5 @@
 import { Heap } from "../memory/heap";
-import { addressToValue, valueToAddress, Pointer, Closure } from "../memory/types";
+import { addressToValue, valueToAddress, Pointer, Closure, tagToType } from "../memory/types";
 import { Environment, Callframe } from "../memory/environment";
 
 let HEAP: Heap;
@@ -159,6 +159,12 @@ const microcode = {
         OS.pop(); // pop the funAddress value
 
         PC = Closure.getClosurePC(HEAP, addressFun);
+    },
+    COPY: (instr) => {
+        const address = OS.pop();
+        const copyAddress = HEAP.getTag(address);
+        OS.push(copyAddress);
+        PC++;
     }
 }
 

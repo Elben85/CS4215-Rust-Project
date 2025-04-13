@@ -5,3 +5,5 @@ Type tags:
 3: Boolean
 4: Void
 5: Pointer
+6: Closure
+7: CallFrame

@@ -1,3 +1,4 @@
+import { TypeChecker, TypeChecker } from './../../src/typeChecker/TypeChecker';
 import { BorrowChecker } from './../../src/borrowChecker/BorrowChecker';
 import { BailErrorStrategy, CharStream, CommonTokenStream } from "antlr4ng";
 import { evaluate } from "../../src/evaluator/evaluate";
@@ -23,7 +24,9 @@ function getParseTree(program:string) {
 export function Evaluate(program: string) {
     const tree = getParseTree(program)
     // Compile the parsed tree
-    const visitor = new CompilerVisitor()
+    const typeChecker = new TypeChecker();
+    typeChecker.checkType(tree);
+    const visitor = new CompilerVisitor(typeChecker.typeCache)
     visitor.visit(tree);
     const instructions = visitor.instructionArray;
     // console.log(instructions);
@@ -50,7 +53,9 @@ export function Compile(program: string) {
     const tree = getParseTree(program)
 
     // Compile the parsed tree
-    const visitor = new CompilerVisitor()
+    const typeChecker = new TypeChecker();
+    typeChecker.checkType(tree);
+    const visitor = new CompilerVisitor(typeChecker.typeCache);
     visitor.visit(tree);
     const instructions = visitor.instructionArray;
 

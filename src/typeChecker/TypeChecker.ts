@@ -58,10 +58,13 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         "-": { type: "binary_arith_type" },
         "*": { type: "binary_arith_type" },
         "/": { type: "binary_arith_type" },
+        "%": { type: "binary_arith_type" },
         "<": { type: "number_comparison_type" },
         ">": { type: "number_comparison_type" },
         "<=": { type: "number_comparison_type" },
         ">=": { type: "number_comparison_type" },
+        "==": {type: "comparison_type"},
+        "!=": {type: "comparison_type"},
         "&&": { type: "binary_bool_type" },
         "||": { type: "binary_bool_type" },
         "!": { type: "unary_bool_type" }
@@ -325,6 +328,12 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                 case "number_comparison_type":
                     if (!type1.compare(NUMBER_TYPE) || !type2.compare(NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
+                    }
+                    type1 = BOOLEAN_TYPE;
+                    break;
+                case "comparison_type":
+                    if (!type1.compare(type2)) {
+                        throw new Error(`operand type does not match`)
                     }
                     type1 = BOOLEAN_TYPE;
                     break;

@@ -1,4 +1,4 @@
-import { AbstractParseTreeVisitor } from 'antlr4ng';
+import { AbstractParseTreeVisitor, ParseTree } from 'antlr4ng';
 import {
     BracketContext,
     PrimitiveContext,
@@ -31,10 +31,9 @@ import {
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
+import { Type } from '../typeChecker/Type';
 
 export const VOID = null;
-
-// interface identifierInformation =
 
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
@@ -44,8 +43,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     private breakStack: any[];
     private continueStack: any[];
     private expectLvalue: boolean;
+    private typeCache: Map<ParseTree, Type>;
 
-    public constructor() {
+    public constructor(typeCache: Map<ParseTree, Type>) {
         super();
         this.instructionArray = [];
         this.isFirstStatement = true;
@@ -53,6 +53,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.breakStack = [];
         this.continueStack = [];
         this.expectLvalue = false;
+        this.typeCache = typeCache
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
@@ -310,6 +311,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
         this.visit(ctx.expression());
         const tmp = this.expectLvalue;
+        if (this.typeCache.get(ctx.expression()).copyable()) {
+            this.instructionArray.push(Instructions.createCopy());
+        }
         this.expectLvalue = true;
         this.visit(ctx.accessIdentifier() || ctx.dereferenceExpression());
         this.expectLvalue = tmp;

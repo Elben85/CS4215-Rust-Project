@@ -110,3 +110,9 @@ export const createCall = (arity: number) => {
         arity: arity
     }
 }
+
+export const createCopy = () => {
+    return {
+        tag: "COPY"
+    }
+}
