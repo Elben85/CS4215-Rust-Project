@@ -1,10 +1,4 @@
-import type { identifierInformation } from "./TypeChecker";
-
-
 export abstract class Type {
-  public isDropped: boolean = false;
-  public owner: identifierInformation = null; //  identifier information 
-
   abstract toString(): string;
   abstract compare(other: Type): boolean;
   abstract copyable(): boolean;
@@ -27,7 +21,6 @@ export class BooleanType extends Type {
 export class UnknownType extends Type {
   public constructor() {
     super();
-    this.isDropped = true;
   }
   toString(): string { return "?"; }
   compare(other: Type): boolean { return other instanceof UnknownType; }
@@ -63,32 +56,31 @@ export class PointerType extends Type {
   copyable(): boolean { return !this.isMutable; }
 }
 
-// export class FunctionType extends Type {
-//   private constructor(
-//     public readonly args: Type[],
-//     public readonly returnType: Type
-//   ) {
-//     super();
-//   }
+export class FunctionType extends Type {
+  public constructor(
+    public readonly argSymbols: string[],
+    public readonly args: Type[],
+    public readonly returnType: Type
+  ) {
+    super();
+  }
 
-//   static withType(args: Type[], returnType: Type) {
-//     return new FunctionType(args, returnType)
-//   }
+  toString(): string {
+    const argsStr = this.args.map(arg => arg.toString()).join(", ");
+    return `fn(${argsStr}) -> ${this.returnType.toString()}`;
+  }
 
-//   toString(): string {
-//     const argsStr = this.args.map(arg => arg.toString()).join(", ");
-//     return `fn(${argsStr}) -> ${this.returnType.toString()}`;
-//   }
+  compare(other: Type): boolean {
+    return (
+      other instanceof FunctionType &&
+      this.returnType.compare(other.returnType) &&
+      this.args.length === other.args.length &&
+      this.args.every((arg, i) => arg.compare(other.args[i]))
+    );
+  }
 
-//   compare(other: Type): boolean {
-//     return (
-//       other instanceof FunctionType &&
-//       this.returnType.compare(other.returnType) &&
-//       this.args.length === other.args.length &&
-//       this.args.every((arg, i) => arg.compare(other.args[i]))
-//     );
-//   }
-// }
+  copyable(): boolean { return true };
+}
 
 // Type Instances
 // export const STRING_TYPE = StringType.getInstance();

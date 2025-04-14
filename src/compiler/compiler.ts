@@ -105,18 +105,40 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         return result;
     }
 
+    private isItem(ctx: StatementContext): boolean {
+        return ctx.item() !== null;
+    }
+
+    private getFunctionBody(ctx: StatementContext): BlockExpressionContext {
+        return ctx.item().function().blockExpression();
+    }
+
+    private getFunctionName(ctx: StatementContext): string {
+        return ctx.item().function().IDENTIFIER().getText();
+    }
+
+    compileStatements(statements: StatementContext[]) {
+        const items = statements.filter(this.isItem);
+
+        // for now items are all function declaration
+        for (let i of items) {
+            this.visitWithFlags(i, this.expectLvalue, true);
+        }
+        const nonItems = statements.filter(x => !this.isItem(x));
+        for (let s of nonItems) {
+            const shouldBeTemporary = s !== nonItems[nonItems.length - 1];
+            this.visitWithFlags(
+                s, false, shouldBeTemporary
+            );
+        }
+    }
+
     visitProg(ctx: ProgContext): void {
         const enterScopeInstr = Instructions.createEnterScope(null)
         this.instructionArray.push(enterScopeInstr)
 
         const statements: StatementContext[] = ctx.statement();
-
-        for (let s of statements) {
-            const shouldBeTemporary = s !== statements[statements.length - 1];
-            this.visitWithFlags(
-                s, false, shouldBeTemporary
-            );
-        }
+        this.compileStatements(statements);
         enterScopeInstr.frameSize = this.env[0].length;
         this.instructionArray.push(Instructions.createDone())
     }
@@ -246,9 +268,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitBlockBody(ctx: BlockBodyContext): void {
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
-        for (let s of ctx.statement()) {
-            this.visitWithFlags(s, this.expectLvalue, true);
-        }
+        this.compileStatements(ctx.statement());
         if (!this.isFirstStatement) {
             // At least have 1 non-empty statement
             this.instructionArray.push(Instructions.createPop());

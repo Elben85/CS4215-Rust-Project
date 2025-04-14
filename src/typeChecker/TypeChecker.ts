@@ -22,13 +22,18 @@ import {
     ContinueExpressionContext,
     BreakExpressionContext,
     DereferenceExpressionContext,
-    BorrowExpressionContext
+    BorrowExpressionContext,
+    FunctionContext,
+    ClosureExpressionContext,
+    FunctionParametersContext,
+    ReturnExpressionContext,
+    CallExpressionContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType, FunctionType } from './Type';
 
 export interface identifierInformation {
-    type: Type | string, // type of identifer
+    type: Type, // type of identifer
     is_mutable: boolean, // is the identifier mutable?
     assigned: true, // whether identifier has been initialized
 }
@@ -38,6 +43,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     private isFirstStatement: boolean;
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
     private useForMutable: boolean; // indicate whether a variable will be used for read / write 
+    // stack to indicate the expected return type of an enclosing function body 
+    private returnTypeStack: Type[]; 
     public typeCache: Map<ParseTree, Type>;
 
     public constructor() {
@@ -47,29 +54,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         this.expectLvalue = false;
         this.useForMutable = false;
         this.typeCache = new Map<ParseTree, Type>();
+        this.returnTypeStack = [];
     }
 
-    // TYPE ENV
-    private emptyTypeEnvironment = null;
-
-    private globalTypeFrame = {
-        // TODO: Use Better Implementation
-        "+": { type: "binary_arith_type" },
-        "-": { type: "binary_arith_type" },
-        "*": { type: "binary_arith_type" },
-        "/": { type: "binary_arith_type" },
-        "%": { type: "binary_arith_type" },
-        "<": { type: "number_comparison_type" },
-        ">": { type: "number_comparison_type" },
-        "<=": { type: "number_comparison_type" },
-        ">=": { type: "number_comparison_type" },
-        "==": {type: "comparison_type"},
-        "!=": {type: "comparison_type"},
-        "&&": { type: "binary_bool_type" },
-        "||": { type: "binary_bool_type" },
-        "!": { type: "unary_bool_type" }
-    };
-    private globalTypeEnvironment = [this.emptyTypeEnvironment, this.globalTypeFrame];
+    private globalTypeEnvironment = [];
 
     lookupType(x: string, te: any[]) {
         let copiedEnv = [...te];
@@ -101,6 +89,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (ts.length > xs.length) throw new Error('too few parameters in declaration');
         if (ts.length < xs.length) throw new Error('too many parameters in declaration');
 
+        te = [...te];
         const newFrame: { [key: string]: identifierInformation } = {};
         for (let i = 0; i < xs.length; i++) {
             newFrame[xs[i]] = ts[i];
@@ -151,19 +140,51 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 
     checkType(ctx: ProgContext): Type {
-        this.typeEnv = this.globalTypeEnvironment;
+        this.typeEnv = [{}];
         return this.visitWithEnvironment(ctx, this.typeEnv);
+    }
+
+    private isItem(ctx: StatementContext): boolean {
+        return ctx.item() !== null;
+    }
+
+    private getFunctionBody(ctx: StatementContext): BlockExpressionContext {
+        return ctx.item().function().blockExpression();
+    }
+
+    private getFunctionName(ctx: StatementContext): string {
+        return ctx.item().function().IDENTIFIER().getText();
     }
 
     visitProg(ctx: ProgContext): Type {
         const statements: StatementContext[] = ctx.statement();
+        const frame = this.typeEnv[0];
+        const type = this.checkStatements(statements);
+        this.dropFrame(frame)
+
+        return type;
+    }
+
+    checkStatements(statements: StatementContext[]): Type {
+        const items = statements.filter(this.isItem);
+
+        // for now items are all function declaration
+        const functionTypes = []
+        for (let f of items) {
+            functionTypes.push(this.visitWithEnvironment(f, this.typeEnv));
+        }
+        for (let i = 0; i < items.length; ++i) {
+            this.checkFunctionBody(
+                this.getFunctionBody(items[i]), 
+                this.lookupType(this.getFunctionName(items[i]), this.typeEnv).type
+            );
+        }
 
         let type: Type = VOID_TYPE;
-        const frame = {};
-        for (let s of statements) {
-            type = this.visitWithEnvironment(s, [...this.typeEnv, frame]);
+        const nonItems = statements.filter(x => !this.isItem(x));
+        for (let s of nonItems) {
+            type = this.visitWithEnvironment(s, this.typeEnv);
         }
-        this.dropFrame(frame)
         return type;
     }
 
@@ -291,9 +312,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitBlockBody(ctx: BlockBodyContext): Type {
         let type: Type = VOID_TYPE;
-        for (let s of ctx.statement()) {
-            this.visitAndCache(s);
-        }
+        this.checkStatements(ctx.statement());
 
         if (ctx.expressionWithoutBlock()) {
             type = this.visitAndCache(ctx.expressionWithoutBlock());
@@ -314,30 +333,39 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         let type2: Type;
         for (let i = 1; i < childCount; i += 2) {
-            const operator = this.lookupType(ctx.getChild(i).getText(), this.typeEnv).type;
+            const operator = ctx.getChild(i).getText();
             type2 = this.visitAndCache(ctx.getChild(i + 1));
 
             // TODO: Cleaner Implementation
             switch (operator) {
-                case "binary_arith_type":
+                case "+":
+                case "-":
+                case "*":
+                case "/":
+                case "%":
                     if (!type1.compare(NUMBER_TYPE) || !type2.compare(NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
                     type1 = NUMBER_TYPE;
                     break;
-                case "number_comparison_type":
+                case "<":
+                case ">":
+                case "<=":
+                case ">=":
                     if (!type1.compare(NUMBER_TYPE) || !type2.compare(NUMBER_TYPE)) {
                         throw new Error(`Operand type not correct for op: ${operator}`)
                     }
                     type1 = BOOLEAN_TYPE;
                     break;
-                case "comparison_type":
+                case "==":
+                case "!=":
                     if (!type1.compare(type2)) {
                         throw new Error(`operand type does not match`)
                     }
                     type1 = BOOLEAN_TYPE;
                     break;
-                case "binary_bool_type":
+                case "&&":
+                case "||":
                     if (!type1.compare(BOOLEAN_TYPE) || !type2.compare(BOOLEAN_TYPE)) {
                         throw new Error(`not Boolean type for Bool op: ${operator}`)
                     }
@@ -476,4 +504,203 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         result.isMutable = mut;
         return result;
     }
+
+    getFunctionParametersSymbolAndTypes(parameters: FunctionParametersContext): [string[], Type[]] {
+        if (parameters === null) {
+            return [[], []]
+        }
+        const functionParams = parameters ? parameters.functionParam() : [];
+                        
+        const argSymbols: string[] = [];
+        const argTypes: Type[] = [];
+
+        for (let p of functionParams) {
+            const type: Type = stringToType(p.TYPE().getText());
+            const symbol: string = p.functionParamPattern().getText();
+            argSymbols.push(symbol);
+            argTypes.push(type);
+        }
+        return [argSymbols, argTypes];
+    }
+
+    visitFunction(ctx: FunctionContext): Type {
+        const parameters = ctx.functionParameters();
+        const [argSymbols, argTypes] = this.getFunctionParametersSymbolAndTypes(parameters);
+        const returnType = ctx.functionReturnType()
+                            ? stringToType(ctx.functionReturnType().TYPE().getText())
+                            : VOID_TYPE
+        const functionName = ctx.IDENTIFIER().getText();
+        const functionType = new FunctionType(argSymbols, argTypes, returnType);
+
+        if (this.typeEnv[this.typeEnv.length - 1].hasOwnProperty(functionName)) {
+            throw new Error(`Redefinition of fn ${functionName}`);
+        }
+
+        this.addIdentifierType(functionName, {
+            type: functionType,
+            is_mutable: false,
+            assigned: true,
+        })
+
+        return VOID_TYPE;
+    }
+
+    visitClosureExpression(ctx: ClosureExpressionContext): Type {
+        const parameters = ctx.functionParameters();
+        const [argSymbols, argTypes] = this.getFunctionParametersSymbolAndTypes(parameters);
+        let returnType: Type;
+
+        if (ctx.expression()) {
+            this.returnTypeStack.push(returnType);
+            returnType = this.visitWithEnvironment(
+                ctx.expression(),
+                this.extendTypeEnvironment(
+                    argSymbols, 
+                    argTypes.map(t => {
+                        return {type: t, is_mutable: false, assigned: true};
+                    }), 
+                    this.typeEnv
+                )
+            );
+            this.returnTypeStack.pop();
+        } else {
+            returnType = stringToType(ctx.TYPE().getText());
+        }
+        const functionType = new FunctionType(argSymbols, argTypes, returnType);
+        
+        if (ctx.blockExpression()) {
+            this.checkFunctionBody(ctx.blockExpression(), functionType);
+        }
+        return functionType;
+    }
+
+    checkFunctionBody(ctx: BlockExpressionContext, functionType: FunctionType) {
+        this.returnTypeStack.push(functionType.returnType);
+        const blockType = this.visitWithEnvironment(
+            ctx,
+            this.extendTypeEnvironment(
+                functionType.argSymbols,
+                functionType.args.map(t => {
+                    return {type: t, is_mutable: false, assigned: true};
+                }), 
+                this.typeEnv
+            )
+        )
+        if (blockType.compare(functionType.returnType)) {
+            // pass type check
+        } else if ((ctx.blockBody().expressionWithoutBlock() === null) && new ReturnChecker().visit(ctx)) {
+            // pass type check
+        } else {
+            throw new Error("Function return type mismatch")
+        }
+        this.returnTypeStack.pop();
+    }
+
+    visitReturnExpression(ctx: ReturnExpressionContext): Type {
+        const returnType = this.visit(ctx.expression());
+        
+        const returnStackLength = this.returnTypeStack.length
+        if (returnStackLength === 0) {
+            throw new Error("return outside of function");
+        }
+
+        const expectedType = this.returnTypeStack[returnStackLength - 1];
+        
+        if (expectedType.compare(UNKNOWN_TYPE)) {
+            this.returnTypeStack[returnStackLength - 1] = expectedType;
+        } else if (!returnType.compare(expectedType)) {
+            const expected = expectedType.toString()
+            const actual = returnType.toString();
+            throw new Error(`Unexpected return type, expected ${expected}, got ${actual}`);
+        }
+        
+        return VOID_TYPE;
+    }
+
+    visitCallExpression(ctx: CallExpressionContext): Type {
+        const fun = this.visit(
+            ctx.callExpression() || ctx.callExpressionTerminal(),
+        );
+
+        if (!(fun instanceof FunctionType)) {
+            throw new Error(`Calling a non function ${ctx.getText()}`);
+        }
+
+        const args = ctx.callParams() ? ctx.callParams().expression(): [];
+        const actualArgTypes = args.map(x => this.visit(x));
+        const expectedArgTypes = fun.args;
+
+        if (actualArgTypes.length !== expectedArgTypes.length) {
+            throw new Error(`Mitmatched number of arguments: ${ctx.getText()}`);
+        }
+
+        for (let i = 0; i < actualArgTypes.length; ++i) {
+            if (!actualArgTypes[i].compare(expectedArgTypes[i])) {
+                const actual = actualArgTypes[i].toString();
+                const expected = expectedArgTypes[i].toString();
+                throw new Error(`Mismatched arg type. expected ${expected}, got ${actual}.\n\n${ctx.getText()}`)
+            }
+        }
+
+        return fun.returnType;
+    }
+}
+
+class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleLangVisitor<boolean> {
+    public constructor() {
+        super();
+    }
+    visitReturnExpression(ctx: ReturnExpressionContext): boolean {return true;}
+
+
+    visitExpressionStatement(ctx: ExpressionStatementContext): boolean {
+        return this.visit(ctx.expressionWithBlock() || ctx.expressionWithoutBlock());
+    }
+
+    visitBlockBody(ctx: BlockBodyContext): boolean {
+        if (ctx.statement().some(s => this.visit(s))) {
+            return true;
+        }
+
+        return ctx.expressionWithoutBlock() && this.visit(ctx.expressionWithoutBlock());
+    }
+
+    visitBracket(ctx: BracketContext): boolean { return this.visit(ctx.expression()); }
+
+    checkLeftToRightAssociativeBinop(ctx): boolean {
+        if (ctx.getChildCount() == 0) {
+            return this.visit(ctx.getChild(0));
+        } else {
+            return false;
+        }
+    }
+
+    visitIfExpression(ctx: IfExpressionContext): boolean {
+        return this.visit(ctx.blockExpression()) 
+                && ctx.ifExpressionAlternative()
+                && this.visit(ctx.ifExpressionAlternative());
+    }
+
+    visitEmptyStatement(_: EmptyStatementContext): boolean {return false;};
+    visitLetStatement(ctx: LetStatementContext): boolean { return false }
+    visitNegationExpression(ctx: NegationExpressionContext): boolean {return false;}
+    visitLogicalOr(ctx: LogicalOrContext): boolean { return false }
+    visitLogicalAnd(ctx: LogicalAndContext): boolean { return false }
+    visitComparison(ctx: ComparisonContext): boolean { return false }
+    visitAdditionSubstraction(ctx: AdditionSubstractionContext): boolean { return false }
+    visitMultiplicationDivision(ctx: MultiplicationDivisionContext): boolean { return false }
+    visitPrimitive(ctx: PrimitiveContext): boolean { return false }
+    visitAccessIdentifier(ctx: AccessIdentifierContext): boolean { return false }
+    visitBlockExpression(ctx: BlockExpressionContext): boolean {
+        return this.visit(ctx.blockBody());
+    }
+
+    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): boolean {return false;}
+    visitContinueExpression(ctx: ContinueExpressionContext): boolean { return false; }
+    visitBreakExpression(ctx: BreakExpressionContext): boolean { return false; };
+    visitAssignmentExpressions(ctx: AssignmentExpressionsContext): boolean { return false; }
+    visitDereferenceExpression(ctx: DereferenceExpressionContext): boolean { return false; }
+    visitBorrowExpression(ctx: BorrowExpressionContext): boolean { return false; }
+    visitFunction(ctx: FunctionContext): boolean {return false;}
+    visitClosureExpression(ctx: ClosureExpressionContext): boolean {return false;}
 }
