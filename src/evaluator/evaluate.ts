@@ -23,13 +23,13 @@ export const evaluate = (instructionArray: any[]) => {
 
     while (instructionArray[PC].tag !== 'DONE') {
         // console.log(PC);
-        // console.log(OS);
-        // console.log(instructionArray[PC]);
+        console.log(OS);
+        console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);
     }
-    console.log(OS);
+    // console.log(OS);
     return OS.length === 0
         ? undefined
         : stackPop();
