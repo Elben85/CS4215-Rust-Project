@@ -25,10 +25,6 @@ export class Heap {
     private buffer: ArrayBuffer;
     private heap: DataView;
 
-    //buddy alloc
-
-
-
     public constructor() {
         this.buffer = new ArrayBuffer(Heap.HEAP_SIZE);
         this.heap = new DataView(this.buffer);
@@ -51,8 +47,6 @@ export class Heap {
             const blockSize = 2**level;
     
             // Write metadata at block start
-            // this.setTag(address, 0); // TODO: check if this is allowed
-            // this.setSize(address, blockSize - Heap.METADATA_SIZE); // TODO: also this
             this.setNext(address, this.getFreeListHead(level));
             this.setFreeListHead(level, address);
     
