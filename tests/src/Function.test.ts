@@ -43,20 +43,16 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(true);
     });
     
-    // should fail
-    // it('simple 4', () => {
-    //     const program = `
-    //         let mut x = 1;
-    //         fn first() {
-    //             x = 10;
-    //         }
-             
-    //         first();
-            
-    //         x;
-    //     `
-    //     expect(program).toEvaluateTo(10);
-    // });
+    it('deferred declaration', () => {
+        const program = `
+            let x: bool = later();
+            fn later() -> bool {
+                true
+            }
+            x;
+        `
+        expect(program).toEvaluateTo(true);
+    });
 
     it('simple closure 1', () => {
         const program = `

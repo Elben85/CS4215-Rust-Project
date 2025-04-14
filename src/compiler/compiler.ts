@@ -396,14 +396,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
         if (ctx.expression()) {
             this.visit(ctx.expression());
-            this.instructionArray.push(Instructions.createReset()); // return the expression
         } else {
             // TODO: Handle return type
             this.visit(ctx.blockExpression());
         }
         this.env.pop();
-
-        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
         this.instructionArray.push(Instructions.createReset());
         gotoInstr.address = this.instructionArray.length;
 
@@ -428,10 +425,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
         this.visit(ctx.blockExpression());
+        this.instructionArray.push(Instructions.createReset());
         this.env.pop();
 
-        this.instructionArray.push(Instructions.createLDC(VOID, this.shouldBeTemporary));
-        this.instructionArray.push(Instructions.createReset());
         gotoInstr.address = this.instructionArray.length;
 
         // Save name of function
