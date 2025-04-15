@@ -3,7 +3,7 @@
  * 
  * A heap is a linked list
  * 1 word of metadata
- * 1 byte type tag, 2 byte size 6 bytes unused
+ * 1 byte type tag, 2 byte size, 2 byte freelist metadata, 2 byte owner address
  * 
  * An address is in word (so adress 1 refers to byte 1 * word_size)
  */
@@ -16,10 +16,12 @@ export class Heap {
     private static MAX_LEVEL = Math.log2(Heap.HEAP_SIZE / Heap.WORD_SIZE); // 13
     private static FREE_LIST_TABLE_WORDS = Heap.MAX_LEVEL + 1; // 14 entries
     private static HEAP_BASE = Heap.FREE_LIST_TABLE_WORDS; // usable heap starts after freelist heads
+    public static INVALID_OWNER_ADDRESS = 0;
 
     // metadata offsets (in bytes)
     private size_offset = 1;
     private next_offset = 3;
+    private owner_offset = 5;
 
     // memory management
     private buffer: ArrayBuffer;
@@ -66,6 +68,7 @@ export class Heap {
         const address = this.buddyAllocate(size);
         this.setTag(address, tag);
         this.setSize(address, size);
+        this.setOwner(address, 0);
 
         return address;
     }
@@ -82,26 +85,29 @@ export class Heap {
     }
 
     public getTag(address: number): number {
-        return this.heap.getUint8(Heap.addressToBytes(address));
+        return this.getByteAtOffset(address, 0);
     }
 
     public setTag(address: number, tag: number): void {
-        this.heap.setUint8(
-            Heap.addressToBytes(address), tag
-        );
+        return this.setByteAtOffset(address, 0, tag);
     }
 
     // size
     public getSize(address: number): number {
-        return this.heap.getUint16(
-            Heap.addressToBytes(address) + this.size_offset
-        )
+        return this.getTwoByteAtOffset(address, this.size_offset);
     }
 
     public setSize(address: number, size: number): void {
-        this.heap.setUint16(
-            Heap.addressToBytes(address) + this.size_offset, size
-        )
+        return this.setTwoByteAtOffset(address, this.size_offset, size);
+    }
+
+    // owner
+    public getOwner(address: number): number {
+        return this.getTwoByteAtOffset(address, this.owner_offset);
+    }
+
+    public setOwner(address: number, owner: number) {
+        this.setTwoByteAtOffset(address, this.owner_offset, owner);
     }
 
     // set byte at offset

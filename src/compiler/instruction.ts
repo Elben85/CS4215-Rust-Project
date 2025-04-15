@@ -1,24 +1,22 @@
-export const createLDC = (value: any, temporary: boolean) => {
+export const createLDC = (value: any) => {
     return {
         tag: "LDC",
         value: value,
-        temp: temporary
     }
 }
 
-export const createBinop = (op: string, temporary: boolean) => {
+export const createBinop = (op: string) => {
     return {
         tag: "BINOP",
         op: op,
-        temp: temporary
+        
     }
 }
 
-export const createUnop = (op: string, temporary: boolean) => {
+export const createUnop = (op: string) => {
     return {
         tag: "UNOP",
         op: op,
-        temp: temporary
     }
 }
 
@@ -107,11 +105,10 @@ export const createReset = () => {
     }
 }
 
-export const createCall = (arity: number, temporary: boolean) => {
+export const createCall = (arity: number) => {
     return {
         tag: "CALL",
         arity: arity,
-        temp: temporary
     }
 }
 
