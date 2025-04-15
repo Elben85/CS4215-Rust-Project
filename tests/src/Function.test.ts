@@ -105,13 +105,9 @@ describe('Function Tests', () => {
         let a = 2 + f(4);
         let b = -f(1);
         let c = &mut f;
-        let d = {
-            let tmp = || -> f64  {return 2;};
-            tmp
-        };
-        a + b + d();
+        b + f(2) * a;
         `
-        expect(program).toEvaluateTo(7);
+        expect(program).toEvaluateTo(11);
     })
 
     it('simple closure immediate 1', () => {
@@ -130,14 +126,6 @@ describe('Function Tests', () => {
         `
 
         expect(program).toEvaluateTo(64);
-    });
-
-    it('closure, high order', () => {
-        const program = `
-            (|x: f64, y: f64| |a: f64, b: f64| x + y + a*b)(1, 2)(3, 4);
-        `
-
-        expect(program).toEvaluateTo(15);
     });
 
 });

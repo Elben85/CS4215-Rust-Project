@@ -19,12 +19,13 @@ export const evaluate = (instructionArray: any[]) => {
     E = Environment.allocate(HEAP, 0);
     TEMPORARIES = [];
 
-    console.log(instructionArray);
+    // console.log(instructionArray);
 
     while (instructionArray[PC].tag !== 'DONE') {
         // console.log(PC);
-        console.log(OS);
-        console.log(instructionArray[PC]);
+        // console.log(OS);
+        // console.log(TEMPORARIES);
+        // console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);
@@ -53,14 +54,14 @@ function stackPop(): any {
 const microcode = {
     LDC: (instr) => {
         stackPush(instr.value);
-        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     UNOP: (instr) => {
         const arg = stackPop();
         let result = evaluate_unop(instr.op, arg);
         stackPush(result);
-        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     BINOP: (instr) => {
@@ -72,7 +73,7 @@ const microcode = {
         );
 
         stackPush(result);
-        if (instr.temp) TEMPORARIES.push(OS[OS.length - 1]);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     POP: (instr) => {
@@ -82,7 +83,19 @@ const microcode = {
     ASSIGN: (instr) => {
         const pointerAddr = OS.pop();
         const valueAddr = OS.pop();
+        const oldOwnerAddress = HEAP.getOwner(valueAddr);
+
+        // invalidate old owner pointer
+        if (oldOwnerAddress !== Heap.INVALID_OWNER_ADDRESS) {
+            Pointer.invalidatePointer(HEAP, oldOwnerAddress);
+        }
+
+        if (Pointer.isValidPointer(HEAP, pointerAddr)) {
+            HEAP.deallocate(Pointer.addressToValue(HEAP, pointerAddr));
+        }
+
         Pointer.setPointer(HEAP, pointerAddr, valueAddr)
+        HEAP.setOwner(valueAddr, pointerAddr);
         PC++;
     },
     LD: (instr) => {
@@ -102,6 +115,7 @@ const microcode = {
         PC++;
     },
     EXIT_SCOPE: (instr) => {
+        Environment.dropEnvAndLastFrame(HEAP, E);
         E = RTS.pop();
         PC++;
     },
@@ -117,20 +131,14 @@ const microcode = {
     },
     DEREF: (instr) => {
         const pointerAddr = OS.pop();
-        // const itemAddr = Pointer.addressToValue(HEAP, pointerAddr);
-        const derefAddr = Pointer.addressToValue(HEAP, pointerAddr);
+        const derefAddr = Pointer.addressToValue(HEAP, Pointer.addressToValue(HEAP, pointerAddr))
         OS.push(derefAddr);
+        
         PC++;
     },
     BORROW: (instr) => {
         const itemAddr = OS.pop();
-        let pointerAddr;
-        if (HEAP.getTag(itemAddr) === Pointer.getTag()) {
-            pointerAddr = Pointer.allocate(HEAP, itemAddr);
-        } else {
-            pointerAddr = itemAddr;
-        }
-        // const pointerAddr = Pointer.allocate(HEAP, itemAddr);
+        let pointerAddr = Pointer.allocate(HEAP, itemAddr);
         OS.push(pointerAddr);
         PC++;
     },
@@ -140,10 +148,21 @@ const microcode = {
         PC++;
     },
     RESET: (instr) => {
+        // The following code is to make sure return value not accidentally dropped
+        const returnVal = OS[OS.length - 1];
+        const owner = HEAP.getOwner(returnVal);
+        if (owner !== Heap.INVALID_OWNER_ADDRESS) {
+            Pointer.invalidatePointer(HEAP, owner);
+            HEAP.setOwner(returnVal, Heap.INVALID_OWNER_ADDRESS);
+        }
+
         const topFrame = RTS.pop();
+        Environment.dropEnvAndLastFrame(HEAP, E);
         if (HEAP.getTag(topFrame) == Callframe.getTag()) {
             PC = Callframe.getPC(HEAP, topFrame);
             E = Callframe.getEnvironment(HEAP, topFrame);
+        } else {
+            E = topFrame;
         }
         
     },
@@ -155,12 +174,13 @@ const microcode = {
         RTS.push(callframe);
 
         const closureEnv = Closure.getClosureEnvironment(HEAP, addressFun);
-        // TODO: this arity does not check with function definition's arity
         E = Environment.extend(HEAP, closureEnv, arity); 
 
         for (let i = arity - 1; i >= 0; --i) {
             const pAddress = Environment.getPointerAddress(HEAP, E, HEAP.getSize(closureEnv), i);
-            Pointer.setPointer(HEAP, pAddress, OS.pop());
+            const valueAddress = OS.pop();
+            Pointer.setPointer(HEAP, pAddress, valueAddress);
+            HEAP.setOwner(valueAddress, pAddress);
         }
         OS.pop(); // pop the funAddress value
 
@@ -170,6 +190,7 @@ const microcode = {
         const address = OS.pop();
         const copyAddress = tagToType(HEAP.getTag(address)).copy(HEAP, address);
         OS.push(copyAddress);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     DROP: (instr) => {
@@ -179,7 +200,9 @@ const microcode = {
             return;
         } else {
             const address = TEMPORARIES.pop();
-            HEAP.deallocate(address);
+            if (HEAP.getOwner(address) === Heap.INVALID_OWNER_ADDRESS) {
+                HEAP.deallocate(address);
+            }
         }
     }
 }

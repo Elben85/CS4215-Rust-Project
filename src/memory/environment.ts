@@ -48,6 +48,13 @@ export class Environment implements Types {
         const frameAddress = this.getFrame(heap, env, frameIndex);
         Frame.setValue(heap, frameAddress, itemIndex, itemAddress);
     }
+
+    public static dropEnvAndLastFrame(heap: Heap, env: number) {
+        const envSize = heap.getSize(env);
+        const frameAddr = this.getFrame(heap, env, envSize - 1);
+        Frame.dropFrame(heap, frameAddr);
+        heap.deallocate(env);
+    }
 }
 
 /**
@@ -67,9 +74,9 @@ class Frame implements Types {
     public static allocate(heap: Heap, numVariables: number): number {
         const frameAddress = heap.reserve(this.indexToOffset(numVariables), this.getTag());
         for (let i = 0; i < numVariables; ++i) {
-            heap.setMetadata(
-                this.getAddress(frameAddress, i), Pointer.getTag(), 1
-            )
+            const pAddress = this.getAddress(frameAddress, i);
+            heap.setMetadata(pAddress, Pointer.getTag(), 1)
+            Pointer.invalidatePointer(heap, pAddress);
         }
         return frameAddress
     }
@@ -93,9 +100,22 @@ class Frame implements Types {
         }
 
         const frameSize = heap.getSize(address);
-        if (frameSize <= index) {
+
+        if (frameSize <= this.indexToOffset(index)) {
             throw new Error(`Invalid index: Trying to access frame of size ${frameSize} at ${index}`);
         }
+    }
+
+    public static dropFrame(heap: Heap, address: number) {
+        const numVar = heap.getSize(address) / (Heap.METADATA_SIZE + 1);
+        
+        for (let i = 0; i < numVar; ++i) {
+            const vAddress = this.getValue(heap, address, i);
+            if (vAddress !== Pointer.INVALID_POINTER) {
+                heap.deallocate(vAddress);
+            }
+        }
+        heap.deallocate(address);
     }
 }
 

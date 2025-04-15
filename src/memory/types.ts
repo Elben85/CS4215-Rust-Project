@@ -116,6 +116,8 @@ class Void implements Types {
 }
 
 export class Pointer implements Types {
+    public static INVALID_POINTER: number = 0;
+
     public static getTag(): number { return 5; }
 
     public static allocate(heap: Heap, address: number): number {
@@ -136,6 +138,14 @@ export class Pointer implements Types {
         return this.allocate(
             heap, this.addressToValue(heap, address)
         )
+    }
+
+    public static invalidatePointer(heap: Heap, address: number) {
+        this.setPointer(heap, address, this.INVALID_POINTER);
+    }
+
+    public static isValidPointer(heap: Heap, address: number) {
+        return this.addressToValue(heap, address) !== this.INVALID_POINTER; 
     }
 }
 
