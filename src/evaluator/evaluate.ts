@@ -117,20 +117,13 @@ const microcode = {
     },
     DEREF: (instr) => {
         const pointerAddr = OS.pop();
-        // const itemAddr = Pointer.addressToValue(HEAP, pointerAddr);
-        const derefAddr = Pointer.addressToValue(HEAP, pointerAddr);
+        const derefAddr = Pointer.addressToValue(HEAP, Pointer.addressToValue(HEAP, pointerAddr))
         OS.push(derefAddr);
         PC++;
     },
     BORROW: (instr) => {
         const itemAddr = OS.pop();
-        let pointerAddr;
-        if (HEAP.getTag(itemAddr) === Pointer.getTag()) {
-            pointerAddr = Pointer.allocate(HEAP, itemAddr);
-        } else {
-            pointerAddr = itemAddr;
-        }
-        // const pointerAddr = Pointer.allocate(HEAP, itemAddr);
+        let pointerAddr = Pointer.allocate(HEAP, itemAddr);
         OS.push(pointerAddr);
         PC++;
     },
