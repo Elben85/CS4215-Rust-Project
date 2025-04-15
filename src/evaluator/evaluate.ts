@@ -19,13 +19,13 @@ export const evaluate = (instructionArray: any[]) => {
     E = Environment.allocate(HEAP, 0);
     TEMPORARIES = [];
 
-    console.log(instructionArray);
+    // console.log(instructionArray);
 
     while (instructionArray[PC].tag !== 'DONE') {
         // console.log(PC);
-        console.log(OS);
-        console.log(TEMPORARIES);
-        console.log(instructionArray[PC]);
+        // console.log(OS);
+        // console.log(TEMPORARIES);
+        // console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);
@@ -115,6 +115,7 @@ const microcode = {
         PC++;
     },
     EXIT_SCOPE: (instr) => {
+        Environment.dropEnvAndLastFrame(HEAP, E);
         E = RTS.pop();
         PC++;
     },
@@ -147,10 +148,21 @@ const microcode = {
         PC++;
     },
     RESET: (instr) => {
+        // The following code is to make sure return value not accidentally dropped
+        const returnVal = OS[OS.length - 1];
+        const owner = HEAP.getOwner(returnVal);
+        if (owner !== Heap.INVALID_OWNER_ADDRESS) {
+            Pointer.invalidatePointer(HEAP, owner);
+            HEAP.setOwner(returnVal, Heap.INVALID_OWNER_ADDRESS);
+        }
+
         const topFrame = RTS.pop();
+        Environment.dropEnvAndLastFrame(HEAP, E);
         if (HEAP.getTag(topFrame) == Callframe.getTag()) {
             PC = Callframe.getPC(HEAP, topFrame);
             E = Callframe.getEnvironment(HEAP, topFrame);
+        } else {
+            E = topFrame;
         }
         
     },

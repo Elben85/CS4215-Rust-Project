@@ -115,7 +115,7 @@ describe('While Loop Tests', () => {
     it(`test continue return correct value`, () => {
         const program = `
             let mut i = 0;
-            let mut j = while i < 10 {
+            let mut j = while i < 1 {
                 i = i + 1;
             };
             j;

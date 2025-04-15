@@ -116,7 +116,7 @@ class Void implements Types {
 }
 
 export class Pointer implements Types {
-    public static INVALID_POINTER: number = Number.MAX_VALUE;
+    public static INVALID_POINTER: number = 0;
 
     public static getTag(): number { return 5; }
 

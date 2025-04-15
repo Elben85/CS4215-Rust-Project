@@ -235,9 +235,5 @@ export class Heap {
     
     private setFreeListHead(level: number, address: number): void {
         this.setTwoByteAtOffset(level, 0, address);
-    }
-    
-    
-    
-    
+    }   
 }
