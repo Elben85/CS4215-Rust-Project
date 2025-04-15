@@ -149,8 +149,7 @@ const microcode = {
     },
     CALL: (instr) => {
         const arity = instr.arity;
-		const addressFunP = OS.slice(-1 - arity,)[0];
-        const addressFun = Pointer.addressToValue(HEAP, addressFunP);
+		const addressFun = OS.slice(-1 - arity,)[0];
 
         const callframe = Callframe.allocate(HEAP, [E, PC+1]);
         RTS.push(callframe);

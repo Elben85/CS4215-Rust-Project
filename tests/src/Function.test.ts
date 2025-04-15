@@ -83,6 +83,22 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(20);
     });
 
+    it('simple closure 4', () => {
+        const program = `
+            let f = |x: f64| -> f64 {
+                return x*x;
+            };
+
+            let g = |x: f64| -> f64 {
+                return 10 + f(x+x);
+            };
+            
+            
+            g(3);
+        `
+        expect(program).toEvaluateTo(46);
+    });
+
     it('Test parsing precedence', () => {
         const program = `
         let mut f = |x: f64| -> f64 {return x;};
@@ -98,14 +114,31 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(7);
     })
 
-    // TODO: Case not yet handled
-    // it('simple closure immediate', () => {
-    //     const program = `
-    //         (|x: f64, y: f64| 10 + x + y)(5, 6);
-    //     `
+    it('simple closure immediate 1', () => {
+        const program = `
+            (|x: f64, y: f64| 10 + x + y)(5, 6);
+        `
 
-    //     expect(program).toEvaluateTo(21);
-    // });
+        expect(program).toEvaluateTo(21);
+    });
+
+    it('simple closure immediate 2', () => {
+        const program = `
+            (|x: f64| -> f64 {
+                return x*x;
+            })(8);
+        `
+
+        expect(program).toEvaluateTo(64);
+    });
+
+    it('closure, high order', () => {
+        const program = `
+            (|x: f64, y: f64| |a: f64, b: f64| x + y + a*b)(1, 2)(3, 4);
+        `
+
+        expect(program).toEvaluateTo(15);
+    });
 
 });
 

@@ -3,7 +3,7 @@
  * 
  * A heap is a linked list
  * 1 word of metadata
- * 1 byte type tag, 2 byte size 6 bytes unused
+ * 1 byte type tag, 2 byte size, 2 byte next address, 4 bytes unused
  * 
  * An address is in word (so adress 1 refers to byte 1 * word_size)
  */

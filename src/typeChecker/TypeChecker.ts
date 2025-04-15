@@ -631,7 +631,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const expectedArgTypes = fun.args;
 
         if (actualArgTypes.length !== expectedArgTypes.length) {
-            throw new Error(`Mitmatched number of arguments: ${ctx.getText()}`);
+            throw new Error(`Mismatched number of arguments: ${ctx.getText()}`);
         }
 
         for (let i = 0; i < actualArgTypes.length; ++i) {

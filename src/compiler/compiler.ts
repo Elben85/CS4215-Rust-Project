@@ -440,9 +440,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     visitFunctionParam(ctx: FunctionParamContext): void {
         // Assign the function parameter to the environment
-        // if (ctx.TYPE()) {
-        //     throw new Error("Compiling type annotation not yet implemented");
-        // }
         let identifier = ctx.functionParamPattern().IDENTIFIER().getText();
         let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
 
@@ -451,7 +448,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitCallExpression(ctx: CallExpressionContext): void { // Call Expression
         this.visitWithFlags(
             ctx.callExpression() || ctx.callExpressionTerminal(),
-            true,
+            false,
             this.shouldBeTemporary
         );
 
