@@ -115,7 +115,9 @@ const microcode = {
         PC++;
     },
     EXIT_SCOPE: (instr) => {
-        Environment.dropEnvAndLastFrame(HEAP, E);
+        // prevent block result to be dropped
+        const resultAddr = OS[OS.length - 1];
+        Environment.dropEnvAndLastFrame(HEAP, E, resultAddr);
         E = RTS.pop();
         PC++;
     },
@@ -133,7 +135,7 @@ const microcode = {
         const pointerAddr = OS.pop();
         const derefAddr = Pointer.addressToValue(HEAP, Pointer.addressToValue(HEAP, pointerAddr))
         OS.push(derefAddr);
-        
+
         PC++;
     },
     BORROW: (instr) => {
@@ -149,32 +151,26 @@ const microcode = {
     },
     RESET: (instr) => {
         // The following code is to make sure return value not accidentally dropped
-        const returnVal = OS[OS.length - 1];
-        const owner = HEAP.getOwner(returnVal);
-        if (owner !== Heap.INVALID_OWNER_ADDRESS) {
-            Pointer.invalidatePointer(HEAP, owner);
-            HEAP.setOwner(returnVal, Heap.INVALID_OWNER_ADDRESS);
-        }
-
+        const resultAddr = OS[OS.length - 1];
         const topFrame = RTS.pop();
-        Environment.dropEnvAndLastFrame(HEAP, E);
+        Environment.dropEnvAndLastFrame(HEAP, E, resultAddr);
         if (HEAP.getTag(topFrame) == Callframe.getTag()) {
             PC = Callframe.getPC(HEAP, topFrame);
             E = Callframe.getEnvironment(HEAP, topFrame);
         } else {
             E = topFrame;
         }
-        
+
     },
     CALL: (instr) => {
         const arity = instr.arity;
-		const addressFun = OS.slice(-1 - arity,)[0];
+        const addressFun = OS.slice(-1 - arity,)[0];
 
-        const callframe = Callframe.allocate(HEAP, [E, PC+1]);
+        const callframe = Callframe.allocate(HEAP, [E, PC + 1]);
         RTS.push(callframe);
 
         const closureEnv = Closure.getClosureEnvironment(HEAP, addressFun);
-        E = Environment.extend(HEAP, closureEnv, arity); 
+        E = Environment.extend(HEAP, closureEnv, arity);
 
         for (let i = arity - 1; i >= 0; --i) {
             const pAddress = Environment.getPointerAddress(HEAP, E, HEAP.getSize(closureEnv), i);
