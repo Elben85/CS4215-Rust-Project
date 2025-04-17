@@ -18,21 +18,21 @@ describe('Block statement test', () => {
         expect(program).toEvaluateTo(6);
     });
 
-    // it('Block Statement 2', () => {
-    //     const program = `
-    //         let mut a = 2;
-    //         let x = {
-    //             let b = &mut a;
-    //             let mut i = 0;
-    //             while i < 30000 {
-    //                 i = i + 1;
-    //             };
-    //             b
-    //         };
-    //         *x;
-    //     `
-    //     expect(program).toEvaluateTo(2);
-    // });
+    it('Block Statement 2', () => {
+        const program = `
+            let mut a = 2;
+            let x = {
+                let b = &mut a;
+                let mut i = 0;
+                while i < 100000 {
+                    i = i + 1;
+                };
+                b
+            };
+            *x;
+        `
+        expect(program).toEvaluateTo(2);
+    });
 });
 
 describe('Block statement type test', () => {

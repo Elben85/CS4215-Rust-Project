@@ -129,6 +129,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const statements: StatementContext[] = ctx.statement();
         this.compileStatements(statements);
         enterScopeInstr.frameSize = this.env[0].length;
+        this.instructionArray.pop();
         this.instructionArray.push(Instructions.createDone())
     }
 
@@ -137,9 +138,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.isFirstStatement = false;
         } else {
             this.instructionArray.push(Instructions.createPop());
-            this.instructionArray.push(Instructions.createDrop());
         }
         this.visit(ctx.getChild(0));
+        this.instructionArray.push(Instructions.createDrop());
     }
 
     visitEmptyStatement(_: EmptyStatementContext): void {
