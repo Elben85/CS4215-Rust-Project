@@ -91,7 +91,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     private visitWithFlags(ctx: ParseTree, expectLvalue: boolean) {
         const oldLvalue = this.expectLvalue;
-        this.expectLvalue = expectLvalue;        
+        this.expectLvalue = expectLvalue;
         const result = this.visit(ctx);
         this.expectLvalue = oldLvalue;
         return result;
@@ -129,7 +129,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const statements: StatementContext[] = ctx.statement();
         this.compileStatements(statements);
         enterScopeInstr.frameSize = this.env[0].length;
-        this.instructionArray.pop();
         this.instructionArray.push(Instructions.createDone())
     }
 
@@ -138,12 +137,12 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.isFirstStatement = false;
         } else {
             this.instructionArray.push(Instructions.createPop());
+            this.instructionArray.push(Instructions.createDrop());
         }
         this.visit(ctx.getChild(0));
-        this.instructionArray.push(Instructions.createDrop());
     }
 
-    visitEmptyStatement(_: EmptyStatementContext): void { 
+    visitEmptyStatement(_: EmptyStatementContext): void {
         this.instructionArray.push(Instructions.createLDC(VOID));
     };
 
@@ -184,7 +183,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     // operator associativity: https://doc.rust-lang.org/reference/expressions.html
     compileLeftToRightAssociativeBinop(ctx): void {
         const childCount = ctx.getChildCount();
-        
+
         if (childCount === 1) {
             this.visitWithFlags(
                 ctx.getChild(0),
@@ -251,10 +250,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
         this.compileStatements(ctx.statement());
-        if (!this.isFirstStatement) {
-            // At least have 1 non-empty statement
-            this.instructionArray.push(Instructions.createPop());
-        }
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
@@ -416,7 +411,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
         this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
         this.instructionArray.push(Instructions.createAssign());
-        this.instructionArray.push(Instructions.createPop());
+        this.instructionArray.push(Instructions.createLDC(VOID));
     }
 
     visitFunctionParam(ctx: FunctionParamContext): void {
@@ -438,6 +433,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             const args = ctx.callParams().expression();
             for (const arg of args) {
                 this.visit(arg);
+                if (this.typeCache.get(arg).copyable()) {
+                    this.instructionArray.push(Instructions.createCopy());
+                }
             }
 
             this.instructionArray.push(Instructions.createCall(args.length));

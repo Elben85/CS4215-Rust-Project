@@ -9,7 +9,7 @@ import { TypeChecker } from "../../src/typeChecker/TypeChecker";
 import { expect } from "vitest";
 import { Type } from "../../src/typeChecker/Type";
 
-function getParseTree(program:string) {
+function getParseTree(program: string) {
     const inputStream = CharStream.fromString(program);
     const lexer = new SimpleLangLexer(inputStream);
     const tokenStream = new CommonTokenStream(lexer);
@@ -41,7 +41,7 @@ export function EvaluateType(program: string) {
     // Compile the parsed tree
     const visitor = new TypeChecker()
     const type = visitor.checkType(tree);
-    
+
     const borrowChecker = new BorrowChecker(visitor.typeCache);
     borrowChecker.visit(tree);
     // console.log(type);

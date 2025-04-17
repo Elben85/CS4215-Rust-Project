@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Compile } from "./setup";
+import { Compile, Evaluate } from "./setup";
 
 describe('Function Tests', () => {
     it('simple', () => {
@@ -7,9 +7,9 @@ describe('Function Tests', () => {
             fn same() -> f64 {
                 return 3*3;
             }    
-            
+
             same();
-            
+
         `
         expect(program).toEvaluateTo(9);
     });
@@ -19,9 +19,9 @@ describe('Function Tests', () => {
             fn same(x: f64, y: f64) -> f64 {
                 return (3 + x) * y;
             }
-            
+
             same(2, 1);
-            
+
         `
         expect(program).toEvaluateTo(5);
     });
@@ -37,12 +37,24 @@ describe('Function Tests', () => {
                 let result1 = first(2, 1);
                 return b && (result1 > 1);
             }
-             
+
             second(true);
         `
         expect(program).toEvaluateTo(true);
     });
-    
+
+    it('simple 4', () => {
+        const program = `
+            let x = 3;
+            fn foo(a: f64) -> f64 {
+                return a + 69;
+            }
+            foo(x) + foo(x);
+            x;
+        `
+        expect(program).toEvaluateTo(3);
+    });
+
     it('deferred declaration', () => {
         const program = `
             let x: bool = later();
@@ -64,7 +76,7 @@ describe('Function Tests', () => {
 
     it('simple closure 2', () => {
         const program = `
-            
+
             let f = |x: f64, y: f64| x * y;
             f(2, 3);
         `
@@ -77,7 +89,7 @@ describe('Function Tests', () => {
                 let z = 10;
                 return 10*x;
             };
-            
+
             f(2);
         `
         expect(program).toEvaluateTo(20);
@@ -92,8 +104,8 @@ describe('Function Tests', () => {
             let g = |x: f64| -> f64 {
                 return 10 + f(x+x);
             };
-            
-            
+
+
             g(3);
         `
         expect(program).toEvaluateTo(46);

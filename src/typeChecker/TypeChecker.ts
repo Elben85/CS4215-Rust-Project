@@ -44,7 +44,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
     private useForMutable: boolean; // indicate whether a variable will be used for read / write 
     // stack to indicate the expected return type of an enclosing function body 
-    private returnTypeStack: Type[]; 
+    private returnTypeStack: Type[];
     public typeCache: Map<ParseTree, Type>;
 
     public constructor() {
@@ -175,7 +175,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         }
         for (let i = 0; i < items.length; ++i) {
             this.checkFunctionBody(
-                this.getFunctionBody(items[i]), 
+                this.getFunctionBody(items[i]),
                 this.lookupType(this.getFunctionName(items[i]), this.typeEnv).type
             );
         }
@@ -447,7 +447,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (!(assigneeType instanceof PointerType)) {
             throw new Error(`Invalid assignee expression:\n${ctx.getText()}`);
         }
-        
+
         let expectedType: Type = assigneeType.baseType;
         if (!(<PointerType>assigneeType).isMutable) {
             throw new Error(`Trying to assign to an immutable reference:\n${ctx.getText()}`);
@@ -510,7 +510,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             return [[], []]
         }
         const functionParams = parameters ? parameters.functionParam() : [];
-                        
+
         const argSymbols: string[] = [];
         const argTypes: Type[] = [];
 
@@ -527,8 +527,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const parameters = ctx.functionParameters();
         const [argSymbols, argTypes] = this.getFunctionParametersSymbolAndTypes(parameters);
         const returnType = ctx.functionReturnType()
-                            ? stringToType(ctx.functionReturnType().TYPE().getText())
-                            : VOID_TYPE
+            ? stringToType(ctx.functionReturnType().TYPE().getText())
+            : VOID_TYPE
         const functionName = ctx.IDENTIFIER().getText();
         const functionType = new FunctionType(argSymbols, argTypes, returnType);
 
@@ -555,10 +555,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             returnType = this.visitWithEnvironment(
                 ctx.expression(),
                 this.extendTypeEnvironment(
-                    argSymbols, 
+                    argSymbols,
                     argTypes.map(t => {
-                        return {type: t, is_mutable: false, assigned: true};
-                    }), 
+                        return { type: t, is_mutable: false, assigned: true };
+                    }),
                     this.typeEnv
                 )
             );
@@ -567,7 +567,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             returnType = stringToType(ctx.TYPE().getText());
         }
         const functionType = new FunctionType(argSymbols, argTypes, returnType);
-        
+
         if (ctx.blockExpression()) {
             this.checkFunctionBody(ctx.blockExpression(), functionType);
         }
@@ -581,8 +581,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             this.extendTypeEnvironment(
                 functionType.argSymbols,
                 functionType.args.map(t => {
-                    return {type: t, is_mutable: false, assigned: true};
-                }), 
+                    return { type: t, is_mutable: false, assigned: true };
+                }),
                 this.typeEnv
             )
         )
@@ -598,14 +598,14 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitReturnExpression(ctx: ReturnExpressionContext): Type {
         const returnType = this.visit(ctx.expression());
-        
+
         const returnStackLength = this.returnTypeStack.length
         if (returnStackLength === 0) {
             throw new Error("return outside of function");
         }
 
         const expectedType = this.returnTypeStack[returnStackLength - 1];
-        
+
         if (expectedType.compare(UNKNOWN_TYPE)) {
             this.returnTypeStack[returnStackLength - 1] = expectedType;
         } else if (!returnType.compare(expectedType)) {
@@ -613,7 +613,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             const actual = returnType.toString();
             throw new Error(`Unexpected return type, expected ${expected}, got ${actual}`);
         }
-        
+
         return VOID_TYPE;
     }
 
@@ -626,8 +626,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             throw new Error(`Calling a non function ${ctx.getText()}`);
         }
 
-        const args = ctx.callParams() ? ctx.callParams().expression(): [];
-        const actualArgTypes = args.map(x => this.visit(x));
+        const args = ctx.callParams() ? ctx.callParams().expression() : [];
+        const actualArgTypes = args.map(x => this.visitAndCache(x));
         const expectedArgTypes = fun.args;
 
         if (actualArgTypes.length !== expectedArgTypes.length) {
@@ -650,7 +650,7 @@ class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleL
     public constructor() {
         super();
     }
-    visitReturnExpression(ctx: ReturnExpressionContext): boolean {return true;}
+    visitReturnExpression(ctx: ReturnExpressionContext): boolean { return true; }
 
 
     visitExpressionStatement(ctx: ExpressionStatementContext): boolean {
@@ -676,14 +676,14 @@ class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleL
     }
 
     visitIfExpression(ctx: IfExpressionContext): boolean {
-        return this.visit(ctx.blockExpression()) 
-                && ctx.ifExpressionAlternative()
-                && this.visit(ctx.ifExpressionAlternative());
+        return this.visit(ctx.blockExpression())
+            && ctx.ifExpressionAlternative()
+            && this.visit(ctx.ifExpressionAlternative());
     }
 
-    visitEmptyStatement(_: EmptyStatementContext): boolean {return false;};
+    visitEmptyStatement(_: EmptyStatementContext): boolean { return false; };
     visitLetStatement(ctx: LetStatementContext): boolean { return false }
-    visitNegationExpression(ctx: NegationExpressionContext): boolean {return false;}
+    visitNegationExpression(ctx: NegationExpressionContext): boolean { return false; }
     visitLogicalOr(ctx: LogicalOrContext): boolean { return false }
     visitLogicalAnd(ctx: LogicalAndContext): boolean { return false }
     visitComparison(ctx: ComparisonContext): boolean { return false }
@@ -695,12 +695,12 @@ class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleL
         return this.visit(ctx.blockBody());
     }
 
-    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): boolean {return false;}
+    visitPredicateLoopExpression(ctx: PredicateLoopExpressionContext): boolean { return false; }
     visitContinueExpression(ctx: ContinueExpressionContext): boolean { return false; }
     visitBreakExpression(ctx: BreakExpressionContext): boolean { return false; };
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): boolean { return false; }
     visitDereferenceExpression(ctx: DereferenceExpressionContext): boolean { return false; }
     visitBorrowExpression(ctx: BorrowExpressionContext): boolean { return false; }
-    visitFunction(ctx: FunctionContext): boolean {return false;}
-    visitClosureExpression(ctx: ClosureExpressionContext): boolean {return false;}
+    visitFunction(ctx: FunctionContext): boolean { return false; }
+    visitClosureExpression(ctx: ClosureExpressionContext): boolean { return false; }
 }

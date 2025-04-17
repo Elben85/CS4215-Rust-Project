@@ -19,13 +19,13 @@ export const evaluate = (instructionArray: any[]) => {
     E = Environment.allocate(HEAP, 0);
     TEMPORARIES = [];
 
-    // console.log(instructionArray);
+    console.log(instructionArray);
 
     while (instructionArray[PC].tag !== 'DONE') {
-        // console.log(PC);
-        // console.log(OS);
-        // console.log(TEMPORARIES);
-        // console.log(instructionArray[PC]);
+        console.log(PC);
+        console.log(OS);
+        console.log(TEMPORARIES);
+        console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);
@@ -51,6 +51,22 @@ function stackPop(): any {
     return addressToValue(HEAP, OS.pop());
 }
 
+function move(vAddress: number, newOwnerAddr: number) {
+    const oldOwnerAddress = HEAP.getOwner(vAddress);
+
+    // invalidate old owner pointer
+    if (oldOwnerAddress !== Heap.INVALID_OWNER_ADDRESS) {
+        Pointer.invalidatePointer(HEAP, oldOwnerAddress);
+    }
+
+    if (Pointer.isValidPointer(HEAP, newOwnerAddr)) {
+        HEAP.deallocate(Pointer.addressToValue(HEAP, newOwnerAddr));
+    }
+
+    Pointer.setPointer(HEAP, newOwnerAddr, vAddress)
+    HEAP.setOwner(vAddress, newOwnerAddr);
+}
+
 const microcode = {
     LDC: (instr) => {
         stackPush(instr.value);
@@ -59,6 +75,7 @@ const microcode = {
     },
     UNOP: (instr) => {
         const arg = stackPop();
+
         let result = evaluate_unop(instr.op, arg);
         stackPush(result);
         TEMPORARIES.push(OS[OS.length - 1]);
@@ -81,21 +98,9 @@ const microcode = {
         PC++;
     },
     ASSIGN: (instr) => {
-        const pointerAddr = OS.pop();
+        const newOwnerAddr = OS.pop();
         const valueAddr = OS.pop();
-        const oldOwnerAddress = HEAP.getOwner(valueAddr);
-
-        // invalidate old owner pointer
-        if (oldOwnerAddress !== Heap.INVALID_OWNER_ADDRESS) {
-            Pointer.invalidatePointer(HEAP, oldOwnerAddress);
-        }
-
-        if (Pointer.isValidPointer(HEAP, pointerAddr)) {
-            HEAP.deallocate(Pointer.addressToValue(HEAP, pointerAddr));
-        }
-
-        Pointer.setPointer(HEAP, pointerAddr, valueAddr)
-        HEAP.setOwner(valueAddr, pointerAddr);
+        move(valueAddr, newOwnerAddr);
         PC++;
     },
     LD: (instr) => {
@@ -140,8 +145,10 @@ const microcode = {
     },
     BORROW: (instr) => {
         const itemAddr = OS.pop();
+
         let pointerAddr = Pointer.allocate(HEAP, itemAddr);
         OS.push(pointerAddr);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     LDF: (instr) => {
@@ -175,18 +182,19 @@ const microcode = {
         for (let i = arity - 1; i >= 0; --i) {
             const pAddress = Environment.getPointerAddress(HEAP, E, HEAP.getSize(closureEnv), i);
             const valueAddress = OS.pop();
-            Pointer.setPointer(HEAP, pAddress, valueAddress);
-            HEAP.setOwner(valueAddress, pAddress);
+            move(valueAddress, pAddress);
         }
         OS.pop(); // pop the funAddress value
 
         PC = Closure.getClosurePC(HEAP, addressFun);
     },
     COPY: (instr) => {
+        // NOTE: for current use case, copy will only be called when we want to bind a value to
+        // a new variable, so pushing to a temporary is unneccessary
         const address = OS.pop();
+
         const copyAddress = tagToType(HEAP.getTag(address)).copy(HEAP, address);
         OS.push(copyAddress);
-        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     DROP: (instr) => {

@@ -37,26 +37,26 @@ export class Heap {
         for (let i = 0; i <= Heap.MAX_LEVEL; i++) {
             this.setFreeListHead(i, 0);
         }
-    
+
         let address = Heap.HEAP_BASE;
         const totalWords = Heap.HEAP_SIZE / Heap.WORD_SIZE;
-    
+
         // Fill remaining heap using largest possible buddy blocks
         while (address < totalWords) {
             const remaining = totalWords - address;
-    
+
             let level = Math.floor(Math.log2(remaining));
-            const blockSize = 2**level;
-    
+            const blockSize = 2 ** level;
+
             // Write metadata at block start
             this.setNext(address, this.getFreeListHead(level));
             this.setFreeListHead(level, address);
-    
+
             address += blockSize;
         }
     }
-    
-    
+
+
 
     public reserve(size: number, tag: number): number {
         /**
@@ -148,46 +148,46 @@ export class Heap {
 
     public deallocate(address: number) {
         this.buddyDeallocate(address);
-     }
+    }
 
 
-     // Buddy Memory Management
-     private buddyAllocate(requestSizeWords: number): number {
+    // Buddy Memory Management
+    private buddyAllocate(requestSizeWords: number): number {
         const totalSize = requestSizeWords + Heap.METADATA_SIZE;
         let level = Math.ceil(Math.log2(totalSize));
-    
+
         for (let i = level; i <= Heap.MAX_LEVEL; i++) {
             let head = this.getFreeListHead(i);
             if (head !== 0) {
                 // Remove from freelist
                 this.setFreeListHead(i, this.getNext(head));
-    
+
                 let addr = head;
                 for (let j = i; j > level; j--) {
-                    const buddy = addr + (2**(j - 1));
-                    this.setSize(buddy, (2**(j - 1)) - Heap.METADATA_SIZE);
+                    const buddy = addr + (2 ** (j - 1));
+                    this.setSize(buddy, (2 ** (j - 1)) - Heap.METADATA_SIZE);
                     this.setNext(buddy, this.getFreeListHead(j - 1));
                     this.setFreeListHead(j - 1, buddy);
                 }
-    
-                this.setSize(addr, (2**level) - Heap.METADATA_SIZE);
+
+                this.setSize(addr, (2 ** level) - Heap.METADATA_SIZE);
                 return addr;
             }
         }
-    
+
         throw new Error("Heap out of memory: No space available for allocation.");
     }
-    
+
 
     private buddyDeallocate(address: number): void {
         const totalSize = this.getSize(address) + Heap.METADATA_SIZE;
         let level = Math.ceil(Math.log2(totalSize));
         let addr = address;
-    
+
         while (true) {
-            const buddy = addr ^ (2**level);
+            const buddy = addr ^ (2 ** level);
             const head = this.getFreeListHead(level);
-    
+
             // Check if buddy is in the free list
             let found = false;
             let prev = -1;
@@ -200,31 +200,31 @@ export class Heap {
                 prev = current;
                 current = this.getNext(current);
             }
-    
+
             if (found) {
                 if (prev === -1) {
                     this.setFreeListHead(level, this.getNext(current));
                 } else {
                     this.setNext(prev, this.getNext(current));
                 }
-    
+
                 addr = Math.min(addr, buddy);
                 level++;
             } else {
                 break;
             }
         }
-    
-        this.setSize(addr, (2**level) - Heap.METADATA_SIZE);
+
+        this.setSize(addr, (2 ** level) - Heap.METADATA_SIZE);
         this.setNext(addr, this.getFreeListHead(level));
         this.setFreeListHead(level, addr);
     }
-    
+
 
     private setNext(address: number, next: number): void {
         this.setTwoByteAtOffset(address, this.next_offset, next);
     }
-    
+
     private getNext(address: number): number {
         return this.getTwoByteAtOffset(address, this.next_offset);
     }
@@ -232,8 +232,8 @@ export class Heap {
     private getFreeListHead(level: number): number {
         return this.getTwoByteAtOffset(level, 0);
     }
-    
+
     private setFreeListHead(level: number, address: number): void {
         this.setTwoByteAtOffset(level, 0, address);
-    }   
+    }
 }
