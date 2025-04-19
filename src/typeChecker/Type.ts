@@ -1,3 +1,5 @@
+import { TypeContext } from "../parser/src/SimpleLangParser";
+
 export abstract class Type {
   abstract toString(): string;
   abstract compare(other: Type): boolean;
@@ -90,13 +92,15 @@ export const BOOLEAN_TYPE = new BooleanType();
 export const VOID_TYPE = new VoidType();
 export const UNKNOWN_TYPE = new UnknownType();
 
-export function stringToType(str: string): Type {
-  switch (str) {
-    case "f64":
-      return NUMBER_TYPE;
-    case "bool":
-      return BOOLEAN_TYPE;
-    default:
-      throw new Error(`Unknown type ${str}`);
-  }
-}
+// export function stringToType(str: string): Type {
+//   switch (str) {
+//     case "f64":
+//       return NUMBER_TYPE;
+//     case "bool":
+//       return BOOLEAN_TYPE;
+//     default:
+//       throw new Error(`Unknown type ${str}`);
+//   }
+// }
+
+

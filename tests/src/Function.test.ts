@@ -55,6 +55,79 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(3);
     });
 
+    it('higher order 1', () => {
+        const program = `
+            fn first(a: f64) -> f64 {
+                return a + 69;
+            }
+
+            fn foo(f: fn(f64) -> f64) -> f64 {
+                return f(3);
+            }
+            
+            foo(first);
+        `
+        expect(program).toEvaluateTo(72);
+    });
+
+    it('higher order 1', () => {
+        const program = `
+            fn first(a: f64) -> f64 {
+                return a + 69;
+            }
+
+            fn foo() -> fn(f64) -> f64 {
+                return first;
+            }
+            
+            foo()(2);
+        `
+        expect(program).toEvaluateTo(71);
+    });
+
+    it('higher order 2', () => {
+        const program = `
+            fn first(a: f64) -> f64 {
+                return a + 69;
+            }
+
+            fn foo(f: fn(f64) -> f64, b: f64) -> bool {
+                return f(b) > f(f(b));
+            }
+            
+            foo(first, 3);
+        `
+        expect(program).toEvaluateTo(false);
+    });
+
+    // it('higher order 3', () => {
+    //     const program = `
+
+    //         fn first(a: f64) -> fn(f64) -> bool {
+    //             fn inside(b: f64) -> bool {
+    //                 return b > a;
+    //             }
+
+    //             return inside;
+    //         }
+
+    //         first(2)(3);
+    //     `
+    //     expect(program).toEvaluateTo(true);
+    // });
+
+    // it('higher order 4', () => {
+    //     const program = `
+
+    //         fn first(a: f64) -> fn(f64) -> bool {
+    //             return |x: f64| -> bool {return a > 1;};
+    //         }
+
+    //         first(10)(0);
+    //     `
+    //     expect(program).toEvaluateTo(true);
+    // });
+
     it('deferred declaration', () => {
         const program = `
             let x: bool = later();

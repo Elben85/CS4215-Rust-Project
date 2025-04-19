@@ -27,10 +27,11 @@ import {
     ClosureExpressionContext,
     FunctionParametersContext,
     ReturnExpressionContext,
-    CallExpressionContext
+    CallExpressionContext,
+    TypeContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, stringToType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType, FunctionType } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType, FunctionType } from './Type';
 
 export interface identifierInformation {
     type: Type, // type of identifer
@@ -194,8 +195,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
     visitLetStatement(ctx: LetStatementContext): Type {
         let declaredType: Type = new UnknownType();
-        if (ctx.TYPE()) {
-            declaredType = stringToType(ctx.TYPE().getText());
+        if (ctx.type()) {
+            declaredType = this.typeContextToType(ctx.type());
         }
         let is_mutable = false;
         if (ctx.mutable()) {
@@ -211,7 +212,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             expressionType = this.visitAndCache(expression);
             assigned = true;
 
-            if (ctx.TYPE() && (!declaredType.compare(expressionType))) {
+            if (ctx.type() && (!declaredType.compare(expressionType))) {
                 throw new Error(
                     `${ctx.getText()}\nExpected ${declaredType.toString()}, got ${expressionType.toString()}`
                 )
@@ -515,7 +516,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const argTypes: Type[] = [];
 
         for (let p of functionParams) {
-            const type: Type = stringToType(p.TYPE().getText());
+            const type: Type = this.typeContextToType(p.type());
             const symbol: string = p.functionParamPattern().getText();
             argSymbols.push(symbol);
             argTypes.push(type);
@@ -527,7 +528,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         const parameters = ctx.functionParameters();
         const [argSymbols, argTypes] = this.getFunctionParametersSymbolAndTypes(parameters);
         const returnType = ctx.functionReturnType()
-            ? stringToType(ctx.functionReturnType().TYPE().getText())
+            ? this.typeContextToType(ctx.functionReturnType().type())
             : VOID_TYPE
         const functionName = ctx.IDENTIFIER().getText();
         const functionType = new FunctionType(argSymbols, argTypes, returnType);
@@ -564,7 +565,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             );
             this.returnTypeStack.pop();
         } else {
-            returnType = stringToType(ctx.TYPE().getText());
+            returnType = this.typeContextToType(ctx.type());
         }
         const functionType = new FunctionType(argSymbols, argTypes, returnType);
 
@@ -644,6 +645,33 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
 
         return fun.returnType;
     }
+
+    typeContextToType(typeContext: TypeContext): Type {
+        if (typeContext.BASETYPE()) {
+            const str = typeContext.BASETYPE().getText();
+            switch (str) {
+                case "f64":
+                    return NUMBER_TYPE;
+                case "bool":
+                    return BOOLEAN_TYPE;
+                default:
+                    throw new Error(`Unknown type ${str}`);
+            }
+        }
+      
+        const functionTypeContext = typeContext.functionType();
+        const functionTypeParam = functionTypeContext.functionTypeParams();
+        let argsType = null;
+        if (functionTypeParam) {
+            argsType = functionTypeParam.type_().map(ctx => this.typeContextToType(ctx));
+        } else {
+            argsType = [];
+        }
+      
+        const returnType = this.typeContextToType(functionTypeContext.functionReturnType().type())
+        return new FunctionType([] , argsType, returnType);
+      
+      }
 }
 
 class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleLangVisitor<boolean> {

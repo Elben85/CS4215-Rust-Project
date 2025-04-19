@@ -21,7 +21,7 @@ item: function;
 // NOTE: the let statement is a simplificition without ref, pattern matching, and outer attributes
 // https://doc.rust-lang.org/reference/statements.html#let-statements
 letStatement
-    : 'let' mutable? IDENTIFIER (':' TYPE)? ('=' expression)? ';'
+    : 'let' mutable? IDENTIFIER (':' type)? ('=' expression)? ';'
     ;
 
 
@@ -164,7 +164,7 @@ continueExpression
 
 // FUNCTIONS
 closureExpression 
-    : ('||' | '|' functionParameters?'|') (expression | '->' TYPE blockExpression)
+    : ('||' | '|' functionParameters?'|') (expression | '->' type blockExpression)
     ;
 
 function
@@ -178,7 +178,7 @@ functionParameters
 
 // Simple case
 functionParam
-    : functionParamPattern ':' TYPE 
+    : functionParamPattern ':' type 
     ;
 
 functionParamPattern
@@ -186,7 +186,7 @@ functionParamPattern
     ;
 
 functionReturnType
-    : '->' TYPE
+    : '->' type
     ;
 
 returnExpression
@@ -197,9 +197,22 @@ callParams
     : expression ( ',' expression )* ','?
     ;
 
+functionType
+    : 'fn' '(' functionTypeParams? ')' functionReturnType?
+    ;
+
+functionTypeParams
+    : type (',' type)* ','?
+    ;
+
+type
+    : BASETYPE 
+    | functionType
+    ;
+
 // PRIMITIVES / LEAF NODES
 INT: [0-9]+;
 BOOL: 'true' | 'false';
-TYPE: 'bool' | 'f64';
+BASETYPE:  'bool' | 'f64';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: [ \t\r\n]+ -> skip;

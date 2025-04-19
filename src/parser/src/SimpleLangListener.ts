@@ -47,6 +47,9 @@ import { FunctionParamPatternContext } from "./SimpleLangParser.js";
 import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
 import { ReturnExpressionContext } from "./SimpleLangParser.js";
 import { CallParamsContext } from "./SimpleLangParser.js";
+import { FunctionTypeContext } from "./SimpleLangParser.js";
+import { FunctionTypeParamsContext } from "./SimpleLangParser.js";
+import { TypeContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -494,6 +497,36 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitCallParams?: (ctx: CallParamsContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionType`.
+     * @param ctx the parse tree
+     */
+    enterFunctionType?: (ctx: FunctionTypeContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionType`.
+     * @param ctx the parse tree
+     */
+    exitFunctionType?: (ctx: FunctionTypeContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.functionTypeParams`.
+     * @param ctx the parse tree
+     */
+    enterFunctionTypeParams?: (ctx: FunctionTypeParamsContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.functionTypeParams`.
+     * @param ctx the parse tree
+     */
+    exitFunctionTypeParams?: (ctx: FunctionTypeParamsContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.type`.
+     * @param ctx the parse tree
+     */
+    enterType?: (ctx: TypeContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.type`.
+     * @param ctx the parse tree
+     */
+    exitType?: (ctx: TypeContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

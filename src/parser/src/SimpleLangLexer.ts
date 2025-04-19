@@ -41,7 +41,7 @@ export class SimpleLangLexer extends antlr.Lexer {
     public static readonly T__33 = 34;
     public static readonly INT = 35;
     public static readonly BOOL = 36;
-    public static readonly TYPE = 37;
+    public static readonly BASETYPE = 37;
     public static readonly IDENTIFIER = 38;
     public static readonly WS = 39;
 
@@ -61,7 +61,7 @@ export class SimpleLangLexer extends antlr.Lexer {
         null, null, null, null, null, null, null, null, null, null, null, 
         null, null, null, null, null, null, null, null, null, null, null, 
         null, null, null, null, null, null, null, null, null, null, null, 
-        null, null, "INT", "BOOL", "TYPE", "IDENTIFIER", "WS"
+        null, null, "INT", "BOOL", "BASETYPE", "IDENTIFIER", "WS"
     ];
 
     public static readonly modeNames = [
@@ -73,7 +73,7 @@ export class SimpleLangLexer extends antlr.Lexer {
         "T__8", "T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", 
         "T__16", "T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", 
         "T__24", "T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "T__31", 
-        "T__32", "T__33", "INT", "BOOL", "TYPE", "IDENTIFIER", "WS",
+        "T__32", "T__33", "INT", "BOOL", "BASETYPE", "IDENTIFIER", "WS",
     ];
 
 
