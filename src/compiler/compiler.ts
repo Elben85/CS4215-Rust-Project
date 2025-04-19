@@ -35,65 +35,113 @@ import { Type } from '../typeChecker/Type';
 
 export const VOID = null;
 
+class FunctionInfo {
+    public constructor(
+        public readonly arity,
+        public readonly address,
+    ) { }
+}
+
+class VarInfo {
+    public constructor(
+        public readonly sym: string,
+        public position: number | null,
+        public functionInfo: FunctionInfo | null // only for compile time functions
+    ) { }
+}
+
+class Frame {
+    private variables: { [key: string]: VarInfo };
+    private dynamicVariableCount: number;
+
+    public constructor() {
+        this.variables = {}
+        this.dynamicVariableCount = 0;
+    }
+
+    public getAndIncrementCount(): number {
+        return this.dynamicVariableCount++;
+    }
+
+    public findIdentifierInfo(identifier: string): VarInfo | null {
+        return identifier in this.variables ? this.variables[identifier] : null;
+    }
+
+    public addIdentifier(identifier: string, dynamic: boolean = true): VarInfo {
+        const info: VarInfo = this.findIdentifierInfo(identifier) || new VarInfo(identifier, null, null);
+        info.functionInfo = null; //reset info
+        if (dynamic && (info.position === null)) {
+            info.position = this.getAndIncrementCount();
+        }
+        this.variables[identifier] = info;
+
+        return info
+    }
+
+    public length() {
+        return this.dynamicVariableCount;
+    }
+}
+
 export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
     // Visit a parse tree produced by SimpleLangParser#prog
     public instructionArray: any[];
     private isFirstStatement: boolean;
-    private env: string[][];
+    private env: Frame[];
     private breakStack: any[];
     private continueStack: any[];
     private expectLvalue: boolean;
     private typeCache: Map<ParseTree, Type>;
+    private isCompilingFunctionBody: boolean;
+    private temporaryFunctionPlaceholders: any[];
 
     public constructor(typeCache: Map<ParseTree, Type>) {
         super();
         this.instructionArray = [];
         this.isFirstStatement = true;
-        this.env = [[]];
+        this.env = [new Frame()];
         this.breakStack = [];
         this.continueStack = [];
         this.expectLvalue = false;
         this.typeCache = typeCache;
+        this.temporaryFunctionPlaceholders = [];
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
         // Note: declaration of the same identifier in the same enclosing block shadows
         // the previous declaration 
         const frameIndex = this.env.length - 1;
-        let valueIndex: number | null = this.frameValueIndex(frameIndex, identifier);
-        if (valueIndex !== null) {
-            return [frameIndex, valueIndex];
-        }
-        const frameLength = (valueIndex = this.env[frameIndex].length);
-        this.env[frameIndex][frameLength] = identifier;
-        return [frameIndex, valueIndex];
+        const info = this.env[frameIndex].addIdentifier(identifier);
+        return [frameIndex, info.position];
     }
 
-    private getIdentifierPosition(identifier: string): [number, number] {
+    private getIdentifierInfo(identifier: string): [number, VarInfo] {
         let frameIndex: number = this.env.length;
-        let valueIndex: number;
+        let varInfo: VarInfo;
         while (frameIndex > 0) {
             --frameIndex;
-            if ((valueIndex = this.frameValueIndex(frameIndex, identifier)) !== null) {
-                return [frameIndex, valueIndex];
+            if ((varInfo = this.env[frameIndex].findIdentifierInfo(identifier)) !== null) {
+                return [frameIndex, varInfo];
             }
         }
         throw new Error(`Accessing undeclared identifier ${identifier}`)
     }
 
-    private frameValueIndex(frameIndex: number, identifier: string): number | null {
-        const frame: string[] = this.env[frameIndex];
-        for (let i = 0; i < frame.length; ++i) {
-            if (frame[i] === identifier) return i;
-        }
-        return null;
+    private getFunctionInfo(identifier: string): FunctionInfo | null {
+        const [_, varInfo] = this.getIdentifierInfo(identifier);
+        return varInfo.functionInfo;
     }
 
-    private visitWithFlags(ctx: ParseTree, expectLvalue: boolean) {
+    private visitWithFlags(ctx: ParseTree, expectLvalue: boolean, isCompilingFunctionBody: boolean) {
         const oldLvalue = this.expectLvalue;
+        const oldCompilingFlag = this.isCompilingFunctionBody;
         this.expectLvalue = expectLvalue;
+        this.isCompilingFunctionBody = isCompilingFunctionBody;
+
         const result = this.visit(ctx);
+
         this.expectLvalue = oldLvalue;
+        this.isCompilingFunctionBody = oldCompilingFlag;
         return result;
     }
 
@@ -101,24 +149,42 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         return ctx.item() !== null;
     }
 
-    private getFunctionBody(ctx: StatementContext): BlockExpressionContext {
-        return ctx.item().function().blockExpression();
-    }
-
-    private getFunctionName(ctx: StatementContext): string {
-        return ctx.item().function().IDENTIFIER().getText();
-    }
-
     compileStatements(statements: StatementContext[]) {
         const items = statements.filter(this.isItem);
 
+
+        const placeholder = this.temporaryFunctionPlaceholders
+        this.temporaryFunctionPlaceholders = [];
         // for now items are all function declaration
         for (let i of items) {
             this.visit(i);
         }
+
+        const unresolved = [];
+        for (let instr of this.temporaryFunctionPlaceholders) {
+            const sym: string = instr.sym;
+            const idx: number = instr.idx;
+            let functionInfo
+            try {
+                functionInfo = this.getFunctionInfo(sym);
+            } catch (e) {
+                unresolved.push(instr);
+                continue;
+            }
+            if (functionInfo === null) {
+                throw new Error("fn not allowed to capture dynamic environment");
+            }
+            this.instructionArray[idx] = Instructions.createLDF(
+                functionInfo.arity,
+                functionInfo.address,
+                true
+            )
+        }
+        this.temporaryFunctionPlaceholders = [...placeholder, ...unresolved];
+
         const nonItems = statements.filter(x => !this.isItem(x));
         for (let s of nonItems) {
-            this.visitWithFlags(s, false);
+            this.visitWithFlags(s, false, this.isCompilingFunctionBody);
         }
     }
 
@@ -128,7 +194,13 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
         const statements: StatementContext[] = ctx.statement();
         this.compileStatements(statements);
-        enterScopeInstr.frameSize = this.env[0].length;
+
+        if (this.temporaryFunctionPlaceholders.length > 0) {
+            const unresolvedName = this.temporaryFunctionPlaceholders.pop().sym;
+            throw new Error(`unresolved name: ${unresolvedName}`)
+        }
+
+        enterScopeInstr.frameSize = this.env[0].length();
         this.instructionArray.pop();
         this.instructionArray.push(Instructions.createDone())
     }
@@ -153,7 +225,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
         let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
         if (expression) {
-            this.visitWithFlags(expression, false);
+            this.visitWithFlags(expression, false, this.isCompilingFunctionBody);
             this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
             this.instructionArray.push(Instructions.createAssign());
         }
@@ -176,7 +248,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitBorrowExpression(ctx: BorrowExpressionContext): void {
-        this.visitWithFlags(ctx.accessIdentifier(), true);
+        this.visitWithFlags(ctx.accessIdentifier(), true, this.isCompilingFunctionBody);
         this.instructionArray.push(Instructions.createBorrow());
     }
 
@@ -189,11 +261,12 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.visitWithFlags(
                 ctx.getChild(0),
                 this.expectLvalue,
+                this.isCompilingFunctionBody
             )
             return;
         }
 
-        this.visitWithFlags(ctx.getChild(0), this.expectLvalue);
+        this.visitWithFlags(ctx.getChild(0), this.expectLvalue, this.isCompilingFunctionBody);
 
         for (let i = 1; i < childCount; i += 2) {
             const operator = ctx.getChild(i).getText();
@@ -227,8 +300,33 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): void {
         let identifier: string = ctx.IDENTIFIER().getText();
-        let position = this.getIdentifierPosition(identifier);
+        let frameIdx: number;
+        let info: VarInfo;
+        try {
+            [frameIdx, info] = this.getIdentifierInfo(identifier);
+        } catch (e) {
+            if (!this.isCompilingFunctionBody) throw e;
 
+            // assume it's a function placeholder
+            const placeholder = Instructions.createFunctionPlaceholder(
+                this.instructionArray.length,
+                identifier
+            )
+            this.instructionArray.push(placeholder);
+            this.temporaryFunctionPlaceholders.push(placeholder);
+            return;
+        }
+
+        if (info.functionInfo) {
+            this.instructionArray.push(Instructions.createLDF(
+                info.functionInfo.arity,
+                info.functionInfo.address,
+                true
+            ))
+            return;
+        }
+
+        const position: [number, number] = [frameIdx, info.position];
         if (this.expectLvalue) {
             this.instructionArray.push(Instructions.createLDA(position))
         } else {
@@ -240,10 +338,10 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const enterScopeInstr = Instructions.createEnterScope(null);
         this.instructionArray.push(enterScopeInstr)
         let body = ctx.blockBody();
-        this.env.push([]);
+        this.env.push(new Frame());
         this.visit(body);
         const frame = this.env.pop();
-        enterScopeInstr.frameSize = frame.length;
+        enterScopeInstr.frameSize = frame.length();
         this.instructionArray.push(Instructions.createExitScope());
     }
 
@@ -265,7 +363,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     visitIfExpression(ctx: IfExpressionContext): void {
         // predicate
-        this.visitWithFlags(ctx.expression(), false);
+        this.visitWithFlags(ctx.expression(), false, this.isCompilingFunctionBody);
 
         const jofInstr = Instructions.createJOF(null);
         this.instructionArray.push(jofInstr);
@@ -289,7 +387,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const whileLoopAddress = this.instructionArray.length;
         const predicate = ctx.expression();
         const body = ctx.blockExpression();
-        this.visitWithFlags(predicate, false);
+        this.visitWithFlags(predicate, false, this.isCompilingFunctionBody);
         const jofInstr = Instructions.createJOF(null);
         this.instructionArray.push(jofInstr);
 
@@ -340,13 +438,14 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     }
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): void {
-        this.visitWithFlags(ctx.expression(), false);
+        this.visitWithFlags(ctx.expression(), false, this.isCompilingFunctionBody);
         if (this.typeCache.get(ctx.expression()).copyable()) {
             this.instructionArray.push(Instructions.createCopy());
         }
         this.visitWithFlags(
             ctx.accessIdentifier() || ctx.dereferenceExpression(),
-            true
+            true,
+            this.isCompilingFunctionBody
         )
         this.instructionArray.push(Instructions.createAssign());
         this.instructionArray.push(Instructions.createLDC(VOID));
@@ -366,11 +465,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.instructionArray.push(gotoInstr)
 
         // TODO: Compiling type annotation not yet implemented
-        this.env.push([]);
+        this.env.push(new Frame());
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
-
+        // this.instructionArray.push(Instructions.createDrop());
         if (ctx.expression()) {
             this.visit(ctx.expression());
         } else {
@@ -389,43 +488,46 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (parameters) {
             arity = parameters.functionParam().length;
         }
+
         // add 1 + 1 to address because 'this.instructionArray.length' is LDF
-        this.instructionArray.push(Instructions.createLDF(arity, this.instructionArray.length + 1 + 1));
+        let identifier = ctx.IDENTIFIER().getText();
+        const functionAddress = this.instructionArray.length + 1;
+        this.env[this.env.length - 1].addIdentifier(identifier, false).functionInfo = new FunctionInfo(
+            arity, functionAddress
+        )
 
         // Push goto to skip the function body
         const gotoInstr = Instructions.createGoto(null);
         this.instructionArray.push(gotoInstr)
 
-        // TODO: Compiling type annotation not yet implemented
-        this.env.push([]);
+        const oldEnv = this.env;
+        this.env = [new Frame()];
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
         this.instructionArray.push(Instructions.createDrop());
-        this.visit(ctx.blockExpression());
+        this.visitWithFlags(
+            ctx.blockExpression(),
+            this.expectLvalue,
+            true
+        );
         this.instructionArray.push(Instructions.createReset());
-        this.env.pop();
+        this.env = oldEnv;
 
         gotoInstr.address = this.instructionArray.length;
-
-        // Save name of function
-        let identifier = ctx.IDENTIFIER().getText();
-        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
-        this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
-        this.instructionArray.push(Instructions.createAssign());
         this.instructionArray.push(Instructions.createLDC(VOID));
     }
 
     visitFunctionParam(ctx: FunctionParamContext): void {
         let identifier = ctx.functionParamPattern().IDENTIFIER().getText();
-        let [frameIndex, valueIndex] = this.assignIdentifierPosition(identifier);
-
+        this.assignIdentifierPosition(identifier);
     }
 
     visitCallExpression(ctx: CallExpressionContext): void { // Call Expression
         this.visitWithFlags(
             ctx.callExpression() || ctx.callExpressionTerminal(),
-            false
+            false,
+            this.isCompilingFunctionBody
         );
 
 

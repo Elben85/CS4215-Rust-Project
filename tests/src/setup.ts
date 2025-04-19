@@ -1,11 +1,10 @@
-import { TypeChecker, TypeChecker } from './../../src/typeChecker/TypeChecker';
+import { TypeChecker } from './../../src/typeChecker/TypeChecker';
 import { BorrowChecker } from './../../src/borrowChecker/BorrowChecker';
 import { BailErrorStrategy, CharStream, CommonTokenStream } from "antlr4ng";
 import { evaluate } from "../../src/evaluator/evaluate";
 import { CompilerVisitor } from "../../src/compiler/compiler";
 import { SimpleLangLexer } from "../../src/parser/src/SimpleLangLexer";
 import { SimpleLangParser } from "../../src/parser/src/SimpleLangParser";
-import { TypeChecker } from "../../src/typeChecker/TypeChecker";
 import { expect } from "vitest";
 import { Type } from "../../src/typeChecker/Type";
 
@@ -14,7 +13,7 @@ function getParseTree(program: string) {
     const lexer = new SimpleLangLexer(inputStream);
     const tokenStream = new CommonTokenStream(lexer);
     const parser = new SimpleLangParser(tokenStream);
-    parser.errorHandler = new BailErrorStrategy();
+    // parser.errorHandler = new BailErrorStrategy();
 
     // Parse the input
     const tree = parser.prog();

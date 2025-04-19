@@ -7,6 +7,7 @@ let OS: number[]; // Stack, list of addresses
 let RTS: number[]; // Runtime stack, list of environment addresses
 let PC: number; // Program counter
 let E: number; // Environment address
+let GLOBAL_ENV: number;
 let TEMPORARIES: number[]; // Address of all temporary values to be dropped at the end of a statement
 
 
@@ -17,6 +18,7 @@ export const evaluate = (instructionArray: any[]) => {
     RTS = [];
     PC = 0;
     E = Environment.allocate(HEAP, 0);
+    GLOBAL_ENV = E;
     TEMPORARIES = [];
 
     // console.log(instructionArray);
@@ -152,7 +154,8 @@ const microcode = {
         PC++;
     },
     LDF: (instr) => {
-        const closure_address = Closure.allocate(HEAP, [instr.arity, instr.address, E]);
+        const env = instr.useGlobal ? GLOBAL_ENV : E
+        const closure_address = Closure.allocate(HEAP, [instr.arity, instr.address, env]);
         OS.push(closure_address);
         PC++;
     },

@@ -2,6 +2,36 @@ import { describe, it, expect } from "vitest";
 import { Compile, Evaluate } from "./setup";
 
 describe('Function Tests', () => {
+    it('recursive function', () => {
+        const program = `
+            fn a(x: f64) -> f64 {
+                fn u() -> f64 {
+                    fn a() -> f64 {
+                        return 2;
+                    }
+                    a()
+                }
+                if x == 1 {
+                    return u() + x;
+                } else {
+                    return b(x - 1);
+                }
+            } 
+
+            fn b(x: f64) -> f64 {
+                c(x)
+            }
+
+            fn c(x: f64) -> f64 {
+                a(x)
+            }
+
+            a(2);
+
+        `
+        expect(program).toEvaluateTo(3);
+    })
+
     it('simple', () => {
         const program = `
             fn same() -> f64 {
