@@ -50,6 +50,7 @@ import { CallParamsContext } from "./SimpleLangParser.js";
 import { FunctionTypeContext } from "./SimpleLangParser.js";
 import { FunctionTypeParamsContext } from "./SimpleLangParser.js";
 import { TypeContext } from "./SimpleLangParser.js";
+import { PointerTypeContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -342,5 +343,11 @@ export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> 
      * @return the visitor result
      */
     visitType?: (ctx: TypeContext) => Result;
+    /**
+     * Visit a parse tree produced by `SimpleLangParser.pointerType`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPointerType?: (ctx: PointerTypeContext) => Result;
 }
 

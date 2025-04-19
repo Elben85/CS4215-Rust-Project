@@ -206,8 +206,13 @@ functionTypeParams
     ;
 
 type
-    : BASETYPE 
-    | functionType
+    : functionType
+    | pointerType
+    | BASETYPE 
+    ;
+
+pointerType
+    : '&' (mutable)? type
     ;
 
 // PRIMITIVES / LEAF NODES

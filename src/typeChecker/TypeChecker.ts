@@ -657,21 +657,26 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                 default:
                     throw new Error(`Unknown type ${str}`);
             }
-        }
-      
-        const functionTypeContext = typeContext.functionType();
-        const functionTypeParam = functionTypeContext.functionTypeParams();
-        let argsType = null;
-        if (functionTypeParam) {
-            argsType = functionTypeParam.type_().map(ctx => this.typeContextToType(ctx));
+        } else if (typeContext.functionType()) {
+            const functionTypeContext = typeContext.functionType();
+            const functionTypeParam = functionTypeContext.functionTypeParams();
+            let argsType = null;
+            if (functionTypeParam) {
+                argsType = functionTypeParam.type_().map(ctx => this.typeContextToType(ctx));
+            } else {
+                argsType = [];
+            }
+
+            const returnType = this.typeContextToType(functionTypeContext.functionReturnType().type())
+            return new FunctionType([], argsType, returnType);
         } else {
-            argsType = [];
+            // poitner type
+            const pointerCtx = typeContext.pointerType();
+            const is_mutable = Boolean(pointerCtx.mutable());
+            return new PointerType(this.typeContextToType(pointerCtx.type()), is_mutable);
         }
-      
-        const returnType = this.typeContextToType(functionTypeContext.functionReturnType().type())
-        return new FunctionType([] , argsType, returnType);
-      
-      }
+
+    }
 }
 
 class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleLangVisitor<boolean> {

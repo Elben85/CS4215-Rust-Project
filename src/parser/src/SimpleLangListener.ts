@@ -50,6 +50,7 @@ import { CallParamsContext } from "./SimpleLangParser.js";
 import { FunctionTypeContext } from "./SimpleLangParser.js";
 import { FunctionTypeParamsContext } from "./SimpleLangParser.js";
 import { TypeContext } from "./SimpleLangParser.js";
+import { PointerTypeContext } from "./SimpleLangParser.js";
 
 
 /**
@@ -527,6 +528,16 @@ export class SimpleLangListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitType?: (ctx: TypeContext) => void;
+    /**
+     * Enter a parse tree produced by `SimpleLangParser.pointerType`.
+     * @param ctx the parse tree
+     */
+    enterPointerType?: (ctx: PointerTypeContext) => void;
+    /**
+     * Exit a parse tree produced by `SimpleLangParser.pointerType`.
+     * @param ctx the parse tree
+     */
+    exitPointerType?: (ctx: PointerTypeContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}
