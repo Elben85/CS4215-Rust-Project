@@ -9,7 +9,6 @@ export const createBinop = (op: string) => {
     return {
         tag: "BINOP",
         op: op,
-        
     }
 }
 
@@ -91,11 +90,12 @@ export const createBorrow = () => {
     }
 }
 
-export const createLDF = (arity: number, address: number) => {
+export const createLDF = (arity: number, address: number, useGlobal?: boolean) => {
     return {
         tag: "LDF",
         arity: arity,
-        address: address
+        address: address,
+        useGlobal: Boolean(useGlobal)
     }
 }
 
@@ -121,5 +121,13 @@ export const createCopy = () => {
 export const createDrop = () => {
     return {
         tag: "DROP"
+    }
+}
+
+export const createFunctionPlaceholder = (idx: number, sym: string) => {
+    return {
+        tag: "TEMP_LDF",
+        idx: idx,
+        sym: sym
     }
 }
