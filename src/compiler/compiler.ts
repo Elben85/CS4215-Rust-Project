@@ -401,6 +401,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
+        this.instructionArray.push(Instructions.createDrop());
         this.visit(ctx.blockExpression());
         this.instructionArray.push(Instructions.createReset());
         this.env.pop();

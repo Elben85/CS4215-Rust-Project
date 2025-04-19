@@ -195,6 +195,7 @@ const microcode = {
 
         const copyAddress = tagToType(HEAP.getTag(address)).copy(HEAP, address);
         OS.push(copyAddress);
+        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     DROP: (instr) => {
