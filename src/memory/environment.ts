@@ -75,7 +75,8 @@ class Frame implements Types {
         const frameAddress = heap.reserve(this.indexToOffset(numVariables), this.getTag());
         for (let i = 0; i < numVariables; ++i) {
             const pAddress = this.getAddress(frameAddress, i);
-            heap.setMetadata(pAddress, Pointer.getTag(), 1)
+            heap.setMetadata(pAddress, Pointer.getTag(), 1);
+            heap.setOwner(pAddress, frameAddress);
             Pointer.invalidatePointer(heap, pAddress);
         }
         return frameAddress

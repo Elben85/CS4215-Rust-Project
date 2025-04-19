@@ -130,34 +130,6 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(false);
     });
 
-    // it('higher order 3', () => {
-    //     const program = `
-
-    //         fn first(a: f64) -> fn(f64) -> bool {
-    //             fn inside(b: f64) -> bool {
-    //                 return b > a;
-    //             }
-
-    //             return inside;
-    //         }
-
-    //         first(2)(3);
-    //     `
-    //     expect(program).toEvaluateTo(true);
-    // });
-
-    // it('higher order 4', () => {
-    //     const program = `
-
-    //         fn first(a: f64) -> fn(f64) -> bool {
-    //             return |x: f64| -> bool {return a > 1;};
-    //         }
-
-    //         first(10)(0);
-    //     `
-    //     expect(program).toEvaluateTo(true);
-    // });
-
     it('deferred declaration', () => {
         const program = `
             let x: bool = later();

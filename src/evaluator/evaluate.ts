@@ -8,8 +8,6 @@ let RTS: number[]; // Runtime stack, list of environment addresses
 let PC: number; // Program counter
 let E: number; // Environment address
 let GLOBAL_ENV: number;
-let TEMPORARIES: number[]; // Address of all temporary values to be dropped at the end of a statement
-
 
 // ENTRY POINT
 export const evaluate = (instructionArray: any[]) => {
@@ -19,7 +17,6 @@ export const evaluate = (instructionArray: any[]) => {
     PC = 0;
     E = Environment.allocate(HEAP, 0);
     GLOBAL_ENV = E;
-    TEMPORARIES = [];
 
     // console.log(instructionArray);
 
@@ -32,25 +29,13 @@ export const evaluate = (instructionArray: any[]) => {
         let tag = instr.tag;
         microcode[tag](instr);
     }
+
     // console.log(OS);
+
+    if (OS.length > 1) throw new Error("LOL NUB");
     return OS.length === 0
         ? undefined
-        : stackPop();
-}
-
-/**
- * Helper function that converts value to address before pushing to the stack
- */
-function stackPush(value: any): void {
-    const address = valueToAddress(HEAP, value);
-    OS.push(address);
-}
-
-/**
- * Helper function that converts address to value before popping from the stack
- */
-function stackPop(): any {
-    return addressToValue(HEAP, OS.pop());
+        : addressToValue(HEAP, OS.pop());
 }
 
 function move(vAddress: number, newOwnerAddr: number) {
@@ -71,32 +56,37 @@ function move(vAddress: number, newOwnerAddr: number) {
 
 const microcode = {
     LDC: (instr) => {
-        stackPush(instr.value);
-        TEMPORARIES.push(OS[OS.length - 1]);
+        const address = valueToAddress(HEAP, instr.value);
+        OS.push(address);
         PC++;
     },
     UNOP: (instr) => {
-        const arg = stackPop();
+        const argAddress = OS.pop();
+        const arg = addressToValue(HEAP, argAddress);
 
-        let result = evaluate_unop(instr.op, arg);
-        stackPush(result);
-        TEMPORARIES.push(OS[OS.length - 1]);
+        let result = evaluateUnop(instr.op, arg);
+        OS.push(valueToAddress(HEAP, result));
+
+        dropIfNoOwner(argAddress);
         PC++;
     },
     BINOP: (instr) => {
-        const arg2 = stackPop();
-        const arg1 = stackPop();
+        const arg2Address = OS.pop();
+        const arg2 = addressToValue(HEAP, arg2Address);
+        const arg1Address = OS.pop();
+        const arg1 = addressToValue(HEAP, arg1Address);
 
-        let result = evaluate_binop(
+        let result = evaluateBinop(
             instr.op, arg1, arg2
         );
 
-        stackPush(result);
-        TEMPORARIES.push(OS[OS.length - 1]);
+        OS.push(valueToAddress(HEAP, result));
+        dropIfNoOwner(arg2Address);
+        dropIfNoOwner(arg1Address);
         PC++;
     },
     POP: (instr) => {
-        OS.pop();
+        dropIfNoOwner(OS.pop());
         PC++;
     },
     ASSIGN: (instr) => {
@@ -132,17 +122,21 @@ const microcode = {
         PC = instr.address;
     },
     JOF: (instr) => {
-        if (!stackPop()) {
+        const predicateAddr = OS.pop();
+        const predicate = addressToValue(HEAP, predicateAddr);
+        if (!predicate) {
             PC = instr.address;
         } else {
             PC++;
         }
+        dropIfNoOwner(predicateAddr);
     },
     DEREF: (instr) => {
         const pointerAddr = OS.pop();
         const derefAddr = Pointer.addressToValue(HEAP, Pointer.addressToValue(HEAP, pointerAddr))
         OS.push(derefAddr);
 
+        dropIfNoOwner(pointerAddr);
         PC++;
     },
     BORROW: (instr) => {
@@ -150,7 +144,6 @@ const microcode = {
 
         let pointerAddr = Pointer.allocate(HEAP, itemAddr);
         OS.push(pointerAddr);
-        TEMPORARIES.push(OS[OS.length - 1]);
         PC++;
     },
     LDF: (instr) => {
@@ -187,35 +180,27 @@ const microcode = {
             const valueAddress = OS.pop();
             move(valueAddress, pAddress);
         }
-        OS.pop(); // pop the funAddress value
+        dropIfNoOwner(OS.pop()); // pop the funAddress value
 
         PC = Closure.getClosurePC(HEAP, addressFun);
     },
     COPY: (instr) => {
-        // NOTE: for current use case, copy will only be called when we want to bind a value to
-        // a new variable, so pushing to a temporary is unneccessary
         const address = OS.pop();
 
         const copyAddress = tagToType(HEAP.getTag(address)).copy(HEAP, address);
         OS.push(copyAddress);
-        TEMPORARIES.push(OS[OS.length - 1]);
+        dropIfNoOwner(address);
         PC++;
-    },
-    DROP: (instr) => {
-        // DROP IN REVERSE ORDER
-        if (TEMPORARIES.length === 0) {
-            PC++;
-            return;
-        } else {
-            const address = TEMPORARIES.pop();
-            if (HEAP.getOwner(address) === Heap.INVALID_OWNER_ADDRESS) {
-                HEAP.deallocate(address);
-            }
-        }
     }
 }
 
-const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
+const dropIfNoOwner = (address) => {
+    if (HEAP.getOwner(address) === Heap.INVALID_OWNER_ADDRESS) {
+        HEAP.deallocate(address);
+    }
+}
+
+const evaluateBinop = (operator: string, arg1: any, arg2: any) => {
     switch (operator) {
         case '+':
             return arg1 + arg2;
@@ -251,7 +236,7 @@ const evaluate_binop = (operator: string, arg1: any, arg2: any) => {
     }
 }
 
-const evaluate_unop = (operator: string, arg: any) => {
+const evaluateUnop = (operator: string, arg: any) => {
     switch (operator) {
         case '-':
             return -arg;

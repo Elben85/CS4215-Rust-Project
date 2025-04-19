@@ -118,12 +118,6 @@ export const createCopy = () => {
     }
 }
 
-export const createDrop = () => {
-    return {
-        tag: "DROP"
-    }
-}
-
 export const createFunctionPlaceholder = (idx: number, sym: string) => {
     return {
         tag: "TEMP_LDF",

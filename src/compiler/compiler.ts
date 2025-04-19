@@ -201,7 +201,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
 
         enterScopeInstr.frameSize = this.env[0].length();
-        this.instructionArray.pop();
         this.instructionArray.push(Instructions.createDone())
     }
 
@@ -212,7 +211,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.instructionArray.push(Instructions.createPop());
         }
         this.visit(ctx.getChild(0));
-        this.instructionArray.push(Instructions.createDrop());
     }
 
     visitEmptyStatement(_: EmptyStatementContext): void {
@@ -349,6 +347,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const tmp = this.isFirstStatement;
         this.isFirstStatement = true;
         this.compileStatements(ctx.statement());
+        if (!this.isFirstStatement) {
+            this.instructionArray.push(Instructions.createPop());
+        }
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
         } else {
@@ -469,7 +470,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
-        // this.instructionArray.push(Instructions.createDrop());
         if (ctx.expression()) {
             this.visit(ctx.expression());
         } else {
@@ -505,7 +505,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
-        this.instructionArray.push(Instructions.createDrop());
         this.visitWithFlags(
             ctx.blockExpression(),
             this.expectLvalue,
