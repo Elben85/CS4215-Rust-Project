@@ -229,6 +229,13 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
             box = this.tryVisit(ctx.expressionWithoutBlock());
             if (this.giveUp) return null;
         }
+
+        // move the value
+        if (box.owner) {
+            box.owner.value = null;
+            box.owner = null;
+        }
+
         return box;
     }
 
