@@ -278,7 +278,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     };
 
     visitPrimitive(ctx: PrimitiveContext): Type {
-        if (ctx.INT()) {
+        if (ctx.FLOAT()) {
             return NUMBER_TYPE;
         } else if (ctx.BOOL()) {
             return BOOLEAN_TYPE;

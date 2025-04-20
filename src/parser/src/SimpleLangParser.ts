@@ -46,7 +46,7 @@ export class SimpleLangParser extends antlr.Parser {
     public static readonly T__31 = 32;
     public static readonly T__32 = 33;
     public static readonly T__33 = 34;
-    public static readonly INT = 35;
+    public static readonly FLOAT = 35;
     public static readonly BOOL = 36;
     public static readonly BASETYPE = 37;
     public static readonly IDENTIFIER = 38;
@@ -112,7 +112,7 @@ export class SimpleLangParser extends antlr.Parser {
         null, null, null, null, null, null, null, null, null, null, null, 
         null, null, null, null, null, null, null, null, null, null, null, 
         null, null, null, null, null, null, null, null, null, null, null, 
-        null, null, "INT", "BOOL", "BASETYPE", "IDENTIFIER", "WS"
+        null, null, "FLOAT", "BOOL", "BASETYPE", "IDENTIFIER", "WS"
     ];
     public static readonly ruleNames = [
         "prog", "mutable", "statement", "emptyStatement", "item", "letStatement", 
@@ -245,7 +245,7 @@ export class SimpleLangParser extends antlr.Parser {
             case SimpleLangParser.T__28:
             case SimpleLangParser.T__29:
             case SimpleLangParser.T__33:
-            case SimpleLangParser.INT:
+            case SimpleLangParser.FLOAT:
             case SimpleLangParser.BOOL:
             case SimpleLangParser.IDENTIFIER:
                 this.enterOuterAlt(localContext, 4);
@@ -480,7 +480,7 @@ export class SimpleLangParser extends antlr.Parser {
             case SimpleLangParser.T__24:
             case SimpleLangParser.T__26:
             case SimpleLangParser.T__29:
-            case SimpleLangParser.INT:
+            case SimpleLangParser.FLOAT:
             case SimpleLangParser.BOOL:
             case SimpleLangParser.IDENTIFIER:
                 this.enterOuterAlt(localContext, 1);
@@ -1657,7 +1657,7 @@ export class SimpleLangParser extends antlr.Parser {
             case SimpleLangParser.T__28:
             case SimpleLangParser.T__29:
             case SimpleLangParser.T__33:
-            case SimpleLangParser.INT:
+            case SimpleLangParser.FLOAT:
             case SimpleLangParser.BOOL:
             case SimpleLangParser.IDENTIFIER:
                 {
@@ -3145,8 +3145,8 @@ export class PrimitiveContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public INT(): antlr.TerminalNode | null {
-        return this.getToken(SimpleLangParser.INT, 0);
+    public FLOAT(): antlr.TerminalNode | null {
+        return this.getToken(SimpleLangParser.FLOAT, 0);
     }
     public BOOL(): antlr.TerminalNode | null {
         return this.getToken(SimpleLangParser.BOOL, 0);

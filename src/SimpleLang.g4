@@ -102,7 +102,7 @@ additionSubstraction: multiplicationDivision (op=('+'|'-') multiplicationDivisio
 multiplicationDivision: binopTerminals (op=('*'|'/'|'%') binopTerminals)*;
 
 primitive
-    : INT 
+    : FLOAT
     | BOOL
     ;
 
@@ -216,7 +216,7 @@ pointerType
     ;
 
 // PRIMITIVES / LEAF NODES
-INT: [0-9]+;
+FLOAT: [0-9]+('.'[0-9]+)?;
 BOOL: 'true' | 'false';
 BASETYPE:  'bool' | 'f64';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
