@@ -9,7 +9,7 @@
  */
 
 export class Heap {
-    private static WORD_SIZE: number = 2 ** 3; // word size (in bytes)
+    public static WORD_SIZE: number = 2 ** 3; // word size (in bytes)
     private static HEAP_SIZE: number = 2 ** 16; // heap size (in bytes)
     public static METADATA_SIZE: number = 1; // size of object metadata in words 
 
@@ -26,10 +26,12 @@ export class Heap {
     // memory management
     private buffer: ArrayBuffer;
     private heap: DataView;
+    private byteView: Uint8Array;
 
     public constructor() {
         this.buffer = new ArrayBuffer(Heap.HEAP_SIZE);
         this.heap = new DataView(this.buffer);
+        this.byteView = new Uint8Array(this.buffer);
         this.constructFreelist()
     }
 
@@ -162,6 +164,14 @@ export class Heap {
         this.heap.setFloat64(
             Heap.addressToBytes(address), value
         );
+    }
+
+    public getMultipleBytes(address: number, length: number): Uint8Array {
+        return new Uint8Array(this.buffer, Heap.addressToBytes(address), length);
+    }
+
+    public setMultipleBytes(address: number, values: Uint8Array) {
+        this.byteView.set(values, Heap.addressToBytes(address));
     }
 
     public deallocate(address: number) {

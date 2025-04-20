@@ -291,6 +291,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             value = parseFloat(ctx.getText())
         } else if (ctx.BOOL()) {
             value = ctx.getText() === 'true';
+        } else if (ctx.STRING()) {
+            value = ctx.STRING().getText();
+            value = value.substring(1, value.length - 1);
         } else {
             throw new Error(`unrecognized primitive: ${ctx.getText()}`);
         }

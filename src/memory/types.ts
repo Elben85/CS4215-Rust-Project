@@ -17,6 +17,8 @@ export const valueToType = (value: any): typeof Types => {
         return Float64
     } else if (typeof value === 'boolean') {
         return Boolean
+    } else if (typeof value === 'string') {
+        return UserString
     } else {
         throw new Error(`Unrecognize literal type: ${value}`)
     }
@@ -34,6 +36,8 @@ export const tagToType = (tag: number): typeof Types => {
             return Closure
         case Pointer.getTag():
             return Pointer
+        case UserString.getTag():
+            return UserString
         default:
             throw new Error(`Unrecognized type tag: ${tag}`);
     }
@@ -196,4 +200,35 @@ export class Closure implements Types {
 }
 
 // TODO
-class Int64 { }
+export class UserString implements Types {
+    /**
+     * 1 byte number of bytes for the string
+     * the rest of the bytes is the byte-encoded string
+     */
+    public static getTag(): number { return 8; }
+
+    public static allocate(heap: Heap, value: string): number {
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(value); // returns a Uint8Array
+        const lenInWords = Math.ceil(encoded.length / Heap.WORD_SIZE);
+
+        const address = heap.reserve(1 + lenInWords, this.getTag());
+        heap.set(address + Heap.METADATA_SIZE, encoded.length);
+        heap.setMultipleBytes(address + Heap.METADATA_SIZE + 1, encoded);
+
+        return address
+
+    }
+
+    public static addressToValue(heap: Heap, address: number) {
+        const size = heap.get(address + Heap.METADATA_SIZE);
+        const encodedData = heap.getMultipleBytes(address + Heap.METADATA_SIZE + 1, size);
+        const decoder = new TextDecoder('utf-8');
+
+        return decoder.decode(encodedData);
+    }
+
+    public static copy(heap: Heap, address: number): number {
+        throw new Error("String type doesn't implemet the Copy trait");
+    }
+}

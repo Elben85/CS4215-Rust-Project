@@ -104,6 +104,7 @@ multiplicationDivision: binopTerminals (op=('*'|'/'|'%') binopTerminals)*;
 primitive
     : FLOAT
     | BOOL
+    | STRING
     ;
 
 accessIdentifier
@@ -218,6 +219,9 @@ pointerType
 // PRIMITIVES / LEAF NODES
 FLOAT: [0-9]+('.'[0-9]+)?;
 BOOL: 'true' | 'false';
-BASETYPE:  'bool' | 'f64';
+STRING
+    : '"' (~["\r\n])* '"'
+    ;
+BASETYPE:  'bool' | 'f64' | 'String';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 WS: [ \t\r\n]+ -> skip;

@@ -20,6 +20,13 @@ export class BooleanType extends Type {
   copyable(): boolean { return true; }
 }
 
+export class StringType extends Type {
+  public constructor() { super(); }
+  toString(): string { return "String"; }
+  compare(other: Type): boolean { return other instanceof StringType; }
+  copyable(): boolean { return false; }
+}
+
 export class UnknownType extends Type {
   public constructor() {
     super();
@@ -87,6 +94,7 @@ export class FunctionType extends Type {
 // Type Instances
 export const NUMBER_TYPE = new NumberType();
 export const BOOLEAN_TYPE = new BooleanType();
+export const STRING_TYPE = new StringType();
 export const VOID_TYPE = new VoidType();
 export const UNKNOWN_TYPE = new UnknownType();
 

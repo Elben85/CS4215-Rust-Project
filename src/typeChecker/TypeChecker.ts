@@ -32,7 +32,7 @@ import {
     ItemContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
-import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType, FunctionType } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, FunctionType, STRING_TYPE } from './Type';
 
 export interface identifierInformation {
     type: Type, // type of identifer
@@ -282,6 +282,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             return NUMBER_TYPE;
         } else if (ctx.BOOL()) {
             return BOOLEAN_TYPE;
+        } else if (ctx.STRING()) {
+            return STRING_TYPE;
         } else {
             throw new Error(`unrecognized primitive type: ${ctx.getText()}`);
         }
@@ -341,6 +343,11 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             // TODO: Cleaner Implementation
             switch (operator) {
                 case "+":
+                    // fall through to the next check for "number" + "number" if fail
+                    if (type1.compare(STRING_TYPE) && type2.compare(STRING_TYPE)) {
+                        type1 = STRING_TYPE;
+                        break;
+                    }
                 case "-":
                 case "*":
                 case "/":
@@ -667,6 +674,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
                     return NUMBER_TYPE;
                 case "bool":
                     return BOOLEAN_TYPE;
+                case "String":
+                    return STRING_TYPE;
                 default:
                     throw new Error(`Unknown type ${str}`);
             }

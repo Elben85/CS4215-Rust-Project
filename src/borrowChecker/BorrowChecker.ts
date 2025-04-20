@@ -34,11 +34,11 @@ import { Type } from '../typeChecker/Type';
  * The class assumes that the parse tree it visits has passed all the typechecks from type checker
  */
 export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implements SimpleLangVisitor<HeapValue> {
-    private env: {[key: string]: ownerInfo}[];
+    private env: { [key: string]: ownerInfo }[];
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
     private useForMutable: boolean; // indicate whether a variable will be used for read / write 
     public typeCache: Map<ParseTree, Type>;
-    public giveUp: boolean; 
+    public giveUp: boolean;
 
     public constructor(typeCache: Map<ParseTree, Type>) {
         super();
@@ -59,7 +59,7 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
     }
 
     lookupInfo(x: string) {
-        for (let i = this.env.length - 1; i >= 0; --i)  {
+        for (let i = this.env.length - 1; i >= 0; --i) {
             const frame = this.env[i];
             if (frame.hasOwnProperty(x)) {
                 return frame[x];
@@ -135,9 +135,9 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
     visitLetStatement(ctx: LetStatementContext): HeapValue {
         const identifier: string = ctx.IDENTIFIER().getText();
         const expression: ParseTree = ctx.expression();
-        const value: HeapValue = expression ? this.tryVisit(expression) : null; 
+        const value: HeapValue = expression ? this.tryVisit(expression) : null;
         if (this.giveUp) return null;
-        const info = new ownerInfo(identifier, value); 
+        const info = new ownerInfo(identifier, value);
         this.addOwnerInfo(identifier, info);
         return new HeapValue(true); // void
     }
@@ -159,7 +159,7 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
         for (let i = 2; i < ctx.getChildCount(); i += 2) {
             this.tryVisit(ctx.getChild(i));
             if (this.giveUp) return null;
-            result = new HeapValue(true);
+            result = new HeapValue(result.copyable);
         }
         return result; // some primitive type
     }
@@ -181,14 +181,14 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
     };
 
     visitPrimitive(ctx: PrimitiveContext): HeapValue {
-        return new HeapValue(true); // some primitive type
+        return new HeapValue(!Boolean(ctx.STRING()));
     }
 
     visitAccessIdentifier(ctx: AccessIdentifierContext): HeapValue {
         let identifier: string = ctx.IDENTIFIER().getText();
         const identifierInfo = this.lookupInfo(identifier);
         const box: HeapBox = identifierInfo.box;
-    
+
         box.useAsOwner(this.useForMutable, this.expectLvalue);
 
         if (this.expectLvalue) {
