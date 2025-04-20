@@ -518,9 +518,15 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         for (let p of functionParams) {
             const type: Type = this.typeContextToType(p.type());
             const symbol: string = p.functionParamPattern().getText();
+
+            if (argSymbols.includes(symbol)) {
+                throw new Error(`Parameter name ${symbol} bound more than once in parameter list`)
+            }
+
             argSymbols.push(symbol);
             argTypes.push(type);
         }
+
         return [argSymbols, argTypes];
     }
 

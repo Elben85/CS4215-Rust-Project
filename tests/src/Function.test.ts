@@ -321,4 +321,24 @@ describe('Function Type Tests', () => {
         `
         expect(program).toPassTypeCheck();
     })
+
+    it('Same parameter name should fail', () => {
+        const program = `
+        fn f(x: f64, y: f64, x: f64) -> f64 {
+            return 1;
+        };
+        `
+
+        expect(program).toFailTypeCheck();
+    })
+
+    it('Same parameter name should fail 2', () => {
+        const program = `
+        let f = |x: f64, y:f64, x: f64| -> f64 {
+            return 1;
+        };
+        `
+
+        expect(program).toFailTypeCheck();
+    })
 })
