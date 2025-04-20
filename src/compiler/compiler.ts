@@ -31,7 +31,7 @@ import {
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import * as Instructions from "./instruction";
-import { Type } from '../typeChecker/Type';
+import { FunctionType, Type } from '../typeChecker/Type';
 
 export const VOID = null;
 
@@ -90,6 +90,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     private env: Frame[];
     private breakStack: any[];
     private continueStack: any[];
+    private functionCtxStack: (FunctionContext | ClosureExpressionContext)[];
     private expectLvalue: boolean;
     private typeCache: Map<ParseTree, Type>;
     private isCompilingFunctionBody: boolean;
@@ -105,6 +106,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.expectLvalue = false;
         this.typeCache = typeCache;
         this.temporaryFunctionPlaceholders = [];
+        this.functionCtxStack = [];
     }
 
     private assignIdentifierPosition(identifier: string): [number, number] {
@@ -465,8 +467,10 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const gotoInstr = Instructions.createGoto(null);
         this.instructionArray.push(gotoInstr)
 
-        // TODO: Compiling type annotation not yet implemented
+        //setup contexts 
         this.env.push(new Frame());
+        this.functionCtxStack.push(ctx);
+
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
@@ -476,8 +480,16 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             // TODO: Handle return type
             this.visit(ctx.blockExpression());
         }
-        this.env.pop();
+
+        if ((<FunctionType>this.typeCache.get(ctx)).returnType.copyable()) {
+            this.instructionArray.push(Instructions.createCopy())
+        }
         this.instructionArray.push(Instructions.createReset());
+
+        //cleanup contexts
+        this.functionCtxStack.pop();
+        this.env.pop();
+
         gotoInstr.address = this.instructionArray.length;
 
     }
@@ -489,7 +501,6 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             arity = parameters.functionParam().length;
         }
 
-        // add 1 + 1 to address because 'this.instructionArray.length' is LDF
         let identifier = ctx.IDENTIFIER().getText();
         const functionAddress = this.instructionArray.length + 1;
         this.env[this.env.length - 1].addIdentifier(identifier, false).functionInfo = new FunctionInfo(
@@ -500,7 +511,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const gotoInstr = Instructions.createGoto(null);
         this.instructionArray.push(gotoInstr)
 
+        // setup contexts
         const oldEnv = this.env;
+        this.functionCtxStack.push(ctx);
         this.env = [new Frame()];
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
@@ -510,7 +523,14 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
             this.expectLvalue,
             true
         );
+
+        if ((<FunctionType>this.typeCache.get(ctx)).returnType.copyable()) {
+            this.instructionArray.push(Instructions.createCopy())
+        }
         this.instructionArray.push(Instructions.createReset());
+
+        //cleanup contexts
+        this.functionCtxStack.pop();
         this.env = oldEnv;
 
         gotoInstr.address = this.instructionArray.length;
@@ -548,6 +568,13 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
     visitReturnExpression(ctx: ReturnExpressionContext): void {
         this.visit(ctx.expression());
+
+        const funcCtx = this.functionCtxStack[this.functionCtxStack.length - 1];
+
+        if ((<FunctionType>this.typeCache.get(funcCtx)).returnType.copyable()) {
+            this.instructionArray.push(Instructions.createCopy())
+        }
+
         this.instructionArray.push(Instructions.createReset());
     }
 }

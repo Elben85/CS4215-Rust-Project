@@ -28,7 +28,8 @@ import {
     FunctionParametersContext,
     ReturnExpressionContext,
     CallExpressionContext,
-    TypeContext
+    TypeContext,
+    ItemContext
 } from '../parser/src/SimpleLangParser';
 import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
 import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, VoidType, FunctionType } from './Type';
@@ -172,7 +173,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         // for now items are all function declaration
         const functionTypes = []
         for (let f of items) {
-            functionTypes.push(this.visitWithEnvironment(f, this.typeEnv));
+            functionTypes.push(this.visit(f));
         }
         for (let i = 0; i < items.length; ++i) {
             this.checkFunctionBody(
@@ -549,6 +550,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
             assigned: true,
         })
 
+        this.typeCache.set(ctx, functionType);
+
         return VOID_TYPE;
     }
 
@@ -578,6 +581,10 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
         if (ctx.blockExpression()) {
             this.checkFunctionBody(ctx.blockExpression(), functionType);
         }
+
+        // cache return type
+        this.typeCache.set(ctx, functionType);
+
         return functionType;
     }
 

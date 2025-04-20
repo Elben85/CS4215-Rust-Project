@@ -94,7 +94,7 @@ describe('Function Tests', () => {
             fn foo(f: fn(f64) -> f64) -> f64 {
                 return f(3);
             }
-            
+
             foo(first);
         `
         expect(program).toEvaluateTo(72);
@@ -109,7 +109,7 @@ describe('Function Tests', () => {
             fn foo() -> fn(f64) -> f64 {
                 return first;
             }
-            
+
             foo()(2);
         `
         expect(program).toEvaluateTo(71);
@@ -124,7 +124,7 @@ describe('Function Tests', () => {
             fn foo(f: fn(f64) -> f64, b: f64) -> bool {
                 return f(b) > f(f(b));
             }
-            
+
             foo(first, 3);
         `
         expect(program).toEvaluateTo(false);
@@ -214,6 +214,26 @@ describe('Function Tests', () => {
 
         expect(program).toEvaluateTo(64);
     });
+
+    it('Capturing and return variable', () => {
+        const program = `
+            let mut a: f64 = 0;
+
+            let getVal = | | a;
+            let increment = | | a = a + 1;
+
+            while getVal() < 10 {
+                increment();
+            }
+            
+            let mut random = getVal();
+            random = random + 1;
+
+            a;
+        `
+
+        expect(program).toEvaluateTo(10);
+    })
 
 });
 
