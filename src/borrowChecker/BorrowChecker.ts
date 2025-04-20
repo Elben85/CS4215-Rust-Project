@@ -219,24 +219,24 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implement
     }
 
     visitBlockBody(ctx: BlockBodyContext): HeapValue {
-        let box: HeapValue = new HeapValue(true); // void
+        let value: HeapValue = new HeapValue(true); // void
         for (let s of ctx.statement()) {
             this.tryVisit(s);
             if (this.giveUp) return null;
         }
 
         if (ctx.expressionWithoutBlock()) {
-            box = this.tryVisit(ctx.expressionWithoutBlock());
+            value = this.tryVisit(ctx.expressionWithoutBlock()).copyIfPossible();
             if (this.giveUp) return null;
         }
 
         // move the value
-        if (box.owner) {
-            box.owner.value = null;
-            box.owner = null;
+        if (value.owner) {
+            value.owner.value = null;
+            value.owner = null;
         }
 
-        return box;
+        return value;
     }
 
     visitBracket(ctx: BracketContext): HeapValue {

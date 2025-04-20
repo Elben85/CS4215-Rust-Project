@@ -76,4 +76,20 @@ describe('Drop Checker', () => {
         `
         expect(program).toPassTypeCheck();
     })
+
+    it(`Float and bool copied not moved 2`, () => {
+        const program = `
+            let a = 1;
+            let b = {
+                a
+            };
+            a;
+            let a = true;
+            let b = {
+                a
+            };
+            a;
+        `
+        expect(program).toPassTypeCheck();
+    })
 });
