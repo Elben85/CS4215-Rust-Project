@@ -288,7 +288,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
     visitPrimitive(ctx: PrimitiveContext): void {
         let value: any;
         if (ctx.FLOAT()) {
-            value = parseInt(ctx.getText())
+            value = parseFloat(ctx.getText())
         } else if (ctx.BOOL()) {
             value = ctx.getText() === 'true';
         } else {

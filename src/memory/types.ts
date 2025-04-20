@@ -145,7 +145,7 @@ export class Pointer implements Types {
     }
 
     public static isValidPointer(heap: Heap, address: number) {
-        return this.addressToValue(heap, address) !== this.INVALID_POINTER; 
+        return this.addressToValue(heap, address) !== this.INVALID_POINTER;
     }
 }
 

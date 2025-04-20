@@ -5,7 +5,7 @@ import { BOOLEAN_TYPE, NUMBER_TYPE, Type } from '../../src/typeChecker/Type';
 describe('Operator Test', () => {
     it('*', () => expect(`2 * 3;`).toEvaluateTo(6));
     it('/', () => expect(`6 / 3;`).toEvaluateTo(2));
-    it('/ (2)', () => expect(`3.0 / 2.0;`).toEvaluateTo(1.5));
+    it('/ (2)', () => expect(`3.2 / 2.0;`).toEvaluateTo(1.6));
     it('+', () => expect(`8 + 2;`).toEvaluateTo(10));
     it('-', () => expect(`92 - 52;`).toEvaluateTo(40));
     it('||', () => expect(`true || false;`).toEvaluateTo(true));
