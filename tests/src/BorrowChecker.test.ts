@@ -96,5 +96,21 @@ describe('Borrow Checker test', () => {
         `
         expect(program).toPassTypeCheck();
     })
+
+    it('Branching borrows', () => {
+        const program = `
+            let mut a: f64 = 1;
+            let b: &mut f64;
+            let mut c;
+            if true {
+                b = &mut a;
+                c = b;
+            } else {
+                c = &mut a;
+            }
+            c;
+        `
+        expect(program).toPassTypeCheck();
+    })
 });
 

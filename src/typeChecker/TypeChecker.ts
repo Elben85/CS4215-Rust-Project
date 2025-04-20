@@ -441,8 +441,17 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         if (ctx.accessIdentifier()) {
             const identifier: string = ctx.accessIdentifier().getText();
             const identifierInfo: identifierInformation = this.lookupType(identifier, this.typeEnv)
-            if ((<Type>identifierInfo.type).compare(UNKNOWN_TYPE)) {
+            if (identifierInfo.type.compare(UNKNOWN_TYPE)) {
                 identifierInfo.type = expressionType;
+                identifierInfo.assigned = true;
+                return VOID_TYPE;
+            } else if (!identifierInfo.assigned) {
+                if (!identifierInfo.type.compare(expressionType)) {
+                    throw new Error(
+                        `Incompatible types in assignment expression ${ctx.getText()}. Received:`
+                        + ` ${expressionType.toString()}, Expected: ${identifierInfo.type.toString()}`
+                    );
+                }
                 identifierInfo.assigned = true;
                 return VOID_TYPE;
             }
