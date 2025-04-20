@@ -1,4 +1,4 @@
-import { TypeContext } from "../parser/src/SimpleLangParser";
+import { TypeContext } from "../parser/src/RustParser";
 
 export abstract class Type {
   abstract toString(): string;

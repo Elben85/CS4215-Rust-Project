@@ -1,13 +1,13 @@
 import { BasicEvaluator } from "conductor/dist/conductor/runner";
 import { IRunnerPlugin } from "conductor/dist/conductor/runner/types";
 import { BailErrorStrategy, CharStream, CommonTokenStream } from 'antlr4ng';
-import { SimpleLangLexer } from './parser/src/SimpleLangLexer';
-import { SimpleLangParser } from './parser/src/SimpleLangParser';
+import { RustLexer } from './parser/src/RustLexer';
+import { RustParser } from './parser/src/RustParser';
 import { CompilerVisitor } from "./compiler/compiler";
 import { evaluate } from "./evaluator/evaluate";
 import { TypeChecker } from "./typeChecker/TypeChecker";
 
-export class SimpleLangEvaluator extends BasicEvaluator {
+export class RustEvaluator extends BasicEvaluator {
     private executionCount: number;
     private visitor: CompilerVisitor;
     private typeChecker: TypeChecker;
@@ -22,9 +22,9 @@ export class SimpleLangEvaluator extends BasicEvaluator {
         try {
             // Create the lexer and parser
             const inputStream = CharStream.fromString(chunk);
-            const lexer = new SimpleLangLexer(inputStream);
+            const lexer = new RustLexer(inputStream);
             const tokenStream = new CommonTokenStream(lexer);
-            const parser = new SimpleLangParser(tokenStream);
+            const parser = new RustParser(tokenStream);
             parser.errorHandler = new BailErrorStrategy();
 
             // Parse the input

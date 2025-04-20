@@ -28,8 +28,8 @@ import {
     ReturnExpressionContext,
     ClosureExpressionContext,
     CallExpressionContext,
-} from '../parser/src/SimpleLangParser';
-import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
+} from '../parser/src/RustParser';
+import { RustVisitor } from '../parser/src/RustVisitor';
 import * as Instructions from "./instruction";
 import { FunctionType, Type } from '../typeChecker/Type';
 
@@ -83,8 +83,8 @@ class Frame {
     }
 }
 
-export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements SimpleLangVisitor<void> {
-    // Visit a parse tree produced by SimpleLangParser#prog
+export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements RustVisitor<void> {
+    // Visit a parse tree produced by RustParser#prog
     public instructionArray: any[];
     private isFirstStatement: boolean;
     private env: Frame[];

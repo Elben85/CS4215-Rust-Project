@@ -30,8 +30,8 @@ import {
     CallExpressionContext,
     TypeContext,
     ItemContext
-} from '../parser/src/SimpleLangParser';
-import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
+} from '../parser/src/RustParser';
+import { RustVisitor } from '../parser/src/RustVisitor';
 import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, FunctionType, STRING_TYPE } from './Type';
 
 export interface identifierInformation {
@@ -40,7 +40,7 @@ export interface identifierInformation {
     assigned: true, // whether identifier has been initialized
 }
 
-export class TypeChecker extends AbstractParseTreeVisitor<Type> implements SimpleLangVisitor<Type> {
+export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustVisitor<Type> {
     private typeEnv: any[];
     private isFirstStatement: boolean;
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
@@ -701,7 +701,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements Simpl
     }
 }
 
-class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements SimpleLangVisitor<boolean> {
+class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements RustVisitor<boolean> {
     public constructor() {
         super();
     }

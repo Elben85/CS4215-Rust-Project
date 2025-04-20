@@ -1,350 +1,350 @@
-// Generated from src/SimpleLang.g4 by ANTLR 4.13.1
+// Generated from src/Rust.g4 by ANTLR 4.13.1
 
 import { AbstractParseTreeVisitor } from "antlr4ng";
 
 
-import { ProgContext } from "./SimpleLangParser.js";
-import { MutableContext } from "./SimpleLangParser.js";
-import { StatementContext } from "./SimpleLangParser.js";
-import { EmptyStatementContext } from "./SimpleLangParser.js";
-import { ItemContext } from "./SimpleLangParser.js";
-import { LetStatementContext } from "./SimpleLangParser.js";
-import { ExpressionStatementContext } from "./SimpleLangParser.js";
-import { ExpressionContext } from "./SimpleLangParser.js";
-import { ExpressionWithoutBlockContext } from "./SimpleLangParser.js";
-import { PrimaryContext } from "./SimpleLangParser.js";
-import { CallExpressionContext } from "./SimpleLangParser.js";
-import { CallExpressionTerminalContext } from "./SimpleLangParser.js";
-import { UnopContext } from "./SimpleLangParser.js";
-import { NegationExpressionContext } from "./SimpleLangParser.js";
-import { DereferenceExpressionContext } from "./SimpleLangParser.js";
-import { BorrowExpressionContext } from "./SimpleLangParser.js";
-import { BinopTerminalsContext } from "./SimpleLangParser.js";
-import { BinopContext } from "./SimpleLangParser.js";
-import { LogicalOrContext } from "./SimpleLangParser.js";
-import { LogicalAndContext } from "./SimpleLangParser.js";
-import { ComparisonContext } from "./SimpleLangParser.js";
-import { AdditionSubstractionContext } from "./SimpleLangParser.js";
-import { MultiplicationDivisionContext } from "./SimpleLangParser.js";
-import { PrimitiveContext } from "./SimpleLangParser.js";
-import { AccessIdentifierContext } from "./SimpleLangParser.js";
-import { BracketContext } from "./SimpleLangParser.js";
-import { AssignmentExpressionsContext } from "./SimpleLangParser.js";
-import { ExpressionWithBlockContext } from "./SimpleLangParser.js";
-import { BlockExpressionContext } from "./SimpleLangParser.js";
-import { BlockBodyContext } from "./SimpleLangParser.js";
-import { IfExpressionContext } from "./SimpleLangParser.js";
-import { IfExpressionAlternativeContext } from "./SimpleLangParser.js";
-import { LoopExpressionContext } from "./SimpleLangParser.js";
-import { PredicateLoopExpressionContext } from "./SimpleLangParser.js";
-import { BreakExpressionContext } from "./SimpleLangParser.js";
-import { ContinueExpressionContext } from "./SimpleLangParser.js";
-import { ClosureExpressionContext } from "./SimpleLangParser.js";
-import { FunctionContext } from "./SimpleLangParser.js";
-import { FunctionParametersContext } from "./SimpleLangParser.js";
-import { FunctionParamContext } from "./SimpleLangParser.js";
-import { FunctionParamPatternContext } from "./SimpleLangParser.js";
-import { FunctionReturnTypeContext } from "./SimpleLangParser.js";
-import { ReturnExpressionContext } from "./SimpleLangParser.js";
-import { CallParamsContext } from "./SimpleLangParser.js";
-import { FunctionTypeContext } from "./SimpleLangParser.js";
-import { FunctionTypeParamsContext } from "./SimpleLangParser.js";
-import { TypeContext } from "./SimpleLangParser.js";
-import { PointerTypeContext } from "./SimpleLangParser.js";
+import { ProgContext } from "./RustParser.js";
+import { MutableContext } from "./RustParser.js";
+import { StatementContext } from "./RustParser.js";
+import { EmptyStatementContext } from "./RustParser.js";
+import { ItemContext } from "./RustParser.js";
+import { LetStatementContext } from "./RustParser.js";
+import { ExpressionStatementContext } from "./RustParser.js";
+import { ExpressionContext } from "./RustParser.js";
+import { ExpressionWithoutBlockContext } from "./RustParser.js";
+import { PrimaryContext } from "./RustParser.js";
+import { CallExpressionContext } from "./RustParser.js";
+import { CallExpressionTerminalContext } from "./RustParser.js";
+import { UnopContext } from "./RustParser.js";
+import { NegationExpressionContext } from "./RustParser.js";
+import { DereferenceExpressionContext } from "./RustParser.js";
+import { BorrowExpressionContext } from "./RustParser.js";
+import { BinopTerminalsContext } from "./RustParser.js";
+import { BinopContext } from "./RustParser.js";
+import { LogicalOrContext } from "./RustParser.js";
+import { LogicalAndContext } from "./RustParser.js";
+import { ComparisonContext } from "./RustParser.js";
+import { AdditionSubstractionContext } from "./RustParser.js";
+import { MultiplicationDivisionContext } from "./RustParser.js";
+import { PrimitiveContext } from "./RustParser.js";
+import { AccessIdentifierContext } from "./RustParser.js";
+import { BracketContext } from "./RustParser.js";
+import { AssignmentExpressionsContext } from "./RustParser.js";
+import { ExpressionWithBlockContext } from "./RustParser.js";
+import { BlockExpressionContext } from "./RustParser.js";
+import { BlockBodyContext } from "./RustParser.js";
+import { IfExpressionContext } from "./RustParser.js";
+import { IfExpressionAlternativeContext } from "./RustParser.js";
+import { LoopExpressionContext } from "./RustParser.js";
+import { PredicateLoopExpressionContext } from "./RustParser.js";
+import { BreakExpressionContext } from "./RustParser.js";
+import { ContinueExpressionContext } from "./RustParser.js";
+import { ClosureExpressionContext } from "./RustParser.js";
+import { FunctionContext } from "./RustParser.js";
+import { FunctionParametersContext } from "./RustParser.js";
+import { FunctionParamContext } from "./RustParser.js";
+import { FunctionParamPatternContext } from "./RustParser.js";
+import { FunctionReturnTypeContext } from "./RustParser.js";
+import { ReturnExpressionContext } from "./RustParser.js";
+import { CallParamsContext } from "./RustParser.js";
+import { FunctionTypeContext } from "./RustParser.js";
+import { FunctionTypeParamsContext } from "./RustParser.js";
+import { TypeContext } from "./RustParser.js";
+import { PointerTypeContext } from "./RustParser.js";
 
 
 /**
  * This interface defines a complete generic visitor for a parse tree produced
- * by `SimpleLangParser`.
+ * by `RustParser`.
  *
  * @param <Result> The return type of the visit operation. Use `void` for
  * operations with no return type.
  */
-export class SimpleLangVisitor<Result> extends AbstractParseTreeVisitor<Result> {
+export class RustVisitor<Result> extends AbstractParseTreeVisitor<Result> {
     /**
-     * Visit a parse tree produced by `SimpleLangParser.prog`.
+     * Visit a parse tree produced by `RustParser.prog`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitProg?: (ctx: ProgContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.mutable`.
+     * Visit a parse tree produced by `RustParser.mutable`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitMutable?: (ctx: MutableContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.statement`.
+     * Visit a parse tree produced by `RustParser.statement`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitStatement?: (ctx: StatementContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.emptyStatement`.
+     * Visit a parse tree produced by `RustParser.emptyStatement`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitEmptyStatement?: (ctx: EmptyStatementContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.item`.
+     * Visit a parse tree produced by `RustParser.item`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitItem?: (ctx: ItemContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.letStatement`.
+     * Visit a parse tree produced by `RustParser.letStatement`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitLetStatement?: (ctx: LetStatementContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.expressionStatement`.
+     * Visit a parse tree produced by `RustParser.expressionStatement`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitExpressionStatement?: (ctx: ExpressionStatementContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.expression`.
+     * Visit a parse tree produced by `RustParser.expression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitExpression?: (ctx: ExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.expressionWithoutBlock`.
+     * Visit a parse tree produced by `RustParser.expressionWithoutBlock`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitExpressionWithoutBlock?: (ctx: ExpressionWithoutBlockContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.primary`.
+     * Visit a parse tree produced by `RustParser.primary`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPrimary?: (ctx: PrimaryContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.callExpression`.
+     * Visit a parse tree produced by `RustParser.callExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitCallExpression?: (ctx: CallExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.callExpressionTerminal`.
+     * Visit a parse tree produced by `RustParser.callExpressionTerminal`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitCallExpressionTerminal?: (ctx: CallExpressionTerminalContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.unop`.
+     * Visit a parse tree produced by `RustParser.unop`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitUnop?: (ctx: UnopContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.negationExpression`.
+     * Visit a parse tree produced by `RustParser.negationExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitNegationExpression?: (ctx: NegationExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.dereferenceExpression`.
+     * Visit a parse tree produced by `RustParser.dereferenceExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitDereferenceExpression?: (ctx: DereferenceExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.borrowExpression`.
+     * Visit a parse tree produced by `RustParser.borrowExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBorrowExpression?: (ctx: BorrowExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.binopTerminals`.
+     * Visit a parse tree produced by `RustParser.binopTerminals`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBinopTerminals?: (ctx: BinopTerminalsContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.binop`.
+     * Visit a parse tree produced by `RustParser.binop`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBinop?: (ctx: BinopContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.logicalOr`.
+     * Visit a parse tree produced by `RustParser.logicalOr`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitLogicalOr?: (ctx: LogicalOrContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.logicalAnd`.
+     * Visit a parse tree produced by `RustParser.logicalAnd`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitLogicalAnd?: (ctx: LogicalAndContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.comparison`.
+     * Visit a parse tree produced by `RustParser.comparison`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitComparison?: (ctx: ComparisonContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.additionSubstraction`.
+     * Visit a parse tree produced by `RustParser.additionSubstraction`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitAdditionSubstraction?: (ctx: AdditionSubstractionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.multiplicationDivision`.
+     * Visit a parse tree produced by `RustParser.multiplicationDivision`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitMultiplicationDivision?: (ctx: MultiplicationDivisionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.primitive`.
+     * Visit a parse tree produced by `RustParser.primitive`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPrimitive?: (ctx: PrimitiveContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.accessIdentifier`.
+     * Visit a parse tree produced by `RustParser.accessIdentifier`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitAccessIdentifier?: (ctx: AccessIdentifierContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.bracket`.
+     * Visit a parse tree produced by `RustParser.bracket`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBracket?: (ctx: BracketContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.assignmentExpressions`.
+     * Visit a parse tree produced by `RustParser.assignmentExpressions`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitAssignmentExpressions?: (ctx: AssignmentExpressionsContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.expressionWithBlock`.
+     * Visit a parse tree produced by `RustParser.expressionWithBlock`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitExpressionWithBlock?: (ctx: ExpressionWithBlockContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.blockExpression`.
+     * Visit a parse tree produced by `RustParser.blockExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBlockExpression?: (ctx: BlockExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.blockBody`.
+     * Visit a parse tree produced by `RustParser.blockBody`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBlockBody?: (ctx: BlockBodyContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.ifExpression`.
+     * Visit a parse tree produced by `RustParser.ifExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitIfExpression?: (ctx: IfExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.ifExpressionAlternative`.
+     * Visit a parse tree produced by `RustParser.ifExpressionAlternative`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitIfExpressionAlternative?: (ctx: IfExpressionAlternativeContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.loopExpression`.
+     * Visit a parse tree produced by `RustParser.loopExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitLoopExpression?: (ctx: LoopExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.predicateLoopExpression`.
+     * Visit a parse tree produced by `RustParser.predicateLoopExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPredicateLoopExpression?: (ctx: PredicateLoopExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.breakExpression`.
+     * Visit a parse tree produced by `RustParser.breakExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitBreakExpression?: (ctx: BreakExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.continueExpression`.
+     * Visit a parse tree produced by `RustParser.continueExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitContinueExpression?: (ctx: ContinueExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.closureExpression`.
+     * Visit a parse tree produced by `RustParser.closureExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitClosureExpression?: (ctx: ClosureExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.function`.
+     * Visit a parse tree produced by `RustParser.function`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunction?: (ctx: FunctionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionParameters`.
+     * Visit a parse tree produced by `RustParser.functionParameters`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionParameters?: (ctx: FunctionParametersContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionParam`.
+     * Visit a parse tree produced by `RustParser.functionParam`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionParam?: (ctx: FunctionParamContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionParamPattern`.
+     * Visit a parse tree produced by `RustParser.functionParamPattern`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionParamPattern?: (ctx: FunctionParamPatternContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionReturnType`.
+     * Visit a parse tree produced by `RustParser.functionReturnType`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionReturnType?: (ctx: FunctionReturnTypeContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.returnExpression`.
+     * Visit a parse tree produced by `RustParser.returnExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitReturnExpression?: (ctx: ReturnExpressionContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.callParams`.
+     * Visit a parse tree produced by `RustParser.callParams`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitCallParams?: (ctx: CallParamsContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionType`.
+     * Visit a parse tree produced by `RustParser.functionType`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionType?: (ctx: FunctionTypeContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.functionTypeParams`.
+     * Visit a parse tree produced by `RustParser.functionTypeParams`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitFunctionTypeParams?: (ctx: FunctionTypeParamsContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.type`.
+     * Visit a parse tree produced by `RustParser.type`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitType?: (ctx: TypeContext) => Result;
     /**
-     * Visit a parse tree produced by `SimpleLangParser.pointerType`.
+     * Visit a parse tree produced by `RustParser.pointerType`.
      * @param ctx the parse tree
      * @return the visitor result
      */

@@ -23,8 +23,8 @@ import {
     BreakExpressionContext,
     DereferenceExpressionContext,
     BorrowExpressionContext
-} from '../parser/src/SimpleLangParser';
-import { SimpleLangVisitor } from '../parser/src/SimpleLangVisitor';
+} from '../parser/src/RustParser';
+import { RustVisitor } from '../parser/src/RustVisitor';
 import { ownerInfo, HeapValue, HeapBox } from './heapBox';
 import { Type } from '../typeChecker/Type';
 
@@ -33,7 +33,7 @@ import { Type } from '../typeChecker/Type';
  * The Borrow Checker. 
  * The class assumes that the parse tree it visits has passed all the typechecks from type checker
  */
-export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implements SimpleLangVisitor<HeapValue> {
+export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue> implements RustVisitor<HeapValue> {
     private env: { [key: string]: ownerInfo }[];
     private expectLvalue: boolean; // indicate whether an expression should result in lvalue or rvalue
     private useForMutable: boolean; // indicate whether a variable will be used for read / write 

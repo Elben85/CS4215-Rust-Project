@@ -3,16 +3,16 @@ import { BorrowChecker } from './../../src/borrowChecker/BorrowChecker';
 import { BailErrorStrategy, CharStream, CommonTokenStream } from "antlr4ng";
 import { evaluate } from "../../src/evaluator/evaluate";
 import { CompilerVisitor } from "../../src/compiler/compiler";
-import { SimpleLangLexer } from "../../src/parser/src/SimpleLangLexer";
-import { SimpleLangParser } from "../../src/parser/src/SimpleLangParser";
+import { RustLexer } from "../../src/parser/src/RustLexer";
+import { RustParser } from "../../src/parser/src/RustParser";
 import { expect } from "vitest";
 import { Type } from "../../src/typeChecker/Type";
 
 function getParseTree(program: string) {
     const inputStream = CharStream.fromString(program);
-    const lexer = new SimpleLangLexer(inputStream);
+    const lexer = new RustLexer(inputStream);
     const tokenStream = new CommonTokenStream(lexer);
-    const parser = new SimpleLangParser(tokenStream);
+    const parser = new RustParser(tokenStream);
     // parser.errorHandler = new BailErrorStrategy();
 
     // Parse the input
