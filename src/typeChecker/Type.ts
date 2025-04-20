@@ -45,7 +45,7 @@ export class PointerType extends Type {
   }
 
   toString(): string {
-    return `*${this.baseType.toString()}`;
+    return `&${this.isMutable ? "mut" : ""} ${this.baseType.toString()}`;
   }
 
   compare(other: Type): boolean {
@@ -85,22 +85,9 @@ export class FunctionType extends Type {
 }
 
 // Type Instances
-// export const STRING_TYPE = StringType.getInstance();
 export const NUMBER_TYPE = new NumberType();
 export const BOOLEAN_TYPE = new BooleanType();
-// export const OBJECT_TYPE = ObjectType.getInstance();
 export const VOID_TYPE = new VoidType();
 export const UNKNOWN_TYPE = new UnknownType();
-
-// export function stringToType(str: string): Type {
-//   switch (str) {
-//     case "f64":
-//       return NUMBER_TYPE;
-//     case "bool":
-//       return BOOLEAN_TYPE;
-//     default:
-//       throw new Error(`Unknown type ${str}`);
-//   }
-// }
 
 
