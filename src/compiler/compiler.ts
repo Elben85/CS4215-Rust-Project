@@ -470,6 +470,10 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         //setup contexts 
         this.env.push(new Frame());
         this.functionCtxStack.push(ctx);
+        const continueStack = this.continueStack;
+        const breakStack = this.breakStack;
+        this.continueStack = [];
+        this.breakStack = [];
 
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
@@ -489,6 +493,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         //cleanup contexts
         this.functionCtxStack.pop();
         this.env.pop();
+        this.continueStack = continueStack;
+        this.breakStack = breakStack;
 
         gotoInstr.address = this.instructionArray.length;
 
@@ -515,6 +521,12 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         const oldEnv = this.env;
         this.functionCtxStack.push(ctx);
         this.env = [new Frame()];
+        const continueStack = this.continueStack;
+        const breakStack = this.breakStack;
+        this.continueStack = [];
+        this.breakStack = [];
+
+
         if (parameters) {
             parameters.functionParam().map(param => this.visit(param)); // will visitFunctionParam()
         }
@@ -532,6 +544,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         //cleanup contexts
         this.functionCtxStack.pop();
         this.env = oldEnv;
+        this.continueStack = continueStack;
+        this.breakStack = breakStack;
 
         gotoInstr.address = this.instructionArray.length;
         this.instructionArray.push(Instructions.createLDC(VOID));

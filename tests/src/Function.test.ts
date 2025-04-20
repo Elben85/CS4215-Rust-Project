@@ -235,6 +235,48 @@ describe('Function Tests', () => {
         expect(program).toEvaluateTo(10);
     })
 
+    it('Function check break stack reset', () => {
+        let program = `
+            let mut i = 0;
+            while i < 10 {
+                fn a() { break; }
+                a();
+            }            
+            i;
+        `
+
+        expect(() => Evaluate(program)).toThrowError("Break statement not within a loop");
+
+        program = `
+            while false {
+                let a = | | { break; };
+            }
+        `
+
+        expect(() => Evaluate(program)).toThrowError("Break statement not within a loop")
+    })
+
+    it('Function check continue stack reset', () => {
+        let program = `
+            let mut i = 0;
+            while i < 10 {
+                fn a() { continue; }
+                a();
+            }            
+            i;
+        `
+
+        expect(() => Evaluate(program)).toThrowError("Continue statement not within a loop");
+
+        program = `
+            while false {
+                let a = | | { continue; };
+            }
+        `
+
+        expect(() => Evaluate(program)).toThrowError("Continue statement not within a loop")
+    })
+
 });
 
 describe('Function Type Tests', () => {
