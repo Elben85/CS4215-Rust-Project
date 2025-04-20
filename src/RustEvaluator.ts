@@ -6,11 +6,13 @@ import { RustParser } from './parser/src/RustParser';
 import { CompilerVisitor } from "./compiler/compiler";
 import { evaluate } from "./evaluator/evaluate";
 import { TypeChecker } from "./typeChecker/TypeChecker";
+import { BorrowChecker } from "./borrowChecker/BorrowChecker";
 
 export class RustEvaluator extends BasicEvaluator {
     private executionCount: number;
     private visitor: CompilerVisitor;
     private typeChecker: TypeChecker;
+    private borrowChecker: BorrowChecker;
 
     constructor(conductor: IRunnerPlugin) {
         super(conductor);
@@ -34,6 +36,10 @@ export class RustEvaluator extends BasicEvaluator {
             // Check the type
             this.typeChecker = new TypeChecker();
             const type = this.typeChecker.checkType(tree);
+
+            // Simple borrow checking
+            this.borrowChecker = new BorrowChecker(this.typeChecker.typeCache);
+            this.borrowChecker.visit(tree);
 
             // Compile the parsed tree
             this.visitor = new CompilerVisitor(this.typeChecker.typeCache);
