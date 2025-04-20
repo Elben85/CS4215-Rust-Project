@@ -13,7 +13,7 @@ describe('String Test', () => {
     it('String 2', () => {
         const program = `
             let a: String = "Hello, ";
-            a + "World!":
+            a + "World!";
         `
         expect(program).toEvaluateTo("Hello, World!");
     })
