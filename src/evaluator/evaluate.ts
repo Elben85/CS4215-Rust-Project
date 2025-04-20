@@ -10,7 +10,7 @@ let E: number; // Environment address
 let GLOBAL_ENV: number;
 
 // ENTRY POINT
-export const evaluate = (instructionArray: any[]) => {
+export const evaluate = (instructionArray: any[], debug: boolean = false) => {
     HEAP = new Heap();
     OS = [];
     RTS = [];
@@ -30,9 +30,10 @@ export const evaluate = (instructionArray: any[]) => {
         microcode[tag](instr);
     }
 
-    // console.log(OS);
 
-    if (OS.length > 1) throw new Error("LOL NUB");
+    if (debug) {
+        if (OS.length > 1) throw new Error("Drop Check Not Finished");
+    }
     return OS.length === 0
         ? undefined
         : addressToValue(HEAP, OS.pop());

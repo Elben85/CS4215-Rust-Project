@@ -28,8 +28,7 @@ export function Evaluate(program: string) {
     const visitor = new CompilerVisitor(typeChecker.typeCache)
     visitor.visit(tree);
     const instructions = visitor.instructionArray;
-    // console.log(instructions);
-    const result = evaluate(instructions);
+    const result = evaluate(instructions, true);
 
     return result;
 }
