@@ -126,23 +126,23 @@ export class Callframe implements Types {
     public static allocate(heap: Heap, args: [number, number]): number {
         const [env, pc] = args;
         const address = heap.reserve(2, this.getTag());
-        heap.set(address + 1, env); // Store the environment
-        heap.setTwoByteAtOffset(address, 3, pc); // Store the PC in the 4th and 5th byte
+        heap.set(address + Heap.METADATA_SIZE, env);
+        heap.set(address + Heap.METADATA_SIZE + 1, pc);
         return address;
     }
 
     public static addressToValue(heap: Heap, address: number): [number, number] {
-        const env = heap.get(address + 1);
-        const pc = heap.getTwoByteAtOffset(address, 2);
+        const env = this.getEnvironment(heap, address);
+        const pc = this.getPC(heap, address);
         return [env, pc];
     }
 
     public static getPC(heap: Heap, address: number): number {
-        return heap.getTwoByteAtOffset(address, 3);
+        return heap.get(address + Heap.METADATA_SIZE + 1);
     }
 
     public static getEnvironment(heap: Heap, address: number): number {
-        return heap.get(address + 1);
+        return heap.get(address + Heap.METADATA_SIZE);
     }
 
 }

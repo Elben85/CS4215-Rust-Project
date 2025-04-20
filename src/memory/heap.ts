@@ -77,6 +77,24 @@ export class Heap {
         return address * this.WORD_SIZE;
     }
 
+    public assertAllFreed() {
+        let freeMem = 0;
+        for (let level = 0, size = 1; level <= Heap.MAX_LEVEL; level += 1, size *= 2) {
+            let head = this.getFreeListHead(level);
+
+            while (head !== 0) {
+                freeMem += size;
+                head = this.getNext(head);
+            }
+        }
+
+        const maxWords = Heap.HEAP_SIZE / Heap.WORD_SIZE;
+        if (maxWords - Heap.HEAP_BASE !== freeMem) {
+            throw new Error(`Not all memory freed: ${maxWords - Heap.HEAP_BASE - freeMem} still allocated`);
+        }
+    }
+
+
     // METADATA MANAGEMENT
     // tags
     public setMetadata(address: number, tag: number, size: number) {

@@ -30,13 +30,21 @@ export const evaluate = (instructionArray: any[], debug: boolean = false) => {
         microcode[tag](instr);
     }
 
+    const resultAddr = OS.pop()
+    const result = resultAddr === undefined
+        ? undefined
+        : addressToValue(HEAP, resultAddr);
+
+    dropIfNoOwner(resultAddr);
+    Environment.dropEnvAndLastFrame(HEAP, E);
+    dropIfNoOwner(GLOBAL_ENV);
 
     if (debug) {
         if (OS.length > 1) throw new Error("Drop Check Not Finished");
+        HEAP.assertAllFreed();
     }
-    return OS.length === 0
-        ? undefined
-        : addressToValue(HEAP, OS.pop());
+
+    return result;
 }
 
 function move(vAddress: number, newOwnerAddr: number) {
@@ -169,6 +177,7 @@ const microcode = {
         if (HEAP.getTag(topFrame) == Callframe.getTag()) {
             PC = Callframe.getPC(HEAP, topFrame);
             E = Callframe.getEnvironment(HEAP, topFrame);
+            dropIfNoOwner(topFrame);
         } else {
             E = topFrame;
         }
