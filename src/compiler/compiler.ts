@@ -354,6 +354,9 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         }
         if (ctx.expressionWithoutBlock()) {
             this.visit(ctx.expressionWithoutBlock());
+            if (this.typeCache.get(ctx.expressionWithoutBlock()).copyable()) {
+                this.instructionArray.push(Instructions.createCopy());
+            }
         } else {
             this.instructionArray.push(Instructions.createLDC(VOID))
         }
@@ -395,7 +398,8 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.instructionArray.push(jofInstr);
 
         // Stores Instruction and the Env depth
-        this.breakStack.push([jofInstr, this.env.length]);
+        const breakGotoInstr = Instructions.createGoto(null);
+        this.breakStack.push([breakGotoInstr, this.env.length]);
         this.continueStack.push([Instructions.createGoto(whileLoopAddress), this.env.length]);
 
         this.visit(body);
@@ -408,6 +412,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
         this.continueStack.pop();
 
         this.instructionArray.push(Instructions.createLDC(VOID));
+        breakGotoInstr.address = this.instructionArray.length;
     }
 
     visitBreakExpression(ctx: BreakExpressionContext): void {
@@ -417,11 +422,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
         const depth = this.env.length - this.breakStack[this.breakStack.length - 1][1];
 
+        this.instructionArray.push(Instructions.createLDC(VOID));
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
         this.instructionArray.push(this.breakStack[this.breakStack.length - 1][0]);
     }
 
@@ -432,9 +437,11 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements S
 
         const depth = this.env.length - this.continueStack[this.continueStack.length - 1][1];
 
+        this.instructionArray.push(Instructions.createLDC(VOID));
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
+        this.instructionArray.push(Instructions.createPop());
 
         this.instructionArray.push(this.continueStack[this.continueStack.length - 1][0]);
 

@@ -45,13 +45,17 @@ function move(vAddress: number, newOwnerAddr: number) {
     if (oldOwnerAddress !== Heap.INVALID_OWNER_ADDRESS) {
         Pointer.invalidatePointer(HEAP, oldOwnerAddress);
     }
+    HEAP.setOwner(vAddress, newOwnerAddr);
+
+    if (newOwnerAddr === Heap.INVALID_OWNER_ADDRESS) {
+        return;
+    }
 
     if (Pointer.isValidPointer(HEAP, newOwnerAddr)) {
         HEAP.deallocate(Pointer.addressToValue(HEAP, newOwnerAddr));
     }
 
     Pointer.setPointer(HEAP, newOwnerAddr, vAddress)
-    HEAP.setOwner(vAddress, newOwnerAddr);
 }
 
 const microcode = {
@@ -114,7 +118,9 @@ const microcode = {
     EXIT_SCOPE: (instr) => {
         // prevent block result to be dropped
         const resultAddr = OS[OS.length - 1];
-        Environment.dropEnvAndLastFrame(HEAP, E, resultAddr);
+        move(resultAddr, Heap.INVALID_OWNER_ADDRESS);
+
+        Environment.dropEnvAndLastFrame(HEAP, E);
         E = RTS.pop();
         PC++;
     },
@@ -155,8 +161,10 @@ const microcode = {
     RESET: (instr) => {
         // The following code is to make sure return value not accidentally dropped
         const resultAddr = OS[OS.length - 1];
+        move(resultAddr, Heap.INVALID_OWNER_ADDRESS);
+
         const topFrame = RTS.pop();
-        Environment.dropEnvAndLastFrame(HEAP, E, resultAddr);
+        Environment.dropEnvAndLastFrame(HEAP, E);
         if (HEAP.getTag(topFrame) == Callframe.getTag()) {
             PC = Callframe.getPC(HEAP, topFrame);
             E = Callframe.getEnvironment(HEAP, topFrame);

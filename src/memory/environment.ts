@@ -49,10 +49,10 @@ export class Environment implements Types {
         Frame.setValue(heap, frameAddress, itemIndex, itemAddress);
     }
 
-    public static dropEnvAndLastFrame(heap: Heap, env: number, resultAddr: number) {
+    public static dropEnvAndLastFrame(heap: Heap, env: number) {
         const envSize = heap.getSize(env);
         const frameAddr = this.getFrame(heap, env, envSize - 1);
-        Frame.dropFrame(heap, frameAddr, resultAddr);
+        Frame.dropFrame(heap, frameAddr);
         heap.deallocate(env);
     }
 }
@@ -107,12 +107,12 @@ class Frame implements Types {
         }
     }
 
-    public static dropFrame(heap: Heap, address: number, resultAddr: number) {
+    public static dropFrame(heap: Heap, address: number) {
         const numVar = heap.getSize(address) / (Heap.METADATA_SIZE + 1);
 
         for (let i = 0; i < numVar; ++i) {
             const vAddress = this.getValue(heap, address, i);
-            if ((vAddress !== Pointer.INVALID_POINTER) && (vAddress !== resultAddr)) {
+            if (vAddress !== Pointer.INVALID_POINTER) {
                 heap.deallocate(vAddress);
             }
         }
