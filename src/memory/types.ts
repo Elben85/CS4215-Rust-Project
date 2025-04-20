@@ -1,14 +1,29 @@
 import { Heap } from './heap';
 
+/**
+ * @param heap heap
+ * @param value value to allocate on the heap  
+ * @returns address where value is allocated
+ */
 export const valueToAddress = (heap: Heap, value: any): number => {
     return valueToType(value).allocate(heap, value);
 }
 
+
+/**
+ * @param heap heap
+ * @param address address where the value is allocated
+ * @returns value retrieved from the heap located at the specified address
+ */
 export const addressToValue = (heap: Heap, address: number): any => {
     const tag = heap.getTag(address);
     return tagToType(tag).addressToValue(heap, address);
 }
 
+/**
+ * @param value value 
+ * @returns the type tag for the value
+ */
 export const valueToType = (value: any): typeof Types => {
     // NOTE: pointer, environment, and frame should not be passed here
     if (value === null) {
@@ -24,6 +39,10 @@ export const valueToType = (value: any): typeof Types => {
     }
 }
 
+/**
+ * @param tag 
+ * @returns the type class with the corresponding type tag
+ */
 export const tagToType = (tag: number): typeof Types => {
     switch (tag) {
         case Float64.getTag():
@@ -44,18 +63,40 @@ export const tagToType = (tag: number): typeof Types => {
 }
 
 export abstract class Types {
+    /**
+     * Unique identifier tag for each type
+     */
     public static getTag(): number {
         throw new Error("Type tag not defined")
     }
 
+    /**
+     * @param heap heap
+     * @param value value to be allocated
+     * 
+     * @returns the allocated address 
+     */
     public static allocate(heap: Heap, value: any): number {
         throw new Error("Type heap allocation not implemented")
     }
 
+    /**
+     * @param heap heap
+     * @param address address where value is allocated
+     * 
+     * @returns the corresponding value allocated at address
+     */
     public static addressToValue(heap: Heap, address: number): any {
         throw new Error("Address to value not implemented");
     }
 
+    /**
+     * Copy the value at address and returns the new address.
+     * 
+     * @param heap 
+     * @param address 
+     * @returns address of the copy
+     */
     public static copy(heap: Heap, address: number): any {
         throw new Error("Copy not implemented")
     }
@@ -199,10 +240,9 @@ export class Closure implements Types {
     }
 }
 
-// TODO
 export class UserString implements Types {
     /**
-     * 1 byte number of bytes for the string
+     * 1 word number of bytes for the string
      * the rest of the bytes is the byte-encoded string
      */
     public static getTag(): number { return 8; }

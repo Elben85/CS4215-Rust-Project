@@ -29,6 +29,9 @@ export class ownerInfo {
     }
 }
 
+/**
+ * A class that represents a memory value where an varriable is assigned to
+ */
 export class HeapBox {
     public owner!: ownerInfo
     public value: HeapValue = null;
@@ -129,6 +132,9 @@ export class HeapBox {
     }
 }
 
+/**
+ * A class that represents allocated values
+ */
 export class HeapValue {
     public owner: HeapBox | null
     public sharedReference: HeapBox | null

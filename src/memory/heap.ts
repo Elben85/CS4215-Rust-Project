@@ -1,11 +1,18 @@
 /**
- * Current Heap structure:
+ * Heap structure:
  * 
- * A heap is a linked list
- * 1 word of metadata
+ * A heap is an array buffer
+ * Each allocated memory are preceeded by 1 word of metadata
  * 1 byte type tag, 2 byte size, 2 byte freelist metadata, 2 byte owner address
  * 
- * An address is in word (so adress 1 refers to byte 1 * word_size)
+ * All address are in words (so adress 1 refers to byte 1 * word_size)
+ * 
+ * The heap allocated memory using a buddy allocator. 
+ * In a buddy allocator there are multiple levels of freelist, depending on the size of the
+ * free node. The free nodes of each level are represented as a linked list, allocated as metadata
+ * on the heap on the free nodes.
+ * The first "MAX_LEVEL" words are used to represent the head of these linked list
+ * 
  */
 
 export class Heap {
@@ -35,6 +42,10 @@ export class Heap {
         this.constructFreelist()
     }
 
+
+    /**
+     * Initialize free list
+     */
     private constructFreelist() {
         for (let i = 0; i <= Heap.MAX_LEVEL; i++) {
             this.setFreeListHead(i, 0);
@@ -60,13 +71,11 @@ export class Heap {
 
 
 
+    /**
+     * allocate and reserve space in the heap of the specified size (in words, EXCLUDING metadata)
+     * Returns the address
+     */
     public reserve(size: number, tag: number): number {
-        /**
-         * allocate and reserve space in the heap of the specified size (in words, EXCLUDING metadata)
-         * Returns the address
-         */
-
-        // TODO: add some metadata
         const address = this.buddyAllocate(size);
         this.setTag(address, tag);
         this.setSize(address, size);
@@ -79,6 +88,9 @@ export class Heap {
         return address * this.WORD_SIZE;
     }
 
+    /**
+     * Debugging function used to check if all memories are properly freed after execution
+     */
     public assertAllFreed() {
         let freeMem = 0;
         for (let level = 0, size = 1; level <= Heap.MAX_LEVEL; level += 1, size *= 2) {
@@ -179,7 +191,13 @@ export class Heap {
     }
 
 
-    // Buddy Memory Management
+    /**
+     * Allocated node using the buddy allocator.
+     * allocated size is requestSizeWords + heap metadata size
+     * 
+     * @param requestSizeWords the number of words to allocate excluding the metadata size
+     * @returns the allocated address
+     */
     private buddyAllocate(requestSizeWords: number): number {
         const totalSize = requestSizeWords + Heap.METADATA_SIZE;
         let level = Math.ceil(Math.log2(totalSize));
@@ -207,6 +225,11 @@ export class Heap {
     }
 
 
+    /**
+     * Address to be deallocated using the buddy deallocator
+     * 
+     * @param address Address to be deallocated
+     */
     private buddyDeallocate(address: number): void {
         const totalSize = this.getSize(address) + Heap.METADATA_SIZE;
         let level = Math.ceil(Math.log2(totalSize));
@@ -249,6 +272,7 @@ export class Heap {
     }
 
 
+    // freelist metadata managements
     private setNext(address: number, next: number): void {
         this.setTwoByteAtOffset(address, this.next_offset, next);
     }

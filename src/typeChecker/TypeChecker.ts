@@ -710,6 +710,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
     }
 }
 
+/**
+ * Class used to check if a function body will return on all path of the execution.
+ */
 class ReturnChecker extends AbstractParseTreeVisitor<boolean> implements RustVisitor<boolean> {
     public constructor() {
         super();
