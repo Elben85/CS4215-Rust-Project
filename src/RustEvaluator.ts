@@ -31,7 +31,6 @@ export class RustEvaluator extends BasicEvaluator {
 
             // Parse the input
             const tree = parser.prog();
-            console.log(tree.toStringTree());
 
             // Check the type
             this.typeChecker = new TypeChecker();
@@ -45,7 +44,6 @@ export class RustEvaluator extends BasicEvaluator {
             this.visitor = new CompilerVisitor(this.typeChecker.typeCache);
             this.visitor.visit(tree);
             const instructions = this.visitor.instructionArray;
-            console.log(instructions);
             const result = evaluate(instructions);
 
             // Send the result to the REPL

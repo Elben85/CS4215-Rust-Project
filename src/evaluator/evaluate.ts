@@ -18,13 +18,7 @@ export const evaluate = (instructionArray: any[], debug: boolean = false) => {
     E = Environment.allocate(HEAP, 0);
     GLOBAL_ENV = E;
 
-    // console.log(instructionArray);
-
     while (instructionArray[PC].tag !== 'DONE') {
-        // console.log(PC);
-        // console.log(OS);
-        // console.log(TEMPORARIES);
-        // console.log(instructionArray[PC]);
         let instr = instructionArray[PC];
         let tag = instr.tag;
         microcode[tag](instr);

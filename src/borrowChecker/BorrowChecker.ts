@@ -202,8 +202,6 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue[]> impleme
         const identifierInfo = this.lookupInfo(identifier);
         const result = [];
 
-        console.log(this.environments.length)
-        console.log(identifierInfo.length)
         for (const info of identifierInfo) {
             const box: HeapBox = info.box;
             box.useAsOwner(this.useForMutable, this.expectLvalue);
@@ -278,19 +276,11 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue[]> impleme
             const altResult = this.visit(ctx.ifExpressionAlternative());
             this.environments = [...oldEnvironments, ...this.environments];
             result = [...result, ...altResult];
-            console.log(result);
-            for (let e of this.environments) {
-                console.log("ENV")
-                for (let f of e) {
-                    console.log(f);
-                }
-            }
         } else {
             result.push(new HeapValue(true)); // push unit
             this.environments = [...this.environments, ...environmentsCopy];
         }
 
-        console.log(this.environments);
 
         return result
     }

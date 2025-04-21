@@ -42,7 +42,6 @@ export function EvaluateType(program: string) {
 
     const borrowChecker = new BorrowChecker(visitor.typeCache);
     borrowChecker.visit(tree);
-    // console.log(type);
 
     return type;
 }
@@ -87,7 +86,6 @@ expect.extend({
                 message: () => `expected program to throw error, but program evaluates to type ${typeResult.toString()}`
             }
         } catch (e) {
-            console.log(e.message);
             return {
                 pass: true,
                 message: () => ``
