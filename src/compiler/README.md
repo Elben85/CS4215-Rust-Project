@@ -120,13 +120,14 @@ List of instructions:
 ```
 
 - `LDF`
-  Creates a closure on the heap and pushes its address onto the operand stack. Takes the function's arity and address, and captures the current environment.
+  Creates a closure on the heap and pushes its address onto the operand stack. Takes the function's arity and address, and captures the current environment. If the `useGlobal` is set to true (e.g. for functions), it will capture the global environment instead.
 
 ```
 {
     tag: "LDF",
     arity: number,
     address: number
+    useGlobal: boolean
 }
 ```
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { NUMBER_TYPE, VOID_TYPE } from '../../src/typeChecker/Type';
-import { VOID } from '../../src/compiler/compiler';
+import { NUMBER_TYPE, UNIT_TYPE } from '../../src/typeChecker/Type';
+import { UNIT } from '../../src/compiler/compiler';
 
 describe('Assignment Tests', () => {
     it('assignments produce value', () => {
@@ -19,7 +19,7 @@ describe('Assignment Tests', () => {
             i = j = 10;
             i;
         `
-        expect(program).toEvaluateTo(VOID);
+        expect(program).toEvaluateTo(UNIT);
     });
 
     it('nested assignments 2', () => {
@@ -49,7 +49,7 @@ describe('Assignment Type Tests', () => {
             let mut j;
             i = j = 10;
         `
-        expect(program).toBeEqualType(VOID_TYPE);
+        expect(program).toBeEqualType(UNIT_TYPE);
     });
 
     it(`assignment type 3`, () => {

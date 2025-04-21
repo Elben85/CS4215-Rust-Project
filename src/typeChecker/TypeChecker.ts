@@ -32,7 +32,7 @@ import {
     ItemContext
 } from '../parser/src/RustParser';
 import { RustVisitor } from '../parser/src/RustVisitor';
-import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, VOID_TYPE, FunctionType, STRING_TYPE } from './Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, PointerType, Type, UNKNOWN_TYPE, UnknownType, UNIT_TYPE, FunctionType, STRING_TYPE } from './Type';
 
 export interface identifierInformation {
     type: Type, // type of identifer
@@ -59,7 +59,6 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         this.returnTypeStack = [];
     }
 
-    private globalTypeEnvironment = [];
 
     lookupType(x: string, te: any[]) {
         let copiedEnv = [...te];
@@ -182,7 +181,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
             );
         }
 
-        let type: Type = VOID_TYPE;
+        let type: Type = UNIT_TYPE;
         const nonItems = statements.filter(x => !this.isItem(x));
         for (let s of nonItems) {
             type = this.visitWithEnvironment(s, this.typeEnv);
@@ -191,7 +190,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
     }
 
     visitEmptyStatement(_: EmptyStatementContext): Type {
-        return VOID_TYPE;
+        return UNIT_TYPE;
     };
 
     visitLetStatement(ctx: LetStatementContext): Type {
@@ -206,7 +205,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         let identifier = ctx.IDENTIFIER().getText();
         let expression = ctx.expression();
 
-        let expressionType: Type = VOID_TYPE;
+        let expressionType: Type = UNIT_TYPE;
         let assigned = false;
 
         if (expression) {
@@ -227,7 +226,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         };
         this.addIdentifierType(identifier, identifierInfo);
 
-        return VOID_TYPE;
+        return UNIT_TYPE;
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): Type {
@@ -315,7 +314,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
     }
 
     visitBlockBody(ctx: BlockBodyContext): Type {
-        let type: Type = VOID_TYPE;
+        let type: Type = UNIT_TYPE;
         this.checkStatements(ctx.statement());
 
         if (ctx.expressionWithoutBlock()) {
@@ -401,7 +400,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         const blockType1: Type = this.visitAndCache(ctx.blockExpression());
         const blockType2: Type = ctx.ifExpressionAlternative()
             ? this.visitAndCache(ctx.ifExpressionAlternative())
-            : VOID_TYPE;
+            : UNIT_TYPE;
 
         if (!blockType1.compare(blockType2)) {
             throw new Error(`An if expression must have the same type in all situations: \n ${ctx.getText()}`);
@@ -422,9 +421,9 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
 
         const bodyType = this.visitAndCache(ctx.blockExpression());
 
-        if (!bodyType.compare(VOID_TYPE)) {
+        if (!bodyType.compare(UNIT_TYPE)) {
             throw new Error(
-                `${ctx.getText()}\nexpected block body to be ${VOID_TYPE.toString()}, `
+                `${ctx.getText()}\nexpected block body to be ${UNIT_TYPE.toString()}, `
                 + `got ${bodyType.toString()}`
             );
         }
@@ -432,8 +431,8 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         return bodyType;
     }
 
-    visitContinueExpression(ctx: ContinueExpressionContext): Type { return VOID_TYPE; }
-    visitBreakExpression(ctx: BreakExpressionContext): Type { return VOID_TYPE; };
+    visitContinueExpression(ctx: ContinueExpressionContext): Type { return UNIT_TYPE; }
+    visitBreakExpression(ctx: BreakExpressionContext): Type { return UNIT_TYPE; };
 
     visitAssignmentExpressions(ctx: AssignmentExpressionsContext): Type {
         const expressionType: Type = this.visitAndCache(ctx.expression());
@@ -444,7 +443,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
             if (identifierInfo.type.compare(UNKNOWN_TYPE)) {
                 identifierInfo.type = expressionType;
                 identifierInfo.assigned = true;
-                return VOID_TYPE;
+                return UNIT_TYPE;
             } else if (!identifierInfo.assigned) {
                 if (!identifierInfo.type.compare(expressionType)) {
                     throw new Error(
@@ -453,7 +452,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
                     );
                 }
                 identifierInfo.assigned = true;
-                return VOID_TYPE;
+                return UNIT_TYPE;
             }
         }
 
@@ -475,7 +474,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
                 + ` ${expressionType.toString()}, Expected: ${expectedType.toString()}`
             );
         }
-        return VOID_TYPE;
+        return UNIT_TYPE;
     }
 
     visitDereferenceExpression(ctx: DereferenceExpressionContext): Type {
@@ -552,7 +551,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
         const [argSymbols, argTypes] = this.getFunctionParametersSymbolAndTypes(parameters);
         const returnType = ctx.functionReturnType()
             ? this.typeContextToType(ctx.functionReturnType().type())
-            : VOID_TYPE
+            : UNIT_TYPE
         const functionName = ctx.IDENTIFIER().getText();
         const functionType = new FunctionType(argSymbols, argTypes, returnType);
 
@@ -568,7 +567,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
 
         this.typeCache.set(ctx, functionType);
 
-        return VOID_TYPE;
+        return UNIT_TYPE;
     }
 
     visitClosureExpression(ctx: ClosureExpressionContext): Type {
@@ -644,7 +643,7 @@ export class TypeChecker extends AbstractParseTreeVisitor<Type> implements RustV
             throw new Error(`Unexpected return type, expected ${expected}, got ${actual}`);
         }
 
-        return VOID_TYPE;
+        return UNIT_TYPE;
     }
 
     visitCallExpression(ctx: CallExpressionContext): Type {

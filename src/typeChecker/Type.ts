@@ -36,10 +36,10 @@ export class UnknownType extends Type {
   copyable(): boolean { return false; }
 }
 
-export class VoidType extends Type {
+export class UnitType extends Type {
   public constructor() { super(); }
   toString(): string { return "()"; }
-  compare(other: Type): boolean { return other instanceof VoidType; }
+  compare(other: Type): boolean { return other instanceof UnitType; }
   copyable(): boolean { return true; }
 }
 
@@ -95,7 +95,7 @@ export class FunctionType extends Type {
 export const NUMBER_TYPE = new NumberType();
 export const BOOLEAN_TYPE = new BooleanType();
 export const STRING_TYPE = new StringType();
-export const VOID_TYPE = new VoidType();
+export const UNIT_TYPE = new UnitType();
 export const UNKNOWN_TYPE = new UnknownType();
 
 

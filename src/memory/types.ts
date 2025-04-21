@@ -27,7 +27,7 @@ export const addressToValue = (heap: Heap, address: number): any => {
 export const valueToType = (value: any): typeof Types => {
     // NOTE: pointer, environment, and frame should not be passed here
     if (value === null) {
-        return Void
+        return UnitType
     } else if (typeof value === 'number') {
         return Float64
     } else if (typeof value === 'boolean') {
@@ -49,8 +49,8 @@ export const tagToType = (tag: number): typeof Types => {
             return Float64
         case Boolean.getTag():
             return Boolean
-        case Void.getTag():
-            return Void
+        case UnitType.getTag():
+            return UnitType
         case Closure.getTag():
             return Closure
         case Pointer.getTag():
@@ -142,7 +142,7 @@ class Boolean implements Types {
     }
 }
 
-class Void implements Types {
+class UnitType implements Types {
     public static getTag(): number { return 4; }
 
     public static allocate(heap: Heap, _: any): number {

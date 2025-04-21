@@ -14,7 +14,7 @@ Currently there are the following types with the corresponding type tags and how
 - Boolean (`tag: 3`)
   1 word for value
 
-- Void (`tag: 4`)
+- Unit (`tag: 4`)
   0 word, only metadata
 
 - Pointer (`tag: 5`)

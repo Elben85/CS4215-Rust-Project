@@ -154,7 +154,7 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue[]> impleme
             const info = new ownerInfo(identifier, value);
             this.addOwnerInfo(identifier, info, env);
         }
-        return this.createNulls().map(_ => new HeapValue(true)); // voids
+        return this.createNulls().map(_ => new HeapValue(true)); // units
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): HeapValue[] {
@@ -240,7 +240,7 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue[]> impleme
     }
 
     visitBlockBody(ctx: BlockBodyContext): HeapValue[] {
-        let values: HeapValue[] = this.createNulls().map(_ => new HeapValue(true)); // voids
+        let values: HeapValue[] = this.createNulls().map(_ => new HeapValue(true)); // unit
         for (let s of ctx.statement()) {
             this.tryVisit(s);
             if (this.giveUp) return null;
@@ -286,7 +286,7 @@ export class BorrowChecker extends AbstractParseTreeVisitor<HeapValue[]> impleme
                 }
             }
         } else {
-            result.push(new HeapValue(true)); // push void
+            result.push(new HeapValue(true)); // push unit
             this.environments = [...this.environments, ...environmentsCopy];
         }
 

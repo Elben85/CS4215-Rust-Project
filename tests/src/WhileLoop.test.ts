@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Compile, Evaluate, EvaluateType } from "./setup";
-import { Type, VOID_TYPE } from '../../src/typeChecker/Type';
-import { VOID } from '../../src/compiler/compiler';
+import { Type, UNIT_TYPE } from '../../src/typeChecker/Type';
+import { UNIT } from '../../src/compiler/compiler';
 
 describe('While Loop Tests', () => {
     it('normal loop', () => {
@@ -15,14 +15,14 @@ describe('While Loop Tests', () => {
         expect(program).toEvaluateTo(10);
     });
 
-    it('while produce void', () => {
+    it('while produce unit', () => {
         const program = `
             let mut i = 0;
             while i < 10 {
                 i = i + 1;
             }
         `
-        expect(program).toEvaluateTo(VOID);
+        expect(program).toEvaluateTo(UNIT);
     });
 
     it('normal loop with break statement', () => {
@@ -109,7 +109,7 @@ describe('While Loop Tests', () => {
             };
             j;
         `
-        expect(program).toEvaluateTo(VOID);
+        expect(program).toEvaluateTo(UNIT);
     })
 
     it(`test continue return correct value`, () => {
@@ -121,7 +121,7 @@ describe('While Loop Tests', () => {
             j;
             
         `
-        expect(program).toEvaluateTo(VOID);
+        expect(program).toEvaluateTo(UNIT);
     })
 
     it(`test break env restoration`, () => {
@@ -170,17 +170,17 @@ describe('While Loop Type Tests', () => {
         expect(program).toFailTypeCheck();
     });
 
-    it('While loop always evaluate to type void', () => {
+    it('While loop always evaluate to type unit', () => {
         const program = `
             let mut i = 0;
             while i < 10 {
                 i = i + 1;
             }
         `
-        expect(program).toBeEqualType(VOID_TYPE);
+        expect(program).toBeEqualType(UNIT_TYPE);
     });
 
-    it('While loop body must be of type void', () => {
+    it('While loop body must be of type unit', () => {
         const program = `
             let mut i = 0;
             while i < 10 {

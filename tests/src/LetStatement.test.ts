@@ -1,7 +1,7 @@
-import { VOID } from './../../src/compiler/compiler';
+import { UNIT } from './../../src/compiler/compiler';
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
-import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, Type, UNIT_TYPE } from '../../src/typeChecker/Type';
 
 describe('Let Statement Test', () => {
     it('Let Statement', () => {
@@ -15,11 +15,11 @@ describe('Let Statement Test', () => {
         expect(program).toEvaluateTo(30);
     });
 
-    it('Let Statement produce void', () => {
+    it('Let Statement produce unit', () => {
         const program = `
             let a: bool;
         `
-        expect(program).toEvaluateTo(VOID);
+        expect(program).toEvaluateTo(UNIT);
     })
 });
 
@@ -30,7 +30,7 @@ describe('Let Statement Type Test', () => {
                 let a = 2+3;
                 let c = b * a;
             `
-        expect(program).toBeEqualType(VOID_TYPE);
+        expect(program).toBeEqualType(UNIT_TYPE);
     });
 
     it('Let Type 2 ', () => {
@@ -88,6 +88,6 @@ describe('Let Statement Type Test', () => {
     })
 
     it('Correct declared type', () => {
-        expect(`let a: bool = true;`).toBeEqualType(VOID_TYPE);
+        expect(`let a: bool = true;`).toBeEqualType(UNIT_TYPE);
     })
 })

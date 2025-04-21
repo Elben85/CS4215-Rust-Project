@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
-import { NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
+import { NUMBER_TYPE, Type, UNIT_TYPE } from '../../src/typeChecker/Type';
 
 describe('Block statement test', () => {
     it('Block Statement', () => {
@@ -55,7 +55,7 @@ describe('Block statement type test', () => {
             b;
         }
         `
-        expect(program).toBeEqualType(VOID_TYPE);
+        expect(program).toBeEqualType(UNIT_TYPE);
     })
 
     it(`Block type 3`, () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Evaluate, EvaluateType } from "./setup";
-import { BOOLEAN_TYPE, NUMBER_TYPE, Type, VOID_TYPE } from '../../src/typeChecker/Type';
+import { BOOLEAN_TYPE, NUMBER_TYPE, Type, UNIT_TYPE } from '../../src/typeChecker/Type';
 
 describe('If Else Tests', () => {
     it('true expression', () => {
@@ -43,7 +43,7 @@ describe('If Else Type Tests', () => {
         const program = `
             if (false) { 1; }
         `
-        expect(program).toBeEqualType(VOID_TYPE);
+        expect(program).toBeEqualType(UNIT_TYPE);
     });
 
     it('If Else Type 3', () => {

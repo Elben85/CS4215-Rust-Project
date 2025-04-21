@@ -33,7 +33,7 @@ import { RustVisitor } from '../parser/src/RustVisitor';
 import * as Instructions from "./instruction";
 import { FunctionType, Type } from '../typeChecker/Type';
 
-export const VOID = null;
+export const UNIT = null;
 
 class FunctionInfo {
     public constructor(
@@ -216,7 +216,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
     }
 
     visitEmptyStatement(_: EmptyStatementContext): void {
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
     };
 
     visitLetStatement(ctx: LetStatementContext): void {
@@ -229,7 +229,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
             this.instructionArray.push(Instructions.createLDA([frameIndex, valueIndex]));
             this.instructionArray.push(Instructions.createAssign());
         }
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
     }
 
     visitExpressionStatement(ctx: ExpressionStatementContext): void {
@@ -361,7 +361,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
                 this.instructionArray.push(Instructions.createCopy());
             }
         } else {
-            this.instructionArray.push(Instructions.createLDC(VOID))
+            this.instructionArray.push(Instructions.createLDC(UNIT))
         }
         this.isFirstStatement = tmp;
     }
@@ -386,7 +386,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
         if (ctx.ifExpressionAlternative()) {
             this.visit(ctx.ifExpressionAlternative());
         } else {
-            this.instructionArray.push(Instructions.createLDC(VOID));
+            this.instructionArray.push(Instructions.createLDC(UNIT));
         }
 
         gotoInstr.address = this.instructionArray.length;
@@ -414,7 +414,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
         this.breakStack.pop();
         this.continueStack.pop();
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
         breakGotoInstr.address = this.instructionArray.length;
     }
 
@@ -425,7 +425,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
 
         const depth = this.env.length - this.breakStack[this.breakStack.length - 1][1];
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
@@ -440,7 +440,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
 
         const depth = this.env.length - this.continueStack[this.continueStack.length - 1][1];
 
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
         for (let i = 0; i < depth; i++) {
             this.instructionArray.push(Instructions.createExitScope());
         }
@@ -461,7 +461,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
             this.isCompilingFunctionBody
         )
         this.instructionArray.push(Instructions.createAssign());
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
     }
 
     visitClosureExpression(ctx: ClosureExpressionContext): void {
@@ -558,7 +558,7 @@ export class CompilerVisitor extends AbstractParseTreeVisitor<void> implements R
         this.breakStack = breakStack;
 
         gotoInstr.address = this.instructionArray.length;
-        this.instructionArray.push(Instructions.createLDC(VOID));
+        this.instructionArray.push(Instructions.createLDC(UNIT));
     }
 
     visitFunctionParam(ctx: FunctionParamContext): void {
