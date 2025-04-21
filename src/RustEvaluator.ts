@@ -44,7 +44,11 @@ export class RustEvaluator extends BasicEvaluator {
             this.visitor = new CompilerVisitor(this.typeChecker.typeCache);
             this.visitor.visit(tree);
             const instructions = this.visitor.instructionArray;
-            const result = evaluate(instructions);
+            let result = evaluate(instructions);
+
+            // a little bit of output formatting
+            if (result === null) { result = "()" }
+            else if (typeof result === "string") { result = `\"${result}\"` }
 
             // Send the result to the REPL
             this.conductor.sendOutput(`Result of expression: ${result}`);
